@@ -667,8 +667,10 @@ class _DashboardPageState extends State<DashboardPage>
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 12,
+                          runSpacing: 8,
                           children: [
                             _buildLegendItem('Nitrogen', _primaryColor),
                             _buildLegendItem('Phosphorus', _secondaryColor),

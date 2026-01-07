@@ -169,7 +169,7 @@ class LandingPage extends StatelessWidget {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        print('About Us pressed');
+                        Navigator.pushNamed(context, '/about');
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40),
