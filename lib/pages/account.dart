@@ -36,7 +36,7 @@ class _AccountPageState extends State<AccountPage> {
             onPressed: () {
               Navigator.pop(context);
               // Navigate to landing page/login
-              // Navigator.pushReplacementNamed(context, '/landing');
+              Navigator.pushReplacementNamed(context, '/');
             },
             child: const Text('Log Out'),
           ),
@@ -71,10 +71,7 @@ class _AccountPageState extends State<AccountPage> {
           ),
           title: Text(
             'Account',
-            style: GoogleFonts.inter(
-              color: _secondaryText,
-              fontSize: 16,
-            ),
+            style: GoogleFonts.inter(color: _secondaryText, fontSize: 16),
           ),
           elevation: 0,
         ),
@@ -87,32 +84,32 @@ class _AccountPageState extends State<AccountPage> {
               _buildSectionTitle('Account'),
               _buildMenuItem(
                 icon: Icons.notifications_none,
-                title: 'Notification Settings',
+                title: 'Profile',
                 onTap: () {
-                  // Navigate to notification settings
+                  Navigator.pushNamed(context, '/profile');
                 },
               ),
-              _buildMenuItem(
-                icon: Icons.account_circle_outlined,
-                title: 'Edit Profile',
-                onTap: () {
-                  // Navigate to edit profile page
-                  // Navigator.pushNamed(context, '/account-edit');
-                },
-              ),
+              // _buildMenuItem(
+              //   icon: Icons.account_circle_outlined,
+              //   title: 'Edit Profile',
+              //   onTap: () {
+              //     // Navigate to edit profile page
+              //     Navigator.pushNamed(context, '/account-edit');
+              //   },
+              // ),
               _buildSectionTitle('General'),
               _buildMenuItem(
                 icon: Icons.phone,
-                title: 'Contact',
+                title: 'Support',
                 onTap: () {
-                  // Navigate to contact page
+                  Navigator.pushNamed(context, '/support');
                 },
               ),
               _buildMenuItem(
                 icon: Icons.privacy_tip_rounded,
                 title: 'Terms of Service',
                 onTap: () {
-                  // Navigate to terms of service
+                  Navigator.pushNamed(context, '/termsOfService');
                 },
               ),
               _buildMenuItem(
@@ -139,7 +136,7 @@ class _AccountPageState extends State<AccountPage> {
               blurRadius: 3,
               color: Color(0x33000000),
               offset: Offset(0, 1),
-            )
+            ),
           ],
         ),
         child: Padding(
@@ -196,10 +193,7 @@ class _AccountPageState extends State<AccountPage> {
       decoration: BoxDecoration(
         color: _secondaryColor.withOpacity(0.2),
         shape: BoxShape.circle,
-        border: Border.all(
-          color: _secondaryColor,
-          width: 2,
-        ),
+        border: Border.all(color: _secondaryColor, width: 2),
       ),
       child: Center(
         child: Text(
@@ -248,7 +242,7 @@ class _AccountPageState extends State<AccountPage> {
                 blurRadius: 5,
                 color: Color(0x3416202A),
                 offset: Offset(0, 2),
-              )
+              ),
             ],
             borderRadius: BorderRadius.circular(12),
           ),
@@ -257,11 +251,7 @@ class _AccountPageState extends State<AccountPage> {
             child: Row(
               mainAxisSize: MainAxisSize.max,
               children: [
-                Icon(
-                  icon,
-                  color: _secondaryText,
-                  size: 24,
-                ),
+                Icon(icon, color: _secondaryText, size: 24),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 12),
@@ -274,11 +264,7 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: _secondaryText,
-                  size: 18,
-                ),
+                Icon(Icons.arrow_forward_ios, color: _secondaryText, size: 18),
               ],
             ),
           ),

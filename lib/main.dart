@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:nutribin_application/pages/about.dart';
 import 'package:nutribin_application/pages/account.dart';
+import 'package:nutribin_application/pages/account_edit.dart';
+import 'package:nutribin_application/pages/camera.dart';
 import 'package:nutribin_application/pages/dashboard.dart';
+import 'package:nutribin_application/pages/fertilizer.dart';
 import 'package:nutribin_application/pages/landing_page.dart';
+import 'package:nutribin_application/pages/machine.dart';
+import 'package:nutribin_application/pages/profile.dart';
 import 'package:nutribin_application/pages/signup.dart';
+import 'package:nutribin_application/pages/support.dart';
+import 'package:nutribin_application/pages/terms.dart';
 
 // --- Light theme colors ---
 final Color lightPrimary = Color(0xfff17720);
@@ -89,7 +97,14 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const SignUpPage(),
         '/dashboard': (context) => const DashboardPage(),
         '/account': (context) => const AccountPage(),
-        // '/camera': (context) => const CameraPage(),
+        '/account-edit': (context) => const AccountEditWidget(),
+        '/support': (context) => const ContactWidget(),
+        '/termsOfService': (context) => const TermsOfServiceWidget(),
+        '/profile': (context) => const ProfileWidget(),
+        '/machine': (context) => const MachineWidget(),
+        '/camera': (context) => const CameraWidget(),
+        '/about': (context) => const AboutUsPage(),
+        '/fertilizers': (context) => const FertilizerPage(),
         // '/account/edit': (context) => const AccountEditPage(),
       },
     );

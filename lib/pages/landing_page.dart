@@ -192,6 +192,7 @@ class LandingPage extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         print('FAQs pressed');
+                        Navigator.pushNamed(context, '/support');
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40),
@@ -201,7 +202,7 @@ class LandingPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text('FAQs'),
+                      child: const Text('Support'),
                     ),
                   ),
 
@@ -213,7 +214,7 @@ class LandingPage extends StatelessWidget {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        print('Terms of Service pressed');
+                        Navigator.pushNamed(context, '/termsOfService');
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40),
@@ -224,28 +225,6 @@ class LandingPage extends StatelessWidget {
                         ),
                       ),
                       child: const Text('Terms of Service'),
-                    ),
-                  ),
-
-                  // Socials
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 4,
-                      horizontal: 16,
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        print('Socials pressed');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 40),
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('Socials'),
                     ),
                   ),
 

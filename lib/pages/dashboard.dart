@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:nutribin_application/pages/fertilizer.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -121,7 +122,7 @@ class _DashboardPageState extends State<DashboardPage>
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.asset(
-                            'assets/images/Logo_(Img).png',
+                            'assets/images/Logo (Img).png',
                             width: 84.6,
                             height: 114.8,
                             fit: BoxFit.cover,
@@ -150,14 +151,25 @@ class _DashboardPageState extends State<DashboardPage>
                     ),
                   ),
                   _buildDrawerButton('Home', Icons.house, () {
-                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/dashboard');
                   }),
-                  _buildDrawerButton('Guide', Icons.menu_book, () {}),
+                  // _buildDrawerButton('Guide', Icons.menu_book, () {
+                  //   Navigator.pushNamed(context, '/guide');
+                  // }),
                   _buildDrawerButton('Cameras', Icons.camera, () {
-                    // Navigator.pushNamed(context, '/camera');
+                    Navigator.pushNamed(context, '/camera');
                   }),
-                  _buildDrawerButton('Fertilizers', Icons.bar_chart, () {}),
-                  _buildDrawerButton('Modules', Icons.settings, () {}),
+                  _buildDrawerButton('Fertilizers', Icons.bar_chart, () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FertilizerPage(),
+                      ),
+                    );
+                  }),
+                  _buildDrawerButton('Machine', Icons.settings, () {
+                    Navigator.pushNamed(context, '/machine');
+                  }),
                 ],
               ),
             ),
@@ -169,15 +181,22 @@ class _DashboardPageState extends State<DashboardPage>
                   _buildDrawerButton(
                     'About Us',
                     Icons.featured_play_list_rounded,
-                    () {},
+                    () {
+                      Navigator.pushNamed(context, '/about');
+                    },
                   ),
-                  _buildDrawerButton('Contacts', Icons.contacts, () {}),
-                  _buildDrawerButton('Studies', Icons.library_books, () {}),
-                  _buildDrawerButton('FAQs', Icons.info, () {}),
+                  _buildDrawerButton('Support', Icons.contacts, () {
+                    Navigator.pushNamed(context, '/support');
+                  }),
+                  _buildDrawerButton('Studies', Icons.library_books, () {
+                    Navigator.pushNamed(context, '/studies');
+                  }),
                   _buildDrawerButton(
                     'Terms & Service',
                     Icons.content_paste_rounded,
-                    () {},
+                    () {
+                      Navigator.pushNamed(context, '/termsOfService');
+                    },
                   ),
                 ],
               ),
