@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -116,6 +114,7 @@ class _SignUpPageState extends State<SignUpPage>
       child: Scaffold(
         key: _scaffoldKey,
         backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: true,
         body: SafeArea(
           child: Container(
             decoration: BoxDecoration(color: _secondaryBackground),
@@ -128,33 +127,9 @@ class _SignUpPageState extends State<SignUpPage>
                     width: 100,
                     height: double.infinity,
                     decoration: const BoxDecoration(color: Colors.white),
-                    alignment: const AlignmentDirectional(0, -1),
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Padding(
-                          padding: const EdgeInsetsDirectional.fromSTEB(
-                            0,
-                            44,
-                            0,
-                            0,
-                          ),
-                          child: Container(
-                            width: double.infinity,
-                            constraints: const BoxConstraints(maxWidth: 602),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(16),
-                                bottomRight: Radius.circular(16),
-                                topLeft: Radius.circular(0),
-                                topRight: Radius.circular(0),
-                              ),
-                            ),
-                            alignment: const AlignmentDirectional(-1, 0),
-                          ),
-                        ),
                         Expanded(
                           child: Container(
                             width: double.infinity,
@@ -162,62 +137,51 @@ class _SignUpPageState extends State<SignUpPage>
                             decoration: const BoxDecoration(
                               color: Colors.white,
                             ),
-                            child: Padding(
-                              padding: const EdgeInsetsDirectional.fromSTEB(
-                                16,
-                                0,
-                                16,
-                                0,
-                              ),
-                              child: Column(
-                                children: [
-                                  Align(
-                                    alignment: const Alignment(-1, 0),
-                                    child: TabBar(
-                                      isScrollable: true,
-                                      labelColor: const Color(0xFF101213),
-                                      unselectedLabelColor: const Color(
-                                        0xFF57636C,
-                                      ),
-                                      labelPadding: const EdgeInsets.all(16),
-                                      labelStyle: GoogleFonts.plusJakartaSans(
-                                        color: const Color(0xFF101213),
-                                        fontSize: 36,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      unselectedLabelStyle:
-                                          GoogleFonts.plusJakartaSans(
-                                            color: const Color(0xFF101213),
-                                            fontSize: 36,
-                                            fontWeight: FontWeight.normal,
-                                          ),
-                                      indicatorColor: _primaryColor,
-                                      indicatorWeight: 4,
-                                      padding:
-                                          const EdgeInsetsDirectional.fromSTEB(
-                                            0,
-                                            12,
-                                            16,
-                                            12,
-                                          ),
-                                      tabs: const [
-                                        Tab(text: 'Sign In'),
-                                        Tab(text: 'Sign Up'),
-                                      ],
-                                      controller: _tabController,
-                                    ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
                                   ),
-                                  Expanded(
-                                    child: TabBarView(
-                                      controller: _tabController,
-                                      children: [
-                                        _buildSignInTab(),
-                                        _buildSignUpTab(),
-                                      ],
+                                  child: TabBar(
+                                    isScrollable: false,
+                                    labelColor: const Color(0xFF101213),
+                                    unselectedLabelColor: const Color(
+                                      0xFF57636C,
                                     ),
+                                    labelPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    labelStyle: const TextStyle(
+                                      color: Color(0xFF101213),
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    unselectedLabelStyle: const TextStyle(
+                                      color: Color(0xFF101213),
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                    indicatorColor: _primaryColor,
+                                    indicatorWeight: 4,
+                                    tabs: const [
+                                      Tab(text: 'Sign In'),
+                                      Tab(text: 'Sign Up'),
+                                    ],
+                                    controller: _tabController,
                                   ),
-                                ],
-                              ),
+                                ),
+                                Expanded(
+                                  child: TabBarView(
+                                    controller: _tabController,
+                                    children: [
+                                      _buildSignInTab(),
+                                      _buildSignUpTab(),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -252,318 +216,239 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   Widget _buildSignInTab() {
-    return Align(
-      alignment: const AlignmentDirectional(0, 0),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 12),
-        child:
-            Column(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        0,
-                        12,
-                        0,
-                        24,
-                      ),
-                      child: Text(
-                        'Let\'s get started by filling out the form below.',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: const Color(0xFF57636C),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    _buildTextField(
-                      controller: _signInEmailController,
-                      focusNode: _signInEmailFocus,
-                      label: 'Email',
-                      autofocus: true,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.email],
-                    ),
-                    _buildTextField(
-                      controller: _signInPasswordController,
-                      focusNode: _signInPasswordFocus,
-                      label: 'Password',
-                      obscureText: !_signInPasswordVisible,
-                      autofillHints: const [AutofillHints.password],
-                      suffixIcon: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _signInPasswordVisible = !_signInPasswordVisible;
-                          });
-                        },
-                        focusNode: FocusNode(skipTraversal: true),
-                        child: Icon(
-                          _signInPasswordVisible
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: const Color(0xFF57636C),
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: const AlignmentDirectional(0, 0),
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                          0,
-                          0,
-                          0,
-                          16,
-                        ),
-                        child: ElevatedButton(
-                          onPressed: _handleSignIn,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(230, 52),
-                            backgroundColor: _primaryColor,
-                            elevation: 3,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(40),
-                            ),
-                          ),
-                          child: Text(
-                            'Sign In',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: const AlignmentDirectional(0, 0),
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                          0,
-                          0,
-                          0,
-                          16,
-                        ),
-                        child: TextButton(
-                          onPressed: _handleForgotPassword,
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(230, 44),
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(
-                                color: Colors.white,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            'Forgot Password',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: const Color(0xFF101213),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    _buildSocialSignInSection(),
-                  ],
-                )
-                .animate()
-                .fadeIn(curve: Curves.easeInOut, duration: 300.ms)
-                .moveY(
-                  curve: Curves.easeInOut,
-                  begin: 60,
-                  end: 0,
-                  duration: 300.ms,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 24, top: 12),
+            child: Text(
+              'Let\'s get started by filling out the form below.',
+              style: const TextStyle(
+                color: Color(0xFF57636C),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          _buildTextField(
+            controller: _signInEmailController,
+            focusNode: _signInEmailFocus,
+            label: 'Email',
+            autofocus: false,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+          ),
+          _buildTextField(
+            controller: _signInPasswordController,
+            focusNode: _signInPasswordFocus,
+            label: 'Password',
+            obscureText: !_signInPasswordVisible,
+            autofillHints: const [AutofillHints.password],
+            suffixIcon: InkWell(
+              onTap: () {
+                setState(() {
+                  _signInPasswordVisible = !_signInPasswordVisible;
+                });
+              },
+              focusNode: FocusNode(skipTraversal: true),
+              child: Icon(
+                _signInPasswordVisible
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: const Color(0xFF57636C),
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: ElevatedButton(
+              onPressed: _handleSignIn,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(230, 52),
+                backgroundColor: _primaryColor,
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(40),
                 ),
+              ),
+              child: const Text(
+                'Sign In',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: TextButton(
+              onPressed: _handleForgotPassword,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(230, 44),
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Colors.white, width: 2),
+                ),
+              ),
+              child: const Text(
+                'Forgot Password',
+                style: TextStyle(
+                  color: Color(0xFF101213),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildSocialSignInSection(),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
 
   Widget _buildSignUpTab() {
-    return Align(
-      alignment: const AlignmentDirectional(0, 0),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 12),
-        child: SingleChildScrollView(
-          child:
-              Column(
-                    mainAxisSize: MainAxisSize.max,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                          0,
-                          12,
-                          0,
-                          24,
-                        ),
-                        child: Text(
-                          'Let\'s get started by filling out the form below.',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: const Color(0xFF57636C),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      _buildTextField(
-                        controller: _firstNameController,
-                        focusNode: _firstNameFocus,
-                        label: 'First Name',
-                        autofocus: true,
-                        keyboardType: TextInputType.name,
-                        autofillHints: const [AutofillHints.givenName],
-                      ),
-                      _buildTextField(
-                        controller: _lastNameController,
-                        focusNode: _lastNameFocus,
-                        label: 'Last Name',
-                        autofocus: true,
-                        keyboardType: TextInputType.name,
-                        autofillHints: const [AutofillHints.familyName],
-                      ),
-                      _buildTextField(
-                        controller: _addressController,
-                        focusNode: _addressFocus,
-                        label: 'Address',
-                        autofocus: true,
-                        keyboardType: TextInputType.streetAddress,
-                        autofillHints: const [AutofillHints.fullStreetAddress],
-                      ),
-                      _buildTextField(
-                        controller: _signUpEmailController,
-                        focusNode: _signUpEmailFocus,
-                        label: 'Email',
-                        autofocus: true,
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
-                      ),
-                      Align(
-                        alignment: const AlignmentDirectional(-1, 0),
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.fromSTEB(
-                            16,
-                            2,
-                            0,
-                            2,
-                          ),
-                          child: Text(
-                            'Gender:',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                          16,
-                          4,
-                          0,
-                          4,
-                        ),
-                        child: Row(
-                          children: [
-                            _buildRadioOption('Male'),
-                            _buildRadioOption('Female'),
-                            _buildRadioOption('Others'),
-                          ],
-                        ),
-                      ),
-                      _buildTextField(
-                        controller: _signUpPasswordController,
-                        focusNode: _signUpPasswordFocus,
-                        label: 'Password',
-                        obscureText: !_signUpPasswordVisible,
-                        autofillHints: const [AutofillHints.password],
-                        suffixIcon: InkWell(
-                          onTap: () {
-                            setState(() {
-                              _signUpPasswordVisible = !_signUpPasswordVisible;
-                            });
-                          },
-                          focusNode: FocusNode(skipTraversal: true),
-                          child: Icon(
-                            _signUpPasswordVisible
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: const Color(0xFF57636C),
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                      _buildTextField(
-                        controller: _confirmPasswordController,
-                        focusNode: _confirmPasswordFocus,
-                        label: 'Confirm Password',
-                        obscureText: !_confirmPasswordVisible,
-                        autofillHints: const [AutofillHints.password],
-                        suffixIcon: InkWell(
-                          onTap: () {
-                            setState(() {
-                              _confirmPasswordVisible =
-                                  !_confirmPasswordVisible;
-                            });
-                          },
-                          focusNode: FocusNode(skipTraversal: true),
-                          child: Icon(
-                            _confirmPasswordVisible
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: const Color(0xFF57636C),
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                      Align(
-                        alignment: const AlignmentDirectional(0, 0),
-                        child: Padding(
-                          padding: const EdgeInsetsDirectional.fromSTEB(
-                            0,
-                            0,
-                            0,
-                            16,
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _handleSignUp,
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(230, 52),
-                              backgroundColor: _primaryColor,
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                            ),
-                            child: Text(
-                              'Create Account',
-                              style: GoogleFonts.plusJakartaSans(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      _buildSocialSignInSection(),
-                    ],
-                  )
-                  .animate()
-                  .fadeIn(curve: Curves.easeInOut, duration: 300.ms)
-                  .moveY(
-                    curve: Curves.easeInOut,
-                    begin: 60,
-                    end: 0,
-                    duration: 300.ms,
-                  ),
-        ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 24, top: 12),
+            child: Text(
+              'Let\'s get started by filling out the form below.',
+              style: const TextStyle(
+                color: Color(0xFF57636C),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          _buildTextField(
+            controller: _firstNameController,
+            focusNode: _firstNameFocus,
+            label: 'First Name',
+            autofocus: false,
+            keyboardType: TextInputType.name,
+            autofillHints: const [AutofillHints.givenName],
+          ),
+          _buildTextField(
+            controller: _lastNameController,
+            focusNode: _lastNameFocus,
+            label: 'Last Name',
+            keyboardType: TextInputType.name,
+            autofillHints: const [AutofillHints.familyName],
+          ),
+          _buildTextField(
+            controller: _addressController,
+            focusNode: _addressFocus,
+            label: 'Address',
+            keyboardType: TextInputType.streetAddress,
+            autofillHints: const [AutofillHints.fullStreetAddress],
+          ),
+          _buildTextField(
+            controller: _signUpEmailController,
+            focusNode: _signUpEmailFocus,
+            label: 'Email',
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4),
+            child: Text(
+              'Gender:',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              children: [
+                _buildRadioOption('Male'),
+                _buildRadioOption('Female'),
+                _buildRadioOption('Others'),
+              ],
+            ),
+          ),
+          _buildTextField(
+            controller: _signUpPasswordController,
+            focusNode: _signUpPasswordFocus,
+            label: 'Password',
+            obscureText: !_signUpPasswordVisible,
+            autofillHints: const [AutofillHints.password],
+            suffixIcon: InkWell(
+              onTap: () {
+                setState(() {
+                  _signUpPasswordVisible = !_signUpPasswordVisible;
+                });
+              },
+              focusNode: FocusNode(skipTraversal: true),
+              child: Icon(
+                _signUpPasswordVisible
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: const Color(0xFF57636C),
+                size: 24,
+              ),
+            ),
+          ),
+          _buildTextField(
+            controller: _confirmPasswordController,
+            focusNode: _confirmPasswordFocus,
+            label: 'Confirm Password',
+            obscureText: !_confirmPasswordVisible,
+            autofillHints: const [AutofillHints.password],
+            suffixIcon: InkWell(
+              onTap: () {
+                setState(() {
+                  _confirmPasswordVisible = !_confirmPasswordVisible;
+                });
+              },
+              focusNode: FocusNode(skipTraversal: true),
+              child: Icon(
+                _confirmPasswordVisible
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: const Color(0xFF57636C),
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: ElevatedButton(
+              onPressed: _handleSignUp,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(230, 52),
+                backgroundColor: _primaryColor,
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(40),
+                ),
+              ),
+              child: const Text(
+                'Create Account',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildSocialSignInSection(),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
@@ -579,50 +464,47 @@ class _SignUpPageState extends State<SignUpPage>
     Widget? suffixIcon,
   }) {
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
-      child: SizedBox(
-        width: double.infinity,
-        child: TextFormField(
-          controller: controller,
-          focusNode: focusNode,
-          autofocus: autofocus,
-          autofillHints: autofillHints,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          cursorColor: const Color(0xFF4B39EF),
-          style: GoogleFonts.plusJakartaSans(
-            color: const Color(0xFF101213),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        autofocus: autofocus,
+        autofillHints: autofillHints,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        cursorColor: const Color(0xFF4B39EF),
+        style: const TextStyle(
+          color: Color(0xFF101213),
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+            color: Color(0xFF57636C),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          decoration: InputDecoration(
-            labelText: label,
-            labelStyle: GoogleFonts.plusJakartaSans(
-              color: const Color(0xFF57636C),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
-              borderRadius: BorderRadius.circular(40),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: _primaryColor, width: 2),
-              borderRadius: BorderRadius.circular(40),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFFFF5963), width: 2),
-              borderRadius: BorderRadius.circular(40),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFFFF5963), width: 2),
-              borderRadius: BorderRadius.circular(40),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.all(24),
-            suffixIcon: suffixIcon,
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
+            borderRadius: BorderRadius.circular(40),
           ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: _primaryColor, width: 2),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFFFF5963), width: 2),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFFFF5963), width: 2),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.all(24),
+          suffixIcon: suffixIcon,
         ),
       ),
     );
@@ -633,7 +515,7 @@ class _SignUpPageState extends State<SignUpPage>
       child: SizedBox(
         height: 32,
         child: RadioListTile<String>(
-          title: Text(value, style: GoogleFonts.inter(fontSize: 14)),
+          title: Text(value, style: const TextStyle(fontSize: 13)),
           value: value,
           groupValue: _selectedGender,
           onChanged: (String? newValue) {
@@ -644,6 +526,7 @@ class _SignUpPageState extends State<SignUpPage>
           activeColor: _primaryColor,
           contentPadding: EdgeInsets.zero,
           dense: true,
+          visualDensity: VisualDensity.compact,
         ),
       ),
     );
@@ -651,71 +534,47 @@ class _SignUpPageState extends State<SignUpPage>
 
   Widget _buildSocialSignInSection() {
     return Column(
-      mainAxisSize: MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Align(
-          alignment: const AlignmentDirectional(0, 0),
-          child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 24),
-            child: Text(
-              'Or sign up with',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
-                color: const Color(0xFF57636C),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'Or sign up with',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF57636C),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
-        Align(
-          alignment: const AlignmentDirectional(0, 0),
-          child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 0,
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              direction: Axis.horizontal,
-              runAlignment: WrapAlignment.center,
-              verticalDirection: VerticalDirection.down,
-              clipBehavior: Clip.none,
-              children: [
-                Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
-                  child: OutlinedButton.icon(
-                    onPressed: _handleGoogleSignIn,
-                    icon: const FaIcon(FontAwesomeIcons.google, size: 20),
-                    label: Text(
-                      'Continue with Google',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: const Color(0xFF101213),
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style:
-                        OutlinedButton.styleFrom(
-                          minimumSize: const Size(230, 44),
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF101213),
-                          side: const BorderSide(
-                            color: Color(0xFFE0E3E7),
-                            width: 2,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                        ).copyWith(
-                          overlayColor: WidgetStateProperty.all(
-                            const Color(0xFFF1F4F8),
-                          ),
-                        ),
+        const SizedBox(height: 8),
+        Center(
+          child: OutlinedButton.icon(
+            onPressed: _handleGoogleSignIn,
+            icon: const FaIcon(FontAwesomeIcons.google, size: 20),
+            label: const Text(
+              'Continue with Google',
+              style: TextStyle(
+                color: Color(0xFF101213),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style:
+                OutlinedButton.styleFrom(
+                  minimumSize: const Size(230, 44),
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF101213),
+                  side: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                ).copyWith(
+                  overlayColor: WidgetStateProperty.all(
+                    const Color(0xFFF1F4F8),
                   ),
                 ),
-              ],
-            ),
           ),
         ),
       ],

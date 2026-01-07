@@ -12,8 +12,8 @@ class _AccountPageState extends State<AccountPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // User data
-  final String _userName = 'Joy Augustin';
-  final String _userEmail = 'joy@augustin.com';
+  final String _userName = 'Matthew Cania';
+  final String _userEmail = 'matthew24@gmail.com';
 
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryColor => const Color(0xFF39D2C0);
