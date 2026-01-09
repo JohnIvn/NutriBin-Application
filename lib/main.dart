@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:nutribin_application/pages/about.dart';
-import 'package:nutribin_application/pages/account.dart';
-import 'package:nutribin_application/pages/account_edit.dart';
+import 'package:nutribin_application/pages/common/about.dart';
+import 'package:nutribin_application/pages/home/account.dart';
+import 'package:nutribin_application/pages/home/account_edit.dart';
 import 'package:nutribin_application/pages/camera.dart';
-import 'package:nutribin_application/pages/dashboard.dart';
-import 'package:nutribin_application/pages/fertilizer.dart';
+import 'package:nutribin_application/pages/home/dashboard.dart';
+import 'package:nutribin_application/pages/home/fertilizer.dart';
 import 'package:nutribin_application/pages/landing_page.dart';
 import 'package:nutribin_application/pages/machine.dart';
-import 'package:nutribin_application/pages/profile.dart';
+import 'package:nutribin_application/pages/home/profile.dart';
 import 'package:nutribin_application/pages/signup.dart';
-import 'package:nutribin_application/pages/support.dart';
-import 'package:nutribin_application/pages/terms.dart';
+import 'package:nutribin_application/pages/home/home_page.dart';
+import 'package:nutribin_application/pages/common/support.dart';
+import 'package:nutribin_application/pages/common/terms.dart';
 
 // --- Light theme colors ---
 final Color lightPrimary = Color(0xfff17720);
@@ -41,11 +42,9 @@ final ThemeData lightTheme = ThemeData(
     primary: lightPrimary,
     secondary: lightSecondary,
     tertiary: lightTertiary,
-    background: lightPrimaryBackground,
     surface: lightAlternate,
     onPrimary: lightPrimaryText,
     onSecondary: lightPrimaryText,
-    onBackground: lightSecondaryText,
     onSurface: lightSecondaryText,
   ),
   // textTheme: TextTheme(
@@ -63,11 +62,9 @@ final ThemeData darkTheme = ThemeData(
     primary: darkPrimary,
     secondary: darkSecondary,
     tertiary: darkTertiary,
-    background: darkPrimaryBackground,
     surface: darkAlternate,
     onPrimary: darkPrimaryText,
     onSecondary: darkPrimaryText,
-    onBackground: darkSecondaryText,
     onSurface: darkSecondaryText,
   ),
   // textTheme: TextTheme(
@@ -93,8 +90,9 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system, // <-- switch automatically
       initialRoute: '/',
       routes: {
-        '/': (context) => const LandingPage(),
-        '/signup': (context) => const SignUpPage(),
+        // '/': (context) => const LandingPage(),
+        '/': (context) => const SignUpPage(),
+        '/home': (context) => const HomePage(),
         '/dashboard': (context) => const DashboardPage(),
         '/account': (context) => const AccountPage(),
         '/account-edit': (context) => const AccountEditWidget(),

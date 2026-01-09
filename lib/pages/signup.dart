@@ -73,7 +73,7 @@ class _SignUpPageState extends State<SignUpPage>
     print('Sign In: ${_signInEmailController.text}');
 
     // Navigate to dashboard after successful sign in
-    Navigator.pushNamed(context, '/dashboard');
+    Navigator.pushNamed(context, '/home');
   }
 
   void _handleSignUp() async {

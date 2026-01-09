@@ -58,7 +58,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
-              // Profile Picture
               SizedBox(
                 width: 140,
                 child: Stack(
@@ -79,7 +78,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(50),
                               child: Image.network(
-                                'https://images.unsplash.com/photo-1633332755192-727a05c4013d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8dXNlcnxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=900&q=60',
+                                'https://lh3.googleusercontent.com/a/ACg8ocJyqilZ9WOdY_Bc-ZhiSRYpODRSFvJWJOLqisDExh1oIS-xVBBl=s288-c-no',
                                 width: 100,
                                 height: 100,
                                 fit: BoxFit.cover,
@@ -109,7 +108,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
               // User Email
               Padding(
-                padding: const EdgeInsets.only(bottom: 32),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Text(
                   'matthew24@gmail.com',
                   style: GoogleFonts.interTight(
@@ -156,7 +155,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Text(
-                                  'Settings',
+                                  'Profile Information',
                                   style: GoogleFonts.interTight(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w600,
@@ -190,7 +189,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                               _buildProfileRow(
                                 icon: Icons.calendar_today,
                                 label: 'Age',
-                                value: '07-24-2005',
+                                value: '20',
                               ),
 
                               // Phone Number

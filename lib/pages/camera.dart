@@ -226,7 +226,7 @@ class _CameraWidgetState extends State<CameraWidget>
       child: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: DataTable(
-          headingRowColor: MaterialStateProperty.all(Colors.blue[700]),
+          headingRowColor: WidgetStateProperty.all(Colors.blue[700]),
           headingRowHeight: 56,
           dataRowHeight: 48,
           columnSpacing: 20,
@@ -272,7 +272,7 @@ class _CameraWidgetState extends State<CameraWidget>
             final index = entry.key;
             final data = entry.value;
             return DataRow(
-              color: MaterialStateProperty.all(
+              color: WidgetStateProperty.all(
                 index % 2 == 0 ? Colors.grey[50] : Colors.white,
               ),
               cells: [
@@ -313,6 +313,8 @@ class _CameraWidgetState extends State<CameraWidget>
 
 // Main app to run this widget
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

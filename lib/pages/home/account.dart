@@ -11,7 +11,6 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // User data
   final String _userName = 'Matthew Cania';
   final String _userEmail = 'matthew24@gmail.com';
 
@@ -21,7 +20,6 @@ class _AccountPageState extends State<AccountPage> {
   Color get _secondaryText => const Color(0xFF57636C);
 
   void _handleLogout() {
-    // Show logout confirmation dialog
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -55,26 +53,6 @@ class _AccountPageState extends State<AccountPage> {
       child: Scaffold(
         key: _scaffoldKey,
         backgroundColor: _secondaryBackground,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          automaticallyImplyLeading: false,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: _secondaryText,
-              size: 30,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              // Or: Navigator.pushReplacementNamed(context, '/dashboard');
-            },
-          ),
-          title: Text(
-            'Account',
-            style: GoogleFonts.inter(color: _secondaryText, fontSize: 16),
-          ),
-          elevation: 0,
-        ),
         body: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.max,
@@ -89,14 +67,6 @@ class _AccountPageState extends State<AccountPage> {
                   Navigator.pushNamed(context, '/profile');
                 },
               ),
-              // _buildMenuItem(
-              //   icon: Icons.account_circle_outlined,
-              //   title: 'Edit Profile',
-              //   onTap: () {
-              //     // Navigate to edit profile page
-              //     Navigator.pushNamed(context, '/account-edit');
-              //   },
-              // ),
               _buildSectionTitle('General'),
               _buildMenuItem(
                 icon: Icons.phone,
@@ -181,7 +151,6 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildLetterAvatar() {
-    // Get first letter of first and last name
     final nameParts = _userName.split(' ');
     final initials = nameParts.length >= 2
         ? '${nameParts[0][0]}${nameParts[1][0]}'

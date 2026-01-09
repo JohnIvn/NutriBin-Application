@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class FertilizerPage extends StatefulWidget {
   const FertilizerPage({super.key});
@@ -75,34 +76,165 @@ class _FertilizerPageState extends State<FertilizerPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: _secondaryBackground,
-      appBar: AppBar(
-        backgroundColor: _primaryColor,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Fertilizer Monitor',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _buildStatusOverview(),
+              _fertilizerStatusCard(),
               _buildNPKMonitoring(),
-              _buildEnvironmentalConditions(),
+              _buildStatusOverview(),
+              _buildNutriBinCondition(),
               _buildGasDetection(),
               _buildCapacityTracking(),
-              _buildWeeklyTrendsChart(),
               const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _fertilizerStatusCard() {
+    final List<String> fruits = [
+      'Tomato',
+      'Cucumber',
+      'Bell Pepper',
+      'Strawberry',
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 2,
+              color: Color(0x33000000),
+              offset: Offset(0, 2),
+            ),
+          ],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                child: Text(
+                  'Fertilizer Status',
+                  style: GoogleFonts.interTight(
+                    color: const Color(0xFF57636C),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+
+              // Status
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Row(
+                  children: const [
+                    Icon(Icons.check_circle, color: Colors.green, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Ready for Use',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Overview
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Text(
+                  'This balanced NPK fertilizer (10:10:8) provides equal support '
+                  'for leaf development, root strength, and fruit production.',
+                  style: TextStyle(
+                    color: Color(0xFF57636C),
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
+                child: Text(
+                  'How to Use',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Color(0xFF2F3E46),
+                  ),
+                ),
+              ),
+
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Text(
+                  '• Apply during early growth and flowering stages.\n'
+                  '• Dilute according to recommended dosage.\n'
+                  '• Water soil before application to prevent root burn.\n'
+                  '• Reapply every 10–14 days for best results.',
+                  style: TextStyle(
+                    color: Color(0xFF57636C),
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
+                child: Text(
+                  'Recommended Crops',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Color(0xFF2F3E46),
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: fruits
+                      .map(
+                        (fruit) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F7FA),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            fruit,
+                            style: const TextStyle(
+                              color: Color(0xFF00796B),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
             ],
           ),
         ),
@@ -178,7 +310,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
                   Expanded(
                     child: _buildQuickStat(
                       'Daily Output',
-                      '45.2 kg',
+                      '1.2 kg',
                       Icons.inventory_2,
                       Colors.blue,
                     ),
@@ -186,7 +318,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
                   Expanded(
                     child: _buildQuickStat(
                       'Quality',
-                      '98.5%',
+                      '84.5%',
                       Icons.verified,
                       Colors.green,
                     ),
@@ -199,7 +331,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
                   Expanded(
                     child: _buildQuickStat(
                       'Efficiency',
-                      '94.2%',
+                      '85.2%',
                       Icons.trending_up,
                       Colors.orange,
                     ),
@@ -207,7 +339,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
                   Expanded(
                     child: _buildQuickStat(
                       'Batches',
-                      '12',
+                      '2',
                       Icons.layers,
                       Colors.purple,
                     ),
@@ -307,9 +439,9 @@ class _FertilizerPageState extends State<FertilizerPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildNPKGauge('Nitrogen', 28.5, Colors.blue),
-                  _buildNPKGauge('Phosphorus', 45.2, Colors.orange),
-                  _buildNPKGauge('Potassium', 22.8, Colors.green),
+                  _buildNPKGauge('Nitrogen', 35.71, Colors.blue),
+                  _buildNPKGauge('Phosphorus', 35.71, Colors.orange),
+                  _buildNPKGauge('Potassium', 28.57, Colors.green),
                 ],
               ),
               const SizedBox(height: 20),
@@ -394,7 +526,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
     );
   }
 
-  Widget _buildEnvironmentalConditions() {
+  Widget _buildNutriBinCondition() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -424,7 +556,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Environmental Conditions',
+                          'NutriBin Condition',
                           style: TextStyle(
                             color: _secondaryText,
                             fontSize: 20,
@@ -859,189 +991,6 @@ class _FertilizerPageState extends State<FertilizerPage> {
             fontSize: 13,
             fontWeight: FontWeight.bold,
             color: _secondaryText,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWeeklyTrendsChart() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.show_chart, color: _primaryColor, size: 28),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Weekly NPK Trends',
-                          style: TextStyle(
-                            color: _secondaryText,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Last 7 days nutrient analysis',
-                          style: TextStyle(
-                            color: _secondaryText.withOpacity(0.7),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                height: 200,
-                child: LineChart(
-                  LineChartData(
-                    gridData: FlGridData(show: true, drawVerticalLine: false),
-                    titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 40,
-                          getTitlesWidget: (value, meta) {
-                            return Text(
-                              value.toInt().toString(),
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: _secondaryText,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (value, meta) {
-                            if (value.toInt() >= 0 &&
-                                value.toInt() < _weeklyData.length) {
-                              return Text(
-                                _weeklyData[value.toInt()]['day'],
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: _secondaryText,
-                                ),
-                              );
-                            }
-                            return const Text('');
-                          },
-                        ),
-                      ),
-                      rightTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      topTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                    ),
-                    borderData: FlBorderData(show: false),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: List.generate(
-                          _weeklyData.length,
-                          (i) => FlSpot(
-                            i.toDouble(),
-                            _weeklyData[i]['nitrogen'].toDouble(),
-                          ),
-                        ),
-                        isCurved: true,
-                        color: Colors.blue,
-                        barWidth: 3,
-                        dotData: FlDotData(show: true),
-                      ),
-                      LineChartBarData(
-                        spots: List.generate(
-                          _weeklyData.length,
-                          (i) => FlSpot(
-                            i.toDouble(),
-                            _weeklyData[i]['phosphorus'].toDouble(),
-                          ),
-                        ),
-                        isCurved: true,
-                        color: Colors.orange,
-                        barWidth: 3,
-                        dotData: FlDotData(show: true),
-                      ),
-                      LineChartBarData(
-                        spots: List.generate(
-                          _weeklyData.length,
-                          (i) => FlSpot(
-                            i.toDouble(),
-                            _weeklyData[i]['potassium'].toDouble(),
-                          ),
-                        ),
-                        isCurved: true,
-                        color: Colors.green,
-                        barWidth: 3,
-                        dotData: FlDotData(show: true),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildChartLegend('Nitrogen', Colors.blue),
-                  const SizedBox(width: 16),
-                  _buildChartLegend('Phosphorus', Colors.orange),
-                  const SizedBox(width: 16),
-                  _buildChartLegend('Potassium', Colors.green),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChartLegend(String label, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: _secondaryText,
-            fontWeight: FontWeight.w500,
           ),
         ),
       ],
