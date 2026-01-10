@@ -48,6 +48,7 @@ class _DashboardPageState extends State<DashboardPage>
                 _fertilizerStatusCard(),
                 // _buildRouteOverviewCard(),
                 _buildMachineReportsCard(),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -80,7 +81,7 @@ class _DashboardPageState extends State<DashboardPage>
           borderRadius: BorderRadius.circular(8),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,10 +219,12 @@ class _DashboardPageState extends State<DashboardPage>
                                 ],
                               ),
                             ),
-                            const Icon(
-                              Icons.keyboard_arrow_right_rounded,
-                              color: Color(0xFF57636C),
-                              size: 24,
+                            IconButton(
+                              onPressed: () {},
+                              icon: const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                              ),
                             ),
                           ],
                         ),
@@ -312,7 +315,6 @@ class _DashboardPageState extends State<DashboardPage>
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 4),
                           Text(
                             'Recent reports from the sensors',
                             style: GoogleFonts.inter(
@@ -324,7 +326,7 @@ class _DashboardPageState extends State<DashboardPage>
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 4),
                       child: Column(
                         children: [
                           _buildReportItem(
@@ -403,10 +405,9 @@ class _DashboardPageState extends State<DashboardPage>
                             fontSize: 12,
                           ),
                         ),
-                        const Icon(
-                          Icons.keyboard_arrow_right_rounded,
-                          color: Color(0xFF57636C),
-                          size: 24,
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.arrow_forward_ios, size: 12),
                         ),
                       ],
                     ),

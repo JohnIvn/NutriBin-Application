@@ -4,6 +4,7 @@ import 'package:nutribin_application/pages/common/about.dart';
 import 'package:nutribin_application/pages/home/dashboard.dart';
 import 'package:nutribin_application/pages/home/fertilizer.dart';
 import 'package:nutribin_application/pages/home/notification_page.dart';
+import 'package:nutribin_application/pages/home/nutribin_page.dart';
 import 'package:nutribin_application/widgets/custom_appbar.dart';
 import 'package:nutribin_application/widgets/custom_navbar.dart';
 
@@ -20,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = const [
     DashboardPage(),
     FertilizerPage(),
+    NutriBinPage(),
     NotificationPage(),
     AccountPage(),
   ];

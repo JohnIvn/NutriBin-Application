@@ -24,6 +24,10 @@ class CustomNavBar extends StatelessWidget {
           label: 'Fertilizers',
         ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.restore_from_trash_outlined),
+          label: 'NutriBin',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.notifications_outlined),
           label: 'Notifications',
         ),
