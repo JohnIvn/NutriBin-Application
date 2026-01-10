@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:nutribin_application/services/auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -28,6 +29,9 @@ class _SignUpPageState extends State<SignUpPage>
   final _signUpEmailController = TextEditingController();
   final _signUpPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _birthdayController = TextEditingController();
+  final _birthdayFocus = FocusNode();
+  DateTime? _selectedBirthday;
 
   final _firstNameFocus = FocusNode();
   final _lastNameFocus = FocusNode();
@@ -59,6 +63,8 @@ class _SignUpPageState extends State<SignUpPage>
     _signUpEmailController.dispose();
     _signUpPasswordController.dispose();
     _confirmPasswordController.dispose();
+    _birthdayController.dispose();
+    _birthdayFocus.dispose();
     _firstNameFocus.dispose();
     _lastNameFocus.dispose();
     _addressFocus.dispose();
@@ -69,26 +75,52 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _handleSignIn() async {
-    // Add your sign in logic here
-    print('Sign In: ${_signInEmailController.text}');
+    try {
+      final result = await AuthService.signin(
+        email: _signInEmailController.text.trim(),
+        password: _signInPasswordController.text.trim(),
+      );
 
-    // Navigate to dashboard after successful sign in
-    Navigator.pushNamed(context, '/home');
+      if (result["success"] != true) {
+        throw Exception(result["error"]);
+      }
+      Navigator.pushNamed(context, '/home');
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
   }
 
   void _handleSignUp() async {
-    if (_signUpPasswordController.text != _confirmPasswordController.text) {
+    try {
+      final result = await AuthService.signup(
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        gender: _selectedGender.toString(),
+        address: _addressController.text,
+        birthday: _birthdayController.text,
+        email: _signUpEmailController.text.trim(),
+        password: _signUpPasswordController.text.trim(),
+        confirmPassword: _confirmPasswordController.text.trim(),
+      );
+
+      if (_signUpPasswordController.text.trim() == '') {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Invalid Password")));
+        return;
+      }
+
+      if (result["success"] != true) {
+        throw Exception(result["data"]);
+      }
+      Navigator.pushNamed(context, '/home');
+    } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Passwords don\'t match!')));
-      return;
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
-
-    // Add your sign up logic here
-    print('Sign Up: ${_signUpEmailController.text}');
-
-    // Navigate to dashboard after successful sign up
-    // Navigator.pushReplacementNamed(context, '/dashboard');
   }
 
   void _handleForgotPassword() {
@@ -355,6 +387,13 @@ class _SignUpPageState extends State<SignUpPage>
             keyboardType: TextInputType.streetAddress,
             autofillHints: const [AutofillHints.fullStreetAddress],
           ),
+          _buildDateField(
+            controller: _birthdayController,
+            focusNode: _birthdayFocus,
+            label: 'Birthday',
+            onTap: _pickBirthday,
+          ),
+
           _buildTextField(
             controller: _signUpEmailController,
             focusNode: _signUpEmailFocus,
@@ -578,6 +617,73 @@ class _SignUpPageState extends State<SignUpPage>
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _pickBirthday() async {
+    DateTime initialDate = DateTime(2000);
+    DateTime firstDate = DateTime(1900);
+    DateTime lastDate = DateTime.now();
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedBirthday ?? initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedBirthday = picked;
+        _birthdayController.text =
+            "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      });
+    }
+  }
+
+  Widget _buildDateField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        readOnly: true,
+        onTap: onTap,
+        cursorColor: const Color(0xFF4B39EF),
+        style: const TextStyle(
+          color: Color(0xFF101213),
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+            color: Color(0xFF57636C),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: _primaryColor, width: 2),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.all(24),
+          suffixIcon: const Icon(
+            Icons.calendar_today_outlined,
+            color: Color(0xFF57636C),
+          ),
+        ),
+      ),
     );
   }
 }

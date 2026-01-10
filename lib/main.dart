@@ -7,7 +7,7 @@ import 'package:nutribin_application/pages/home/dashboard.dart';
 import 'package:nutribin_application/pages/home/fertilizer.dart';
 import 'package:nutribin_application/pages/machine.dart';
 import 'package:nutribin_application/pages/home/profile.dart';
-import 'package:nutribin_application/pages/signup.dart';
+import 'package:nutribin_application/pages/auth/signup.dart';
 import 'package:nutribin_application/pages/home/home_page.dart';
 import 'package:nutribin_application/pages/common/support.dart';
 import 'package:nutribin_application/pages/common/terms.dart';

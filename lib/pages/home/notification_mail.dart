@@ -3,7 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class MailPage extends StatefulWidget {
-  const MailPage({Key? key}) : super(key: key);
+  const MailPage({super.key});
 
   static const String routeName = '/mail';
 
