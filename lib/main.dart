@@ -5,7 +5,6 @@ import 'package:nutribin_application/pages/home/account_edit.dart';
 import 'package:nutribin_application/pages/camera.dart';
 import 'package:nutribin_application/pages/home/dashboard.dart';
 import 'package:nutribin_application/pages/home/fertilizer.dart';
-import 'package:nutribin_application/pages/landing_page.dart';
 import 'package:nutribin_application/pages/machine.dart';
 import 'package:nutribin_application/pages/home/profile.dart';
 import 'package:nutribin_application/pages/signup.dart';
