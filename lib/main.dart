@@ -11,6 +11,7 @@ import 'package:nutribin_application/pages/auth/signup.dart';
 import 'package:nutribin_application/pages/home/home_page.dart';
 import 'package:nutribin_application/pages/common/support.dart';
 import 'package:nutribin_application/pages/common/terms.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // --- Light theme colors ---
 final Color lightPrimary = Color(0xfff17720);
@@ -73,8 +74,9 @@ final ThemeData darkTheme = ThemeData(
   // ),
 );
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
