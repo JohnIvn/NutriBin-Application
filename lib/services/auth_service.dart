@@ -17,63 +17,59 @@ class AuthService {
     required String confirmPassword,
   }) async {
     if (password != confirmPassword) {
-      return {"success": false, "data": "Password mismatch"};
+      return {
+        "success": false,
+        "data": "Password and Confirm Password mismatch",
+      };
     }
 
     final td = DateTime.now();
     final bd = DateTime.parse(birthday);
 
     int age = td.year - bd.year;
-    if (td.month < bd.month || (td.month == bd.month && td.day < bd.day)) {
+    final monthDifference = td.month - bd.month;
+    final dayDifference = td.day - bd.day;
+
+    if (monthDifference < 0 || (monthDifference == 0 && dayDifference < 0)) {
       age--;
     }
 
     if (age < 18) {
-      return {"success": false, "data": "Age must be 18+"};
+      return {"success": false, "data": "Age Invalid"};
     }
 
-    final authRes = await http.post(
-      Uri.parse("$supabaseUrl/auth/v1/signup"),
-      headers: {"apikey": anonKey, "Content-Type": "application/json"},
-      body: jsonEncode({"email": email, "password": password}),
-    );
+    return {"success": true, "data": "Successful Sign Up"};
 
-    final authData = jsonDecode(authRes.body);
+    // final url = Uri.parse("$baseUrl/signup");
 
-    if (authRes.statusCode != 200 && authRes.statusCode != 201) {
-      return {"success": false, "data": authData};
-    }
+    // final response = await http.post(
+    //   url,
+    //   headers: {"Content-Type": "application/json"},
+    //   body: jsonEncode({
+    //     "firstName": firstName,
+    //     "lastName": lastName,
+    //     "gender": gender,
+    //     "email": email,
+    //     "password": password,
+    //     "birthday": birthday,
+    //     "age": age,
+    //     "address": address,
+    //   }),
+    // );
 
-    final userId = authData["user"]["id"];
-
-    await http.post(
-      Uri.parse("$supabaseUrl/rest/v1/profiles"),
-      headers: {
-        "apikey": anonKey,
-        "Authorization": "Bearer $anonKey",
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({
-        "id": userId,
-        "first_name": firstName,
-        "last_name": lastName,
-        "gender": gender,
-        "birthday": birthday,
-        "age": age,
-        "address": address,
-      }),
-    );
-
-    return {"success": true, "data": "Signup successful"};
+    // return jsonDecode(response.body);
   }
 
+  // User Sign In
   static Future<Map<String, dynamic>> signin({
     required String email,
     required String password,
   }) async {
+    final url = Uri.parse("$baseUrl/signin");
+
     final response = await http.post(
-      Uri.parse("https://mtfbnszjdqpjpuigvgoh.supabase.co/functions/v1/signin"),
-      headers: {"Content-Type": "application/json", "apikey": anonKey},
+      url,
+      headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email, "password": password}),
     );
 
