@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = "https://yourdomain.com/rest/v1";
+  static const String supabaseUrl = "https://mtfbnszjdqpjpuigvgoh.supabase.co";
 
-  // User Sign Up
+  static const String anonKey =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZmJuc3pqZHFwanB1aWd2Z29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzMTE1MTAsImV4cCI6MjA4MTg4NzUxMH0.OQFKEKwScPyCUa63dBI5nm7rDFhB0q12O5OKYIFyaQY";
+
   static Future<Map<String, dynamic>> signup({
     required String firstName,
     required String lastName,
@@ -16,59 +18,63 @@ class AuthService {
     required String confirmPassword,
   }) async {
     if (password != confirmPassword) {
-      return {
-        "success": false,
-        "data": "Password and Confirm Password mismatch",
-      };
+      return {"success": false, "data": "Password mismatch"};
     }
 
     final td = DateTime.now();
     final bd = DateTime.parse(birthday);
 
     int age = td.year - bd.year;
-    final monthDifference = td.month - bd.month;
-    final dayDifference = td.day - bd.day;
-
-    if (monthDifference < 0 || (monthDifference == 0 && dayDifference < 0)) {
+    if (td.month < bd.month || (td.month == bd.month && td.day < bd.day)) {
       age--;
     }
 
     if (age < 18) {
-      return {"success": false, "data": "Age Invalid"};
+      return {"success": false, "data": "Age must be 18+"};
     }
 
-    return {"success": true, "data": "Successful Sign Up"};
+    final authRes = await http.post(
+      Uri.parse("$supabaseUrl/auth/v1/signup"),
+      headers: {"apikey": anonKey, "Content-Type": "application/json"},
+      body: jsonEncode({"email": email, "password": password}),
+    );
 
-    // final url = Uri.parse("$baseUrl/signup");
+    final authData = jsonDecode(authRes.body);
 
-    // final response = await http.post(
-    //   url,
-    //   headers: {"Content-Type": "application/json"},
-    //   body: jsonEncode({
-    //     "firstName": firstName,
-    //     "lastName": lastName,
-    //     "gender": gender,
-    //     "email": email,
-    //     "password": password,
-    //     "birthday": birthday,
-    //     "age": age,
-    //     "address": address,
-    //   }),
-    // );
+    if (authRes.statusCode != 200 && authRes.statusCode != 201) {
+      return {"success": false, "data": authData};
+    }
 
-    // return jsonDecode(response.body);
+    final userId = authData["user"]["id"];
+
+    await http.post(
+      Uri.parse("$supabaseUrl/rest/v1/profiles"),
+      headers: {
+        "apikey": anonKey,
+        "Authorization": "Bearer $anonKey",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "id": userId,
+        "first_name": firstName,
+        "last_name": lastName,
+        "gender": gender,
+        "birthday": birthday,
+        "age": age,
+        "address": address,
+      }),
+    );
+
+    return {"success": true, "data": "Signup successful"};
   }
 
-  // User Sign In
   static Future<Map<String, dynamic>> signin({
     required String email,
     required String password,
   }) async {
-    final url = Uri.parse("$baseUrl/signin");
-
     final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
+      Uri.parse("$supabaseUrl/functions/v1/signin"),
+      headers: {"Content-Type": "application/json", "apikey": anonKey},
       body: jsonEncode({"email": email, "password": password}),
     );
 

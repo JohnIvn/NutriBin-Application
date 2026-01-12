@@ -81,10 +81,14 @@ class _SignUpPageState extends State<SignUpPage>
         password: _signInPasswordController.text.trim(),
       );
 
-      if (result["success"] != true) {
-        throw Exception(result["error"]);
+      if (result["success"] == true) {
+        Navigator.pushNamed(context, '/home');
+        return;
       }
-      Navigator.pushNamed(context, '/home');
+
+      final message = result["data"] ?? result["error"] ?? "Sign in failed";
+
+      throw Exception(message);
     } catch (e) {
       ScaffoldMessenger.of(
         context,
