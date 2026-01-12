@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:nutribin_application/pages/common/about.dart';
 import 'package:nutribin_application/pages/home/account.dart';
 import 'package:nutribin_application/pages/home/account_edit.dart';
@@ -73,10 +74,10 @@ final ThemeData darkTheme = ThemeData(
   // ),
 );
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
+  runApp(MyApp());
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
