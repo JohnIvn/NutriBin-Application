@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService {
   static final String supabaseUrl = dotenv.env["SUPABASE_URL"].toString();
   static final String anonKey = dotenv.env["SUPABASE_ANON"].toString();
+  // static final String supabaseUrl = "https://mtfbnszjdqpjpuigvgoh.supabase.co";
+  // static final String anonKey ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZmJuc3pqZHFwanB1aWd2Z29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzMTE1MTAsImV4cCI6MjA4MTg4NzUxMH0.OQFKEKwScPyCUa63dBI5nm7rDFhB0q12O5OKYIFyaQY";
 
   static Future<Map<String, dynamic>> signup({
     required String firstName,
@@ -66,7 +67,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final url = Uri.parse("$supabaseUrl/signin");
+    final url = Uri.parse("$supabaseUrl/functions/v1/signin");
 
     final response = await http.post(
       url,

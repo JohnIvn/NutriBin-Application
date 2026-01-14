@@ -82,13 +82,14 @@ class _SignUpPageState extends State<SignUpPage>
       );
 
       if (result["success"] != true) {
-        throw Exception(result["error"]);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result["data"].toString())));
+        throw Error();
       }
       Navigator.pushNamed(context, '/home');
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      print(e);
     }
   }
 
@@ -126,11 +127,6 @@ class _SignUpPageState extends State<SignUpPage>
   void _handleForgotPassword() {
     // Navigate to forgot password/camera page
     // Navigator.pushNamed(context, '/camera');
-  }
-
-  void _handleGoogleSignIn() {
-    // Add Google sign in logic here
-    print('Google Sign In');
   }
 
   Color get _primaryColor => Theme.of(context).primaryColor;
@@ -295,6 +291,27 @@ class _SignUpPageState extends State<SignUpPage>
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _handleForgotPassword,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                backgroundColor: Colors.transparent,
+              ),
+              child: const Text(
+                'Forgot Password',
+                style: TextStyle(
+                  color: Color(0xFF101213),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+
           const SizedBox(height: 8),
           Center(
             child: ElevatedButton(
@@ -317,30 +334,7 @@ class _SignUpPageState extends State<SignUpPage>
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Center(
-            child: TextButton(
-              onPressed: _handleForgotPassword,
-              style: TextButton.styleFrom(
-                minimumSize: const Size(230, 44),
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Colors.white, width: 2),
-                ),
-              ),
-              child: const Text(
-                'Forgot Password',
-                style: TextStyle(
-                  color: Color(0xFF101213),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildSocialSignInSection(),
+
           const SizedBox(height: 24),
         ],
       ),
@@ -484,8 +478,6 @@ class _SignUpPageState extends State<SignUpPage>
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          _buildSocialSignInSection(),
           const SizedBox(height: 24),
         ],
       ),
@@ -568,55 +560,6 @@ class _SignUpPageState extends State<SignUpPage>
           visualDensity: VisualDensity.compact,
         ),
       ),
-    );
-  }
-
-  Widget _buildSocialSignInSection() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            'Or sign up with',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF57636C),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Center(
-          child: OutlinedButton.icon(
-            onPressed: _handleGoogleSignIn,
-            icon: const FaIcon(FontAwesomeIcons.google, size: 20),
-            label: const Text(
-              'Continue with Google',
-              style: TextStyle(
-                color: Color(0xFF101213),
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style:
-                OutlinedButton.styleFrom(
-                  minimumSize: const Size(230, 44),
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF101213),
-                  side: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                ).copyWith(
-                  overlayColor: WidgetStateProperty.all(
-                    const Color(0xFFF1F4F8),
-                  ),
-                ),
-          ),
-        ),
-      ],
     );
   }
 

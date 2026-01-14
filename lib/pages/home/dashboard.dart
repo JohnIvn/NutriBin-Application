@@ -13,20 +13,11 @@ class _DashboardPageState extends State<DashboardPage>
     with SingleTickerProviderStateMixin {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final List<Map<String, dynamic>> _weeklyData = [
-    {'day': 'Mon', 'nitrogen': 20, 'phosphorus': 35, 'potassium': 15},
-    {'day': 'Tue', 'nitrogen': 25, 'phosphorus': 40, 'potassium': 18},
-    {'day': 'Wed', 'nitrogen': 22, 'phosphorus': 38, 'potassium': 20},
-    {'day': 'Thu', 'nitrogen': 28, 'phosphorus': 45, 'potassium': 22},
-    {'day': 'Fri', 'nitrogen': 24, 'phosphorus': 42, 'potassium': 19},
-    {'day': 'Sat', 'nitrogen': 30, 'phosphorus': 50, 'potassium': 25},
-    {'day': 'Sun', 'nitrogen': 26, 'phosphorus': 48, 'potassium': 21},
-  ];
-
-  Color get _primaryColor => Theme.of(context).primaryColor;
-  Color get _secondaryColor => const Color(0xFF39D2C0);
-  Color get _tertiaryColor => const Color(0xFFEE8B60);
-  Color get _secondaryText => const Color(0xFF57636C);
+  Color get _primaryColor => Theme.of(context).colorScheme.primary;
+  Color get _secondaryColor => Theme.of(context).colorScheme.secondary;
+  Color get _tertiaryColor => Theme.of(context).colorScheme.tertiary;
+  Color get _secondaryText =>
+      Theme.of(context).colorScheme.onSurface.withOpacity(0.6);
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
 
   @override
@@ -289,7 +280,7 @@ class _DashboardPageState extends State<DashboardPage>
           Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _secondaryBackground,
                   boxShadow: const [
                     BoxShadow(
                       blurRadius: 3,
@@ -309,7 +300,7 @@ class _DashboardPageState extends State<DashboardPage>
                           Text(
                             'Machine Reports',
                             style: GoogleFonts.interTight(
-                              color: const Color(0xFF57636C),
+                              color: _tertiaryColor,
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
                             ),

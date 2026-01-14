@@ -76,6 +76,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icon/
+    - .env
 
 flutter_native_splash:
   color: "#ffffff"           # background color
