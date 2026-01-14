@@ -13,6 +13,7 @@ class AuthService {
     required String lastName,
     required String gender,
     required String birthday,
+    required String contact,
     required String address,
     required String email,
     required String password,
@@ -29,10 +30,7 @@ class AuthService {
     final bd = DateTime.parse(birthday);
 
     int age = td.year - bd.year;
-    final monthDifference = td.month - bd.month;
-    final dayDifference = td.day - bd.day;
-
-    if (monthDifference < 0 || (monthDifference == 0 && dayDifference < 0)) {
+    if (td.month < bd.month || (td.month == bd.month && td.day < bd.day)) {
       age--;
     }
 
@@ -40,26 +38,28 @@ class AuthService {
       return {"success": false, "data": "Age Invalid"};
     }
 
-    return {"success": true, "data": "Successful Sign Up"};
+    final url = Uri.parse("$supabaseUrl/functions/v1/signup");
 
-    // final url = Uri.parse("$baseUrl/signup");
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $anonKey",
+      },
+      body: jsonEncode({
+        "firstName": firstName,
+        "lastName": lastName,
+        "gender": gender,
+        "birthday": birthday,
+        "age": age,
+        "contact": contact,
+        "address": address,
+        "email": email,
+        "password": password,
+      }),
+    );
 
-    // final response = await http.post(
-    //   url,
-    //   headers: {"Content-Type": "application/json"},
-    //   body: jsonEncode({
-    //     "firstName": firstName,
-    //     "lastName": lastName,
-    //     "gender": gender,
-    //     "email": email,
-    //     "password": password,
-    //     "birthday": birthday,
-    //     "age": age,
-    //     "address": address,
-    //   }),
-    // );
-
-    // return jsonDecode(response.body);
+    return jsonDecode(response.body);
   }
 
   // User Sign In

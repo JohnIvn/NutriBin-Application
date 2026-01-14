@@ -25,6 +25,7 @@ class _SignUpPageState extends State<SignUpPage>
   // Sign Up form controllers
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _contactController = TextEditingController();
   final _addressController = TextEditingController();
   final _signUpEmailController = TextEditingController();
   final _signUpPasswordController = TextEditingController();
@@ -35,6 +36,7 @@ class _SignUpPageState extends State<SignUpPage>
 
   final _firstNameFocus = FocusNode();
   final _lastNameFocus = FocusNode();
+  final _contactFocus = FocusNode();
   final _addressFocus = FocusNode();
   final _signUpEmailFocus = FocusNode();
   final _signUpPasswordFocus = FocusNode();
@@ -60,6 +62,7 @@ class _SignUpPageState extends State<SignUpPage>
     _firstNameController.dispose();
     _lastNameController.dispose();
     _addressController.dispose();
+    _contactController.dispose();
     _signUpEmailController.dispose();
     _signUpPasswordController.dispose();
     _confirmPasswordController.dispose();
@@ -67,6 +70,7 @@ class _SignUpPageState extends State<SignUpPage>
     _birthdayFocus.dispose();
     _firstNameFocus.dispose();
     _lastNameFocus.dispose();
+    _contactFocus.dispose();
     _addressFocus.dispose();
     _signUpEmailFocus.dispose();
     _signUpPasswordFocus.dispose();
@@ -95,32 +99,38 @@ class _SignUpPageState extends State<SignUpPage>
 
   void _handleSignUp() async {
     try {
-      final result = await AuthService.signup(
-        firstName: _firstNameController.text,
-        lastName: _lastNameController.text,
-        gender: _selectedGender.toString(),
-        address: _addressController.text,
-        birthday: _birthdayController.text,
-        email: _signUpEmailController.text.trim(),
-        password: _signUpPasswordController.text.trim(),
-        confirmPassword: _confirmPasswordController.text.trim(),
-      );
-
-      if (_signUpPasswordController.text.trim() == '') {
+      if (_signUpPasswordController.text.trim().isEmpty) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text("Invalid Password")));
         return;
       }
 
+      final result = await AuthService.signup(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        gender: _selectedGender.toString(),
+        contact: _contactController.text.trim(),
+        address: _addressController.text.trim(),
+        birthday: _birthdayController.text.trim(),
+        email: _signUpEmailController.text.trim(),
+        password: _signUpPasswordController.text.trim(),
+        confirmPassword: _confirmPasswordController.text.trim(),
+      );
+
       if (result["success"] != true) {
-        throw Exception(result["data"]);
+        throw Exception(result["data"].toString());
       }
-      Navigator.pushNamed(context, '/home');
-    } catch (e) {
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(const SnackBar(content: Text("Signup successful")));
+
+      Navigator.pushReplacementNamed(context, '/home');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
     }
   }
 
@@ -373,6 +383,13 @@ class _SignUpPageState extends State<SignUpPage>
             label: 'Last Name',
             keyboardType: TextInputType.name,
             autofillHints: const [AutofillHints.familyName],
+          ),
+          _buildTextField(
+            controller: _contactController,
+            focusNode: _contactFocus,
+            label: 'Contact',
+            keyboardType: TextInputType.number,
+            autofillHints: const [AutofillHints.telephoneNumber],
           ),
           _buildTextField(
             controller: _addressController,
