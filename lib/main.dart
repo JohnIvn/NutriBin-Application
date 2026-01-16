@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/pages/common/about.dart';
 import 'package:nutribin_application/pages/home/account.dart';
 import 'package:nutribin_application/pages/home/account_edit.dart';
@@ -74,6 +75,7 @@ final ThemeData darkTheme = ThemeData(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  AuthService().startServer();
   runApp(const MyApp());
 }
 
