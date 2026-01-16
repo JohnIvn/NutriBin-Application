@@ -5,9 +5,7 @@ import 'package:http/http.dart' as http;
 class AuthService {
   static final String supabaseUrl = dotenv.env["SUPABASE_URL"].toString();
   static final String anonKey = dotenv.env["SUPABASE_ANON"].toString();
-  // static final String supabaseUrl = "https://mtfbnszjdqpjpuigvgoh.supabase.co";
-  // static final String anonKey ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZmJuc3pqZHFwanB1aWd2Z29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzMTE1MTAsImV4cCI6MjA4MTg4NzUxMH0.OQFKEKwScPyCUa63dBI5nm7rDFhB0q12O5OKYIFyaQY";
-
+  
   static Future<Map<String, dynamic>> signup({
     required String firstName,
     required String lastName,
