@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -76,5 +77,42 @@ class AuthService {
     );
 
     return jsonDecode(response.body);
+  }
+
+  Future<void> startServer() async {
+    // Get phone's actual IP address
+    String phoneIP = '0.0.0.0';
+    try {
+      final interfaces = await NetworkInterface.list(
+        includeLoopback: false,
+        type: InternetAddressType.IPv4,
+      );
+      if (interfaces.isNotEmpty) {
+        phoneIP = interfaces.first.addresses.first.address;
+      }
+    } catch (e) {
+      print('Error getting IP: $e');
+    }
+
+    print('Phone IP: $phoneIP');
+    print('Attempting to send to Railway server...');
+
+    try {
+      final message = 'Hello from AuthService!';
+      final response = await http.post(
+        Uri.parse('https://nutribin-server-production.up.railway.app/test'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'message': message,
+          'phoneIP': phoneIP,
+          'timestamp': DateTime.now().toIso8601String(),
+        }),
+      );
+      print('Sent to server: ${response.statusCode}');
+      print('Response body: ${response.body}');
+    } catch (e) {
+      print('Error sending to server: $e');
+      print('Error type: ${e.runtimeType}');
+    }
   }
 }
