@@ -6,6 +6,7 @@ import 'package:nutribin_application/pages/home/notification_page.dart';
 import 'package:nutribin_application/pages/home/nutribin_page.dart';
 import 'package:nutribin_application/widgets/custom_appbar.dart';
 import 'package:nutribin_application/widgets/custom_navbar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,6 +17,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  bool _isLoading = true;
+  bool _isAuthenticated = false;
 
   final List<Widget> _pages = const [
     DashboardPage(),
@@ -26,7 +29,96 @@ class _HomePageState extends State<HomePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+      if (!isLoggedIn) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please log in to continue'),
+              duration: Duration(seconds: 2),
+              backgroundColor: Colors.orange,
+            ),
+          );
+
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/signup');
+          }
+        }
+      } else {
+        setState(() {
+          _isAuthenticated = true;
+          _isLoading = false;
+        });
+
+        _checkSessionExpiry(prefs);
+      }
+    } catch (e) {
+      print('Session check error: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session error. Please log in again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+
+        Navigator.pushReplacementNamed(context, '/signup');
+      }
+    }
+  }
+
+  Future<void> _checkSessionExpiry(SharedPreferences prefs) async {
+    final loginTimestamp = prefs.getInt('loginTimestamp');
+
+    if (loginTimestamp != null) {
+      final loginTime = DateTime.fromMillisecondsSinceEpoch(loginTimestamp);
+      final currentTime = DateTime.now();
+      final difference = currentTime.difference(loginTime);
+
+      if (difference.inDays > 7) {
+        await prefs.clear();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Your session has expired. Please log in again.'),
+              duration: Duration(seconds: 3),
+              backgroundColor: Colors.orange,
+            ),
+          );
+
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/signup');
+          }
+        }
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (!_isAuthenticated) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       appBar: CustomAppBar(),
       body: _pages[_currentIndex],

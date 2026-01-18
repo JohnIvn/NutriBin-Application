@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:nutribin_application/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -49,6 +50,7 @@ class _SignUpPageState extends State<SignUpPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _checkExistingSession();
   }
 
   @override
@@ -77,6 +79,28 @@ class _SignUpPageState extends State<SignUpPage>
     super.dispose();
   }
 
+  Future<void> _checkExistingSession() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    if (isLoggedIn && mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
+  }
+
+  Future<void> _saveSession(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', true);
+    await prefs.setString('userId', userId);
+    await prefs.setInt('loginTimestamp', DateTime.now().millisecondsSinceEpoch);
+
+    // Temporary Comment Out, backend connection doesnt exist yet
+    // if (userData['token'] != null) {
+    //   await prefs.setString('authToken', userData['token'].toString());
+    // }
+  }
+
   void _handleSignIn() async {
     try {
       final result = await AuthService.signin(
@@ -90,7 +114,12 @@ class _SignUpPageState extends State<SignUpPage>
         ).showSnackBar(SnackBar(content: Text(result["data"].toString())));
         throw Error();
       }
-      Navigator.pushNamed(context, '/home');
+
+      await _saveSession(result["user_id"]);
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } catch (e) {
       print(e);
     }
@@ -125,7 +154,12 @@ class _SignUpPageState extends State<SignUpPage>
         context,
       ).showSnackBar(const SnackBar(content: Text("Signup successful")));
 
-      Navigator.pushReplacementNamed(context, '/home');
+      // Save session data
+      await _saveSession(result["user_id"]);
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
@@ -135,7 +169,7 @@ class _SignUpPageState extends State<SignUpPage>
 
   void _handleForgotPassword() {
     // Navigate to forgot password/camera page
-    // Navigator.pushNamed(context, '/camera');
+    // Navigator.pushNamed(context, '/reset');
   }
 
   Color get _primaryColor => Theme.of(context).primaryColor;
