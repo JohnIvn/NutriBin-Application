@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -19,6 +20,22 @@ class _AccountPageState extends State<AccountPage> {
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
   Color get _secondaryText => const Color(0xFF57636C);
 
+  Future<void> logOut() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (!mounted) return;
+
+      Navigator.pushReplacementNamed(context, '/');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error logging out. Please try again.')),
+      );
+    }
+  }
+
   void _handleLogout() {
     showDialog(
       context: context,
@@ -33,8 +50,7 @@ class _AccountPageState extends State<AccountPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // Navigate to landing page/login
-              Navigator.pushReplacementNamed(context, '/');
+              logOut();
             },
             child: const Text('Log Out'),
           ),

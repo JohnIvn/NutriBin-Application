@@ -42,7 +42,7 @@ class _ContactWidgetState extends State<ContactWidget>
           parent: _animationController,
           curve: Interval(
             index * 0.1,
-            0.6 + (index * 0.1),
+            (0.6 + index * 0.1).clamp(0.0, 1.0),
             curve: Curves.easeInOut,
           ),
         ),
@@ -52,15 +52,12 @@ class _ContactWidgetState extends State<ContactWidget>
     _slideAnimations = List.generate(
       7,
       (index) =>
-          Tween<Offset>(
-            begin: const Offset(0.0, 110.0),
-            end: Offset.zero,
-          ).animate(
+          Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
             CurvedAnimation(
               parent: _animationController,
               curve: Interval(
                 index * 0.1,
-                0.6 + (index * 0.1),
+                (0.6 + index * 0.1).clamp(0.0, 1.0),
                 curve: Curves.easeInOut,
               ),
             ),
