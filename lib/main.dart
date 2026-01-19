@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:nutribin_application/pages/auth/forgot_password.dart';
+import 'package:nutribin_application/pages/auth/otp_page.dart';
+import 'package:nutribin_application/pages/auth/reset_password.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/pages/common/about.dart';
 import 'package:nutribin_application/pages/home/account.dart';
@@ -101,6 +104,9 @@ class MyApp extends StatelessWidget {
         '/fertilizers': (context) => const FertilizerPage(),
         '/account': (context) => const AccountPage(),
         '/account-edit': (context) => const AccountEditWidget(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
+        '/verify-otp': (context) => const VerifyPasswordResetOtpPage(),
+        '/reset-password': (context) => const ResetPasswordPage(),
 
         // Common Routes
         '/support': (context) => const ContactWidget(),

@@ -4,9 +4,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static final String supabaseUrl = dotenv.env["SUPABASE_URL"].toString();
+  static final String restUrl = dotenv.env["SUPABASE_URL"].toString();
   static final String anonKey = dotenv.env["SUPABASE_ANON"].toString();
-  
+
   static Future<Map<String, dynamic>> signup({
     required String firstName,
     required String lastName,
@@ -37,7 +37,7 @@ class AuthService {
       return {"success": false, "data": "Age Invalid"};
     }
 
-    final url = Uri.parse("$supabaseUrl/functions/v1/signup");
+    final url = Uri.parse("$restUrl/functions/v1/signup");
 
     final response = await http.post(
       url,
@@ -66,14 +66,14 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final url = Uri.parse("$supabaseUrl/functions/v1/signin");
+    final url = Uri.parse("$restUrl/functions/v1/signin");
 
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email, "password": password}),
     );
-  
+
     return jsonDecode(response.body);
   }
 

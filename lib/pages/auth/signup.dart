@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,6 +46,7 @@ class _SignUpPageState extends State<SignUpPage>
   bool _signUpPasswordVisible = false;
   bool _confirmPasswordVisible = false;
   String? _selectedGender;
+  bool _termsAccepted = false;
 
   @override
   void initState() {
@@ -127,6 +129,13 @@ class _SignUpPageState extends State<SignUpPage>
 
   void _handleSignUp() async {
     try {
+      if (!_termsAccepted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please accept the Terms of Service")),
+        );
+        return;
+      }
+
       if (_signUpPasswordController.text.trim().isEmpty) {
         ScaffoldMessenger.of(
           context,
@@ -169,7 +178,25 @@ class _SignUpPageState extends State<SignUpPage>
 
   void _handleForgotPassword() {
     // Navigate to forgot password/camera page
-    // Navigator.pushNamed(context, '/reset');
+    Navigator.pushNamed(context, '/forgot-password');
+  }
+
+  void _navigateToTerms() {
+    Navigator.pushNamed(context, '/terms');
+  }
+
+  void _openMapPicker() async {
+    final result = await Navigator.pushNamed(
+      context,
+      '/map_picker',
+      arguments: _addressController.text.trim(),
+    );
+
+    if (result != null && result is String) {
+      setState(() {
+        _addressController.text = result;
+      });
+    }
   }
 
   Color get _primaryColor => Theme.of(context).primaryColor;
@@ -424,12 +451,11 @@ class _SignUpPageState extends State<SignUpPage>
             keyboardType: TextInputType.number,
             autofillHints: const [AutofillHints.telephoneNumber],
           ),
-          _buildTextField(
+          _buildMapAddressField(
             controller: _addressController,
             focusNode: _addressFocus,
             label: 'Address',
-            keyboardType: TextInputType.streetAddress,
-            autofillHints: const [AutofillHints.fullStreetAddress],
+            onTap: _openMapPicker,
           ),
           _buildDateField(
             controller: _birthdayController,
@@ -504,6 +530,51 @@ class _SignUpPageState extends State<SignUpPage>
                 color: const Color(0xFF57636C),
                 size: 24,
               ),
+            ),
+          ),
+          // Terms of Service Checkbox
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16, left: 4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: _termsAccepted,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _termsAccepted = value ?? false;
+                      });
+                    },
+                    activeColor: _primaryColor,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        color: Color(0xFF57636C),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      children: [
+                        const TextSpan(text: 'I agree to the '),
+                        TextSpan(
+                          text: 'Terms of Service',
+                          style: TextStyle(
+                            color: _primaryColor,
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = _navigateToTerms,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
@@ -673,6 +744,52 @@ class _SignUpPageState extends State<SignUpPage>
           contentPadding: const EdgeInsets.all(24),
           suffixIcon: const Icon(
             Icons.calendar_today_outlined,
+            color: Color(0xFF57636C),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapAddressField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        readOnly: true,
+        onTap: onTap,
+        cursorColor: const Color(0xFF4B39EF),
+        style: const TextStyle(
+          color: Color(0xFF101213),
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+            color: Color(0xFF57636C),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: _primaryColor, width: 2),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.all(24),
+          suffixIcon: const Icon(
+            Icons.location_on_outlined,
             color: Color(0xFF57636C),
           ),
         ),
