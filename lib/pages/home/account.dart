@@ -59,6 +59,19 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  // DEBUG ONLY - Remove in production
+  Future<void> _resetTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('navbar_tutorial_seen');
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Tutorial reset! It will show on next app restart.'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -70,40 +83,49 @@ class _AccountPageState extends State<AccountPage> {
         key: _scaffoldKey,
         backgroundColor: _secondaryBackground,
         body: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProfileHeader(),
-              _buildSectionTitle('Account'),
-              _buildMenuItem(
-                icon: Icons.notifications_none,
-                title: 'Profile',
-                onTap: () {
-                  Navigator.pushNamed(context, '/profile');
-                },
-              ),
-              _buildSectionTitle('General'),
-              _buildMenuItem(
-                icon: Icons.phone,
-                title: 'Support',
-                onTap: () {
-                  Navigator.pushNamed(context, '/support');
-                },
-              ),
-              _buildMenuItem(
-                icon: Icons.privacy_tip_rounded,
-                title: 'Terms of Service',
-                onTap: () {
-                  Navigator.pushNamed(context, '/termsOfService');
-                },
-              ),
-              _buildMenuItem(
-                icon: Icons.exit_to_app,
-                title: 'Log Out',
-                onTap: _handleLogout,
-              ),
-            ],
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(), // optional, nice effect
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildProfileHeader(),
+                _buildSectionTitle('Account'),
+                _buildMenuItem(
+                  icon: Icons.notifications_none,
+                  title: 'Profile',
+                  onTap: () {
+                    Navigator.pushNamed(context, '/profile');
+                  },
+                ),
+                _buildSectionTitle('General'),
+                _buildMenuItem(
+                  icon: Icons.phone,
+                  title: 'Support',
+                  onTap: () {
+                    Navigator.pushNamed(context, '/support');
+                  },
+                ),
+                _buildMenuItem(
+                  icon: Icons.privacy_tip_rounded,
+                  title: 'Terms of Service',
+                  onTap: () {
+                    Navigator.pushNamed(context, '/termsOfService');
+                  },
+                ),
+                // DEBUG ONLY - Remove in production
+                _buildMenuItem(
+                  icon: Icons.replay,
+                  title: 'Reset Tutorial (Debug)',
+                  onTap: _resetTutorial,
+                ),
+                _buildMenuItem(
+                  icon: Icons.exit_to_app,
+                  title: 'Log Out',
+                  onTap: _handleLogout,
+                ),
+              ],
+            ),
           ),
         ),
       ),

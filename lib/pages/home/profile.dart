@@ -425,13 +425,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                   icon: Icons.lock_outline,
                                   label: 'Change Password',
                                   onTap: () {
-                                    // Navigate to change password page
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Change password feature coming soon',
-                                        ),
-                                      ),
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/forgot-password',
                                     );
                                   },
                                 ),

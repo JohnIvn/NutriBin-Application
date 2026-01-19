@@ -83,6 +83,56 @@ class AuthService {
     return jsonDecode(response.body);
   }
 
+  // User Update
+  static Future<Map<String, dynamic>> updateUser({
+    required String firstName,
+    required String lastName,
+    required String gender,
+    required String birthday,
+    required String contact,
+    required String address,
+  }) async {
+    final td = DateTime.now();
+    final bd = DateTime.parse(birthday);
+
+    int age = td.year - bd.year;
+    if (td.month < bd.month || (td.month == bd.month && td.day < bd.day)) {
+      age--;
+    }
+
+    if (age < 18) {
+      return {"success": false, "data": "Age Invalid"};
+    }
+
+    try {
+      String? userId = await getUserId();
+      final url = Uri.parse("$restUrl/functions/v1/update");
+
+      final response = await http.put(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+          "apikey": anonKey,
+        },
+        body: jsonEncode({
+          "customer_id": userId,
+          "firstName": firstName,
+          "lastName": lastName,
+          "gender": gender,
+          "birthday": birthday,
+          "age": age,
+          "contact": contact,
+          "address": address,
+        }),
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {"success": false, "data": e};
+    }
+  }
+
   // User Fetch
   static Future<Map<String, dynamic>> fetchUser() async {
     try {
@@ -94,7 +144,11 @@ class AuthService {
 
       final response = await http.get(
         url,
-        headers: {"Content-Type": "application/json", "Authorization": "Bearer $anonKey", "apikey": anonKey},
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+          "apikey": anonKey,
+        },
       );
 
       return jsonDecode(response.body);

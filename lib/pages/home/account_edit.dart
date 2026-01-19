@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/services/auth_service.dart';
 
 class AccountEditWidget extends StatefulWidget {
   const AccountEditWidget({super.key});
@@ -13,78 +14,69 @@ class AccountEditWidget extends StatefulWidget {
 
 class _AccountEditWidgetState extends State<AccountEditWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  
+
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryColor => const Color(0xFFA63000);
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
   Color get _secondaryText => const Color(0xFF57636C);
-  
+
   // Text controllers
-  late TextEditingController firstNameController;
-  late TextEditingController lastNameController;
-  late TextEditingController birthdayController;
-  late TextEditingController addressController;
-  late TextEditingController emailController;
-  late TextEditingController passwordController;
-  late TextEditingController confirmPasswordController;
-  
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _birthdayController;
+  late TextEditingController _addressController;
+  late TextEditingController _contactController;
+
   // Focus nodes
-  late FocusNode firstNameFocusNode;
-  late FocusNode lastNameFocusNode;
-  late FocusNode birthdayFocusNode;
-  late FocusNode addressFocusNode;
-  late FocusNode emailFocusNode;
-  late FocusNode passwordFocusNode;
-  late FocusNode confirmPasswordFocusNode;
-  
+  late FocusNode _firstNameFocusNode;
+  late FocusNode _lastNameFocusNode;
+  late FocusNode _birthdayFocusNode;
+  late FocusNode _addressFocusNode;
+  late FocusNode _contactFocusNode;
+
+  bool isLoading = true;
+  String? errorMessage;
+
   // Form state
   String? selectedGender;
-  bool showPassword = true;
-  bool obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize controllers
-    firstNameController = TextEditingController();
-    lastNameController = TextEditingController();
-    birthdayController = TextEditingController();
-    addressController = TextEditingController();
-    emailController = TextEditingController();
-    passwordController = TextEditingController();
-    confirmPasswordController = TextEditingController();
-    
+    _firstNameController = TextEditingController();
+    _lastNameController = TextEditingController();
+    _birthdayController = TextEditingController();
+    _addressController = TextEditingController();
+    _contactController = TextEditingController();
+
     // Initialize focus nodes
-    firstNameFocusNode = FocusNode();
-    lastNameFocusNode = FocusNode();
-    birthdayFocusNode = FocusNode();
-    addressFocusNode = FocusNode();
-    emailFocusNode = FocusNode();
-    passwordFocusNode = FocusNode();
-    confirmPasswordFocusNode = FocusNode();
+    _firstNameFocusNode = FocusNode();
+    _lastNameFocusNode = FocusNode();
+    _birthdayFocusNode = FocusNode();
+    _addressFocusNode = FocusNode();
+    _contactFocusNode = FocusNode();
+
+    _fetchAccount();
   }
 
   @override
   void dispose() {
     // Dispose controllers
-    firstNameController.dispose();
-    lastNameController.dispose();
-    birthdayController.dispose();
-    addressController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    confirmPasswordController.dispose();
-    
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _birthdayController.dispose();
+    _addressController.dispose();
+    _contactController.dispose();
+
     // Dispose focus nodes
-    firstNameFocusNode.dispose();
-    lastNameFocusNode.dispose();
-    birthdayFocusNode.dispose();
-    addressFocusNode.dispose();
-    emailFocusNode.dispose();
-    passwordFocusNode.dispose();
-    confirmPasswordFocusNode.dispose();
-    
+    _firstNameFocusNode.dispose();
+    _lastNameFocusNode.dispose();
+    _birthdayFocusNode.dispose();
+    _addressFocusNode.dispose();
+    _contactFocusNode.dispose();
+
     super.dispose();
   }
 
@@ -118,552 +110,270 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         elevation: 0,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Text(
-                      'Your information',
-                      style: GoogleFonts.interTight(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : errorMessage != null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(fontSize: 14, color: Colors.red),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              )
+            : SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // First Name Field
                     Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        controller: firstNameController,
-                        focusNode: firstNameFocusNode,
-                        decoration: InputDecoration(
-                          labelText: 'First Name',
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.grey[300]!,
-                              width: 2,
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Your information',
+                            style: GoogleFonts.interTight(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
                             ),
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                        style: GoogleFonts.inter(fontSize: 14),
+                        ],
                       ),
                     ),
-                    
-                    // Last Name Field
+
                     Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        controller: lastNameController,
-                        focusNode: lastNameFocusNode,
-                        decoration: InputDecoration(
-                          labelText: 'Last Name',
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.grey[300]!,
-                              width: 2,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // First Name
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: TextFormField(
+                              controller: _firstNameController,
+                              focusNode: _firstNameFocusNode,
+                              decoration: _inputDecoration('First Name'),
                             ),
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                              width: 2,
+
+                          // Last Name
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: TextFormField(
+                              controller: _lastNameController,
+                              focusNode: _lastNameFocusNode,
+                              decoration: _inputDecoration('Last Name'),
                             ),
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                        style: GoogleFonts.inter(fontSize: 14),
-                      ),
-                    ),
-                    
-                    // Gender Label
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 16, 0, 4),
-                      child: Text(
-                        'Gender',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ),
-                    
-                    // Gender Radio Buttons
-                    Row(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: Text(
-                              'Male',
+
+                          // Gender label
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 16, 0, 4),
+                            child: Text(
+                              'Gender',
                               style: GoogleFonts.inter(
                                 fontSize: 14,
-                                color: selectedGender == 'Male' 
-                                    ? Colors.grey[600] 
-                                    : Colors.grey[600],
+                                color: Colors.grey[600],
                               ),
                             ),
-                            value: 'Male',
-                            groupValue: selectedGender,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedGender = value;
-                              });
-                            },
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                            activeColor: _primaryColor,
                           ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: Text(
-                              'Female',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: selectedGender == 'Female' 
-                                    ? Colors.grey[600] 
-                                    : Colors.grey[600],
+
+                          // Gender radios
+                          Row(
+                            children: [
+                              _genderTile('Male'),
+                              _genderTile('Female'),
+                              _genderTile('Others'),
+                            ],
+                          ),
+
+                          // Birthday
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: TextFormField(
+                              controller: _birthdayController,
+                              focusNode: _birthdayFocusNode,
+                              decoration: _inputDecoration(
+                                'Birthday',
+                                hint: 'yyyy-mm-dd',
                               ),
                             ),
-                            value: 'Female',
-                            groupValue: selectedGender,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedGender = value;
-                              });
-                            },
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                            activeColor: _primaryColor,
                           ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: Text(
-                              'Others',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: selectedGender == 'Others' 
-                                    ? Colors.grey[600] 
-                                    : Colors.grey[600],
+
+                          // Address
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: TextFormField(
+                              controller: _addressController,
+                              focusNode: _addressFocusNode,
+                              decoration: _inputDecoration(
+                                'Address',
+                                hint: 'Brgy 123 Phase 1 Purok 1',
                               ),
                             ),
-                            value: 'Others',
-                            groupValue: selectedGender,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedGender = value;
-                              });
-                            },
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                            activeColor: _primaryColor,
                           ),
-                        ),
-                      ],
-                    ),
-                    
-                    // Birthday Field
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        controller: birthdayController,
-                        focusNode: birthdayFocusNode,
-                        decoration: InputDecoration(
-                          labelText: 'Birthday',
-                          hintText: '1-6-2008',
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                          hintStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[400],
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.grey[300]!,
-                              width: 2,
+
+                          // Contact Number
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: TextFormField(
+                              controller: _contactController,
+                              focusNode: _contactFocusNode,
+                              keyboardType: TextInputType.phone,
+                              decoration: _inputDecoration(
+                                'Contact Number',
+                                hint: '+63 912 345 6789',
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFFDBE2E7),
-                        ),
+                        ],
                       ),
                     ),
-                    
-                    // Address Field
+
+                    // Save button
                     Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        controller: addressController,
-                        focusNode: addressFocusNode,
-                        decoration: InputDecoration(
-                          labelText: 'Address',
-                          hintText: 'Brgy 123 Phase 1 Purok 1 Fake City',
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[600],
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: ElevatedButton(
+                        onPressed: _handleSave,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryColor,
+                          minimumSize: const Size(270, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          hintStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[400],
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.grey[300]!,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
                         ),
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFFDBE2E7),
+                        child: Text(
+                          'Save Changes',
+                          style: GoogleFonts.interTight(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                    
-                    // Email Field
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        controller: emailController,
-                        focusNode: emailFocusNode,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          hintText: 'user123@example.com',
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                          hintStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[400],
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.grey[300]!,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFFDBE2E7),
-                        ),
-                      ),
-                    ),
-                    
-                    // Password Field
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        controller: passwordController,
-                        focusNode: passwordFocusNode,
-                        obscureText: !showPassword,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          hintText: '@User123',
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                          hintStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[400],
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.grey[300]!,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFFDBE2E7),
-                        ),
-                      ),
-                    ),
-                    
-                    // Confirm Password Field
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        controller: confirmPasswordController,
-                        focusNode: confirmPasswordFocusNode,
-                        obscureText: !showPassword,
-                        decoration: InputDecoration(
-                          labelText: 'Confirm Password',
-                          hintText: '@User123',
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                          hintStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[400],
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.grey[300]!,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFFDBE2E7),
-                        ),
-                      ),
-                    ),
-                    
-                    // Show Password Checkbox
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: showPassword,
-                          onChanged: (value) {
-                            setState(() {
-                              showPassword = value ?? true;
-                            });
-                          },
-                          activeColor: _primaryColor,
-                          checkColor: Colors.white,
-                          side: BorderSide(
-                            color: Colors.grey[300]!,
-                            width: 2,
-                          ),
-                        ),
-                        Text(
-                          'Show Password',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
               ),
-              
-              // Save Changes Button
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryColor,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(270, 50),
-                    padding: EdgeInsets.zero,
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'Save Changes',
-                    style: GoogleFonts.interTight(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      ),
+    );
+  }
+
+  Future<void> _fetchAccount() async {
+    try {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+
+      final result = await AuthService.fetchUser();
+
+      if (!mounted) return;
+
+      if (result["success"] != true) {
+        setState(() {
+          isLoading = false;
+          errorMessage = result["data"]?.toString() ?? 'Failed to load account';
+        });
+        return;
+      }
+
+      final user = result["data"];
+
+      setState(() {
+        _firstNameController.text = user["first_name"]?.toString() ?? '';
+        _lastNameController.text = user["last_name"]?.toString() ?? '';
+        _addressController.text = user["address"]?.toString() ?? '';
+        _birthdayController.text = user["birthday"]?.toString() ?? '';
+        _contactController.text = user["contact_number"]?.toString() ?? '';
+        selectedGender = user["gender"]?.toString();
+
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Failed to load account: $e';
+      });
+    }
+  }
+
+  Future<void> _handleSave() async {
+    try {
+      final result = await AuthService.updateUser(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        gender: selectedGender.toString(),
+        contact: _contactController.text.trim(),
+        address: _addressController.text.trim(),
+        birthday: _birthdayController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      if (result["success"] != true) {
+        setState(() {
+          isLoading = false;
+          errorMessage = result["data"]?.toString() ?? 'Failed to load account';
+        });
+        return;
+      }
+
+      final user = result["data"];
+
+      setState(() {
+        _firstNameController.text = user["first_name"]?.toString() ?? '';
+        _lastNameController.text = user["last_name"]?.toString() ?? '';
+        _addressController.text = user["address"]?.toString() ?? '';
+        _birthdayController.text = user["birthday"]?.toString() ?? '';
+        _contactController.text = user["contact_number"]?.toString() ?? '';
+        selectedGender = user["gender"]?.toString();
+
+        isLoading = false;
+      });
+
+      if (result["success"] == true) {
+        Navigator.pushNamed(context, '/account');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Failed to load account: $e';
+      });
+    }
+  }
+
+  InputDecoration _inputDecoration(String label, {String? hint}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.white,
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.black, width: 2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  Expanded _genderTile(String value) {
+    return Expanded(
+      child: RadioListTile<String>(
+        title: Text(value, style: GoogleFonts.inter(fontSize: 14)),
+        value: value,
+        groupValue: selectedGender,
+        onChanged: (v) => setState(() => selectedGender = v),
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        activeColor: _primaryColor,
       ),
     );
   }
