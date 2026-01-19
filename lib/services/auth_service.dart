@@ -2,10 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   static final String restUrl = dotenv.env["SUPABASE_URL"].toString();
   static final String anonKey = dotenv.env["SUPABASE_ANON"].toString();
+
+  static Future<String?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId');
+  }
 
   static Future<Map<String, dynamic>> signup({
     required String firstName,
@@ -75,6 +81,26 @@ class AuthService {
     );
 
     return jsonDecode(response.body);
+  }
+
+  // User Fetch
+  static Future<Map<String, dynamic>> fetchUser() async {
+    try {
+      String? userId = await getUserId();
+      final url = Uri.parse(
+        "$restUrl/functions/v1/fetchAccount?customer_id=$userId",
+      );
+      print("USERID: $userId");
+
+      final response = await http.get(
+        url,
+        headers: {"Content-Type": "application/json", "Authorization": "Bearer $anonKey", "apikey": anonKey},
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {"success": false, "data": e};
+    }
   }
 
   Future<void> startServer() async {
