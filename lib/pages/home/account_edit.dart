@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/models/user.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
+import 'package:nutribin_application/widgets/map_picker.dart';
 
 class AccountEditWidget extends StatefulWidget {
   final VoidCallback? onSaved;
@@ -216,6 +217,9 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                             child: TextFormField(
                               controller: _addressController,
                               focusNode: _addressFocusNode,
+                              readOnly:
+                                  true,
+                              onTap: _openMapPicker,
                               decoration: _inputDecoration(
                                 'Address',
                                 hint: 'Brgy 123 Phase 1 Purok 1',
@@ -343,6 +347,19 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
       setState(() {
         isLoading = false;
         errorMessage = 'Failed to load account: $e';
+      });
+    }
+  }
+
+  Future<void> _openMapPicker() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MapPickerPage()),
+    );
+
+    if (result != null && result is String) {
+      setState(() {
+        _addressController.text = result;
       });
     }
   }

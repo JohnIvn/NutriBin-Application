@@ -27,6 +27,35 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
     },
   ];
 
+  void _handleReportError(String errorTitle) {
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Report Error',
+          style: GoogleFonts.interTight(fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          'Error report for "$errorTitle" has been submitted to the maintenance team.',
+          style: GoogleFonts.inter(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'OK',
+              style: GoogleFonts.inter(
+                color: Theme.of(context).primaryColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -124,7 +153,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                               padding: const EdgeInsets.only(top: 12),
                               child: Container(
                                 width: 4,
-                                height: isExpanded ? 120 : 76,
+                                height: isExpanded ? 230 : 76,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF44336),
                                   borderRadius: BorderRadius.circular(2),
@@ -191,28 +220,140 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                       firstChild: const SizedBox.shrink(),
                                       secondChild: Padding(
                                         padding: const EdgeInsets.only(top: 12),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              6,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color: const Color(
+                                                    0xFFF44336,
+                                                  ).withOpacity(0.3),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Text(
+                                                error['details']!,
+                                                style: GoogleFonts.inter(
+                                                  color: const Color(
+                                                    0xFF57636C,
+                                                  ),
+                                                  fontSize: 13,
+                                                  height: 1.5,
+                                                ),
+                                              ),
                                             ),
-                                            border: Border.all(
-                                              color: const Color(
-                                                0xFFF44336,
-                                              ).withOpacity(0.3),
-                                              width: 1,
+                                            const SizedBox(height: 12),
+                                            // Tip container
+                                            Container(
+                                              padding: const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFFFF3E0),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color: const Color(
+                                                    0xFFFF9800,
+                                                  ).withOpacity(0.3),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.lightbulb_outline,
+                                                    color: Color(0xFFFF9800),
+                                                    size: 18,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          'Tip:',
+                                                          style:
+                                                              GoogleFonts.inter(
+                                                                color:
+                                                                    const Color(
+                                                                      0xFFFF9800,
+                                                                    ),
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 4,
+                                                        ),
+                                                        Text(
+                                                          'Try restarting the device twice before filing a report. This often resolves temporary sensor and connection issues.',
+                                                          style:
+                                                              GoogleFonts.inter(
+                                                                color:
+                                                                    const Color(
+                                                                      0xFF57636C,
+                                                                    ),
+                                                                fontSize: 12,
+                                                                height: 1.4,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                          child: Text(
-                                            error['details']!,
-                                            style: GoogleFonts.inter(
-                                              color: const Color(0xFF57636C),
-                                              fontSize: 13,
-                                              height: 1.5,
+                                            const SizedBox(height: 12),
+                                            // Report button
+                                            SizedBox(
+                                              width: double.infinity,
+                                              child: ElevatedButton.icon(
+                                                onPressed: () =>
+                                                    _handleReportError(
+                                                      error['title']!,
+                                                    ),
+                                                icon: const Icon(
+                                                  Icons.report_problem_outlined,
+                                                  size: 18,
+                                                ),
+                                                label: Text(
+                                                  'Report This Error',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(
+                                                    0xFFF44336,
+                                                  ),
+                                                  foregroundColor: Colors.white,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 12,
+                                                      ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                  elevation: 0,
+                                                ),
+                                              ),
                                             ),
-                                          ),
+                                          ],
                                         ),
                                       ),
                                       crossFadeState: isExpanded

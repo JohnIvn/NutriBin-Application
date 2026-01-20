@@ -93,3 +93,5 @@ class ProfileUtility {
     }
   }
 }
+
+class AuthUtility {}

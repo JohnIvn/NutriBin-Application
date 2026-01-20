@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:nutribin_application/pages/auth/forgot_password.dart';
+import 'package:nutribin_application/pages/auth/otp_contacts.dart';
 import 'package:nutribin_application/pages/auth/otp_page.dart';
 import 'package:nutribin_application/pages/auth/reset_password.dart';
 import 'package:nutribin_application/services/auth_service.dart';
@@ -14,7 +15,9 @@ import 'package:nutribin_application/pages/auth/signup.dart';
 import 'package:nutribin_application/pages/home/home_page.dart';
 import 'package:nutribin_application/pages/common/support.dart';
 import 'package:nutribin_application/pages/common/terms.dart';
+import 'package:nutribin_application/services/google_auth_service.dart';
 import 'package:nutribin_application/widgets/map_picker.dart';
+import 'package:nutribin_application/widgets/terms_accept.dart';
 
 // LIGHT THEME
 final Color lightPrimary = Color(0xFF3A4D39);
@@ -79,6 +82,7 @@ final ThemeData darkTheme = ThemeData(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  GoogleOAuthService.initialize();
   AuthService().startServer();
   runApp(const MyApp());
 }
@@ -109,6 +113,8 @@ class MyApp extends StatelessWidget {
         '/verify-otp': (context) => const VerifyPasswordResetOtpPage(),
         '/reset-password': (context) => const ResetPasswordPage(),
         '/map-picker': (context) => const MapPickerPage(),
+        '/verify-contacts': (context) => const ContactsVerification(),
+        '/terms-acceptance': (context) => const TermsAcceptancePage(),
 
         // Common Routes
         '/support': (context) => const ContactWidget(),
