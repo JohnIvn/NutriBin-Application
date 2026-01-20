@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/models/user.dart';
 import 'package:nutribin_application/services/auth_service.dart';
+import 'package:nutribin_application/utils/helpers.dart';
 
 class AccountEditWidget extends StatefulWidget {
-  const AccountEditWidget({super.key});
+  final VoidCallback? onSaved;
+
+  const AccountEditWidget({super.key, this.onSaved});
 
   static String routeName = 'AccountEdit';
   static String routePath = '/accountEdit';
@@ -185,7 +189,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                             children: [
                               _genderTile('Male'),
                               _genderTile('Female'),
-                              _genderTile('Others'),
                             ],
                           ),
 
@@ -268,27 +271,22 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         errorMessage = null;
       });
 
-      final result = await AuthService.fetchUser();
+      final profile = await PreferenceUtility.getProfile(
+        name: true,
+        contacts: true,
+        birthday: true,
+        email: true,
+      );
 
       if (!mounted) return;
 
-      if (result["success"] != true) {
-        setState(() {
-          isLoading = false;
-          errorMessage = result["data"]?.toString() ?? 'Failed to load account';
-        });
-        return;
-      }
-
-      final user = result["data"];
-
       setState(() {
-        _firstNameController.text = user["first_name"]?.toString() ?? '';
-        _lastNameController.text = user["last_name"]?.toString() ?? '';
-        _addressController.text = user["address"]?.toString() ?? '';
-        _birthdayController.text = user["birthday"]?.toString() ?? '';
-        _contactController.text = user["contact_number"]?.toString() ?? '';
-        selectedGender = user["gender"]?.toString();
+        _firstNameController.text = profile["firstName"]?.toString() ?? '';
+        _lastNameController.text = profile["lastName"]?.toString() ?? '';
+        _addressController.text = profile["address"]?.toString() ?? '';
+        _birthdayController.text = profile["birthday"]?.toString() ?? '';
+        _contactController.text = profile["contact"]?.toString() ?? '';
+        selectedGender = profile["gender"]?.toString();
 
         isLoading = false;
       });
@@ -306,7 +304,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
       final result = await AuthService.updateUser(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
-        gender: selectedGender.toString(),
+        gender: selectedGender ?? "male",
         contact: _contactController.text.trim(),
         address: _addressController.text.trim(),
         birthday: _birthdayController.text.trim(),
@@ -321,22 +319,22 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         });
         return;
       }
+      final user = User.fromJson(result["data"]);
 
-      final user = result["data"];
-
-      setState(() {
-        _firstNameController.text = user["first_name"]?.toString() ?? '';
-        _lastNameController.text = user["last_name"]?.toString() ?? '';
-        _addressController.text = user["address"]?.toString() ?? '';
-        _birthdayController.text = user["birthday"]?.toString() ?? '';
-        _contactController.text = user["contact_number"]?.toString() ?? '';
-        selectedGender = user["gender"]?.toString();
-
-        isLoading = false;
-      });
+      await PreferenceUtility.saveSession(
+        user.id,
+        user.email,
+        user.firstName,
+        user.lastName,
+        user.gender,
+        user.contact,
+        user.address,
+        user.birthday,
+      );
 
       if (result["success"] == true) {
-        Navigator.pushNamed(context, '/account');
+        // Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (!mounted) return;

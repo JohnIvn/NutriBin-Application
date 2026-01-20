@@ -2,16 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:nutribin_application/utils/helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   static final String restUrl = dotenv.env["SUPABASE_URL"].toString();
   static final String anonKey = dotenv.env["SUPABASE_ANON"].toString();
-
-  static Future<String?> getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('userId');
-  }
 
   static Future<Map<String, dynamic>> signup({
     required String firstName,
@@ -95,17 +91,10 @@ class AuthService {
     final td = DateTime.now();
     final bd = DateTime.parse(birthday);
 
-    int age = td.year - bd.year;
-    if (td.month < bd.month || (td.month == bd.month && td.day < bd.day)) {
-      age--;
-    }
-
-    if (age < 18) {
-      return {"success": false, "data": "Age Invalid"};
-    }
+    int age = ProfileUtility.calculateAge(birthday);
 
     try {
-      String? userId = await getUserId();
+      String? userId = await PreferenceUtility.getUserId();
       final url = Uri.parse("$restUrl/functions/v1/update");
 
       final response = await http.put(
@@ -126,7 +115,6 @@ class AuthService {
           "address": address,
         }),
       );
-
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "data": e};
@@ -136,7 +124,7 @@ class AuthService {
   // User Fetch
   static Future<Map<String, dynamic>> fetchUser() async {
     try {
-      String? userId = await getUserId();
+      String? userId = await PreferenceUtility.getUserId();
       final url = Uri.parse(
         "$restUrl/functions/v1/fetchAccount?customer_id=$userId",
       );

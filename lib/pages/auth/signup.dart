@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:nutribin_application/models/user.dart';
 import 'package:nutribin_application/services/auth_service.dart';
+import 'package:nutribin_application/utils/helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -91,18 +93,6 @@ class _SignUpPageState extends State<SignUpPage>
     }
   }
 
-  Future<void> _saveSession(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', true);
-    await prefs.setString('userId', userId);
-    await prefs.setInt('loginTimestamp', DateTime.now().millisecondsSinceEpoch);
-
-    // Temporary Comment Out, backend connection doesnt exist yet
-    // if (userData['token'] != null) {
-    //   await prefs.setString('authToken', userData['token'].toString());
-    // }
-  }
-
   void _handleSignIn() async {
     try {
       final result = await AuthService.signin(
@@ -117,7 +107,18 @@ class _SignUpPageState extends State<SignUpPage>
         throw Error();
       }
 
-      await _saveSession(result["user_id"]);
+      final user = User.fromJson(result["user"]);
+
+      await PreferenceUtility.saveSession(
+        user.id,
+        user.email,
+        user.firstName,
+        user.lastName,
+        user.gender,
+        user.contact,
+        user.address,
+        user.birthday,
+      );
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');
@@ -164,7 +165,18 @@ class _SignUpPageState extends State<SignUpPage>
       ).showSnackBar(const SnackBar(content: Text("Signup successful")));
 
       // Save session data
-      await _saveSession(result["user_id"]);
+      final user = User.fromJson(result["user"]);
+
+      await PreferenceUtility.saveSession(
+        user.id,
+        user.email,
+        user.firstName,
+        user.lastName,
+        user.gender,
+        user.contact,
+        user.address,
+        user.birthday,
+      );
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');
@@ -484,7 +496,6 @@ class _SignUpPageState extends State<SignUpPage>
               children: [
                 _buildRadioOption('Male'),
                 _buildRadioOption('Female'),
-                _buildRadioOption('Others'),
               ],
             ),
           ),

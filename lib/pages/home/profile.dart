@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/services/auth_service.dart';
+import 'package:nutribin_application/utils/helpers.dart';
 
 class ProfileWidget extends StatefulWidget {
   const ProfileWidget({super.key});
@@ -39,26 +40,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     _fetchAccount();
   }
 
-  int _calculateAge(String birthday) {
-    if (birthday.isEmpty) return 0;
-    try {
-      // Make sure the birthday string is in 'yyyy-MM-dd' format
-      final birthDate = DateTime.parse(birthday);
-      final today = DateTime.now();
-      int age = today.year - birthDate.year;
-
-      // If birthday hasn't happened yet this year, subtract 1
-      if (today.month < birthDate.month ||
-          (today.month == birthDate.month && today.day < birthDate.day)) {
-        age--;
-      }
-      return age;
-    } catch (e) {
-      print('Error calculating age: $e');
-      return 0; // fallback if parsing fails
-    }
-  }
-
   String _getInitials() {
     String initials = '';
     if (firstName.isNotEmpty) {
@@ -89,72 +70,48 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     return colors[index];
   }
 
-  void _fetchAccount() async {
-    print('Starting _fetchAccount...');
+  void _reloadAccount() {
+    _fetchAccount();
+  }
 
+  void _fetchAccount() async {
     try {
       setState(() {
         isLoading = true;
         errorMessage = null;
       });
 
-      print('Calling AuthService.fetchUser()...');
-      final result = await AuthService.fetchUser();
-      print('fetchUser result: $result');
+      final profile = await PreferenceUtility.getProfile(
+        name: true,
+        contacts: true,
+        birthday: true,
+        email: true,
+      );
 
-      if (!mounted) {
-        print('Widget not mounted, returning');
-        return;
-      }
-
-      if (result["success"] != true) {
-        print('fetchUser failed: ${result["data"]}');
-        setState(() {
-          isLoading = false;
-          errorMessage = result["data"]?.toString() ?? 'Failed to load profile';
-        });
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(errorMessage!)));
-        return;
-      }
-
-      final user = result["data"];
-      print('User data received: $user');
+      if (!mounted) return;
 
       setState(() {
-        firstName = user["first_name"]?.toString() ?? '';
-        lastName = user["last_name"]?.toString() ?? '';
-        email = user["email"]?.toString() ?? '';
-        phoneNumber = user["contact_number"]?.toString() ?? '';
-        birthday = user["birthday"]?.toString() ?? '';
-        gender = user["gender"]?.toString() ?? '';
-
-        age = user["age"]?.toString() ?? '';
-        // age = _calculateAge(birthday).toString(); //Comment out (indecisive dev)
+        firstName = profile["firstName"]?.toString() ?? '';
+        lastName = profile["lastName"]?.toString() ?? '';
+        phoneNumber = profile["contact"]?.toString() ?? '';
+        birthday = profile["birthday"]?.toString() ?? '';
+        age = profile["age"]?.toString() ?? '';
+        email = profile["email"]?.toString() ?? '';
+        gender = profile["gender"]?.toString() ?? '';
 
         isLoading = false;
       });
+    } catch (e) {
+      if (!mounted) return;
 
-      print('Profile loaded successfully');
-    } catch (e, stackTrace) {
-      print('Error in _fetchAccount: $e');
-      print('Stack trace: $stackTrace');
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Failed to load profile';
+      });
 
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-          errorMessage = 'Failed to load profile: $e';
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to load profile: $e"),
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to load profile')));
     }
   }
 
@@ -411,14 +368,19 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                   value: email.isEmpty ? 'Not set' : email,
                                 ),
                                 const SizedBox(height: 24),
-                                // Action Buttons
                                 _buildActionButton(
                                   icon: Icons.edit_outlined,
                                   label: 'Edit Profile',
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    '/account-edit',
-                                  ),
+                                  onTap: () async {
+                                    final didUpdate = await Navigator.pushNamed(
+                                      context,
+                                      '/account-edit',
+                                    );
+
+                                    if (didUpdate == true) {
+                                      _reloadAccount();
+                                    }
+                                  },
                                 ),
                                 const SizedBox(height: 12),
                                 _buildActionButton(

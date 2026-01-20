@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/utils/helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AccountPage extends StatefulWidget {
@@ -12,13 +13,67 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final String _userName = 'Matthew Cania';
-  final String _userEmail = 'matthew24@gmail.com';
+  String userName = "";
+  String userEmail = "";
 
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryColor => const Color(0xFF39D2C0);
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
   Color get _secondaryText => const Color(0xFF57636C);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  String _getInitials() {
+    final parts = userName.trim().split(RegExp(r'\s+'));
+
+    String initials = '';
+    if (parts.isNotEmpty && parts[0].isNotEmpty) {
+      initials += parts[0][0].toUpperCase();
+    }
+    if (parts.length > 1 && parts[1].isNotEmpty) {
+      initials += parts[1][0].toUpperCase();
+    }
+
+    return initials.isEmpty ? '?' : initials;
+  }
+
+  Color _getAvatarColor() {
+    final name = userName.replaceAll(' ', '');
+    if (name.isEmpty) return _primaryColor;
+
+    final colors = [
+      const Color(0xFF4285F4), // Blue
+      const Color(0xFFEA4335), // Red
+      const Color(0xFFFBBC04), // Yellow
+      const Color(0xFF34A853), // Green
+      const Color(0xFFFF6D00), // Orange
+      const Color(0xFF9C27B0), // Purple
+      const Color(0xFF00BCD4), // Cyan
+      const Color(0xFFE91E63), // Pink
+    ];
+
+    final index = name.codeUnitAt(0) % colors.length;
+    return colors[index];
+  }
+
+  Future<void> _loadUserProfile() async {
+    final Map<String, Object?> user = await PreferenceUtility.getProfile(
+      name: true,
+      birthday: false,
+      contacts: false,
+      email: true,
+    );
+
+    setState(() {
+      userName = "${user["firstName"] ?? ""} ${user["lastName"] ?? ""}".trim();
+
+      userEmail = user["email"] as String? ?? "";
+    });
+  }
 
   Future<void> logOut() async {
     try {
@@ -161,7 +216,7 @@ class _AccountPageState extends State<AccountPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _userName,
+                      userName,
                       style: GoogleFonts.interTight(
                         color: _secondaryText,
                         fontSize: 22,
@@ -171,7 +226,7 @@ class _AccountPageState extends State<AccountPage> {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        _userEmail,
+                        userEmail,
                         style: GoogleFonts.inter(
                           color: _secondaryText,
                           fontSize: 14,
@@ -189,26 +244,20 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildLetterAvatar() {
-    final nameParts = _userName.split(' ');
-    final initials = nameParts.length >= 2
-        ? '${nameParts[0][0]}${nameParts[1][0]}'
-        : nameParts[0][0];
-
     return Container(
-      width: 90,
-      height: 90,
+      width: 80,
+      height: 80,
       decoration: BoxDecoration(
-        color: _secondaryColor.withOpacity(0.2),
         shape: BoxShape.circle,
-        border: Border.all(color: _secondaryColor, width: 2),
+        color: _getAvatarColor(),
       ),
       child: Center(
         child: Text(
-          initials.toUpperCase(),
+          _getInitials(),
           style: GoogleFonts.inter(
-            color: _primaryColor,
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
+            fontSize: 30,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
         ),
       ),
