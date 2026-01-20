@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:nutribin_application/models/user.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
+import 'package:nutribin_application/widgets/map_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -198,10 +199,9 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _openMapPicker() async {
-    final result = await Navigator.pushNamed(
+    final result = await Navigator.push(
       context,
-      '/map_picker',
-      arguments: _addressController.text.trim(),
+      MaterialPageRoute(builder: (context) => MapPickerPage()),
     );
 
     if (result != null && result is String) {

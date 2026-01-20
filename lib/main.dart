@@ -14,6 +14,7 @@ import 'package:nutribin_application/pages/auth/signup.dart';
 import 'package:nutribin_application/pages/home/home_page.dart';
 import 'package:nutribin_application/pages/common/support.dart';
 import 'package:nutribin_application/pages/common/terms.dart';
+import 'package:nutribin_application/widgets/map_picker.dart';
 
 // LIGHT THEME
 final Color lightPrimary = Color(0xFF3A4D39);
@@ -107,6 +108,7 @@ class MyApp extends StatelessWidget {
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/verify-otp': (context) => const VerifyPasswordResetOtpPage(),
         '/reset-password': (context) => const ResetPasswordPage(),
+        '/map-picker': (context) => const MapPickerPage(),
 
         // Common Routes
         '/support': (context) => const ContactWidget(),
