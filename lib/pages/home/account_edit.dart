@@ -34,7 +34,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
   // Focus nodes
   late FocusNode _firstNameFocusNode;
   late FocusNode _lastNameFocusNode;
-  late FocusNode _birthdayFocusNode;
   late FocusNode _addressFocusNode;
   late FocusNode _contactFocusNode;
 
@@ -43,6 +42,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
 
   // Form state
   String? selectedGender;
+  DateTime? selectedBirthday;
 
   @override
   void initState() {
@@ -58,7 +58,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     // Initialize focus nodes
     _firstNameFocusNode = FocusNode();
     _lastNameFocusNode = FocusNode();
-    _birthdayFocusNode = FocusNode();
     _addressFocusNode = FocusNode();
     _contactFocusNode = FocusNode();
 
@@ -77,7 +76,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     // Dispose focus nodes
     _firstNameFocusNode.dispose();
     _lastNameFocusNode.dispose();
-    _birthdayFocusNode.dispose();
     _addressFocusNode.dispose();
     _contactFocusNode.dispose();
 
@@ -192,16 +190,23 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                             ],
                           ),
 
-                          // Birthday
+                          // Birthday with Calendar Picker
                           Padding(
                             padding: const EdgeInsets.only(top: 16),
                             child: TextFormField(
                               controller: _birthdayController,
-                              focusNode: _birthdayFocusNode,
-                              decoration: _inputDecoration(
-                                'Birthday',
-                                hint: 'yyyy-mm-dd',
-                              ),
+                              readOnly: true,
+                              decoration:
+                                  _inputDecoration(
+                                    'Birthday',
+                                    hint: 'yyyy-mm-dd',
+                                  ).copyWith(
+                                    suffixIcon: Icon(
+                                      Icons.calendar_today,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                              onTap: _selectBirthday,
                             ),
                           ),
 
@@ -264,6 +269,37 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     );
   }
 
+  Future<void> _selectBirthday() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate:
+          selectedBirthday ??
+          DateTime.now().subtract(const Duration(days: 365 * 18)),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: _primaryColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != selectedBirthday) {
+      setState(() {
+        selectedBirthday = picked;
+        _birthdayController.text =
+            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      });
+    }
+  }
+
   Future<void> _fetchAccount() async {
     try {
       setState(() {
@@ -284,7 +320,19 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         _firstNameController.text = profile["firstName"]?.toString() ?? '';
         _lastNameController.text = profile["lastName"]?.toString() ?? '';
         _addressController.text = profile["address"]?.toString() ?? '';
-        _birthdayController.text = profile["birthday"]?.toString() ?? '';
+
+        final birthdayStr = profile["birthday"]?.toString() ?? '';
+        _birthdayController.text = birthdayStr;
+
+        // Parse the birthday string to DateTime if it exists
+        if (birthdayStr.isNotEmpty) {
+          try {
+            selectedBirthday = DateTime.parse(birthdayStr);
+          } catch (e) {
+            // If parsing fails, leave selectedBirthday as null
+          }
+        }
+
         _contactController.text = profile["contact"]?.toString() ?? '';
         selectedGender = profile["gender"]?.toString();
 
@@ -333,7 +381,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
       );
 
       if (result["success"] == true) {
-        // Navigator.pop(context);
         Navigator.pop(context, true);
       }
     } catch (e) {
