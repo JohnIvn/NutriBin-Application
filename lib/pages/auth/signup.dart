@@ -32,14 +32,10 @@ class _SignUpPageState extends State<SignUpPage>
   // Sign Up form controllers
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _contactController = TextEditingController();
   final _addressController = TextEditingController();
   final _signUpEmailController = TextEditingController();
   final _signUpPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _birthdayController = TextEditingController();
-  final _birthdayFocus = FocusNode();
-  DateTime? _selectedBirthday;
 
   final _firstNameFocus = FocusNode();
   final _lastNameFocus = FocusNode();
@@ -50,7 +46,6 @@ class _SignUpPageState extends State<SignUpPage>
   final _confirmPasswordFocus = FocusNode();
 
   bool _passwordVisible = false;
-  String? _selectedGender;
   bool _termsRead = false;
   bool _termsAccepted = false;
 
@@ -62,6 +57,8 @@ class _SignUpPageState extends State<SignUpPage>
 
   bool _isLoading = false;
 
+  Color get _primaryColor => Theme.of(context).primaryColor;
+  Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
   @override
   void initState() {
     super.initState();
@@ -81,12 +78,9 @@ class _SignUpPageState extends State<SignUpPage>
     _firstNameController.dispose();
     _lastNameController.dispose();
     _addressController.dispose();
-    _contactController.dispose();
     _signUpEmailController.dispose();
     _signUpPasswordController.dispose();
     _confirmPasswordController.dispose();
-    _birthdayController.dispose();
-    _birthdayFocus.dispose();
     _firstNameFocus.dispose();
     _lastNameFocus.dispose();
     _contactFocus.dispose();
@@ -95,43 +89,6 @@ class _SignUpPageState extends State<SignUpPage>
     _signUpPasswordFocus.dispose();
     _confirmPasswordFocus.dispose();
     super.dispose();
-  }
-
-  void _navigateToTerms() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const TermsAcceptancePage()),
-    );
-
-    if (result != null && result is bool) {
-      setState(() {
-        _termsRead = result;
-      });
-      if (_termsRead == true) {
-        _termsAccepted = result;
-      }
-    }
-  }
-
-  void _validatePassword() {
-    final password = _signUpPasswordController.text;
-    setState(() {
-      _hasMinLength = password.length >= 8;
-      _hasUppercase = password.contains(RegExp(r'[A-Z]'));
-      _hasLowercase = password.contains(RegExp(r'[a-z]'));
-      _hasDigit = password.contains(RegExp(r'[0-9]'));
-      _hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
-    });
-  }
-
-  Future<void> _checkExistingSession() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-    if (isLoggedIn && mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
-    }
   }
 
   bool _validateSignInForm() {
@@ -170,51 +127,24 @@ class _SignUpPageState extends State<SignUpPage>
       return false;
     }
 
-    if (_contactController.text.trim().isEmpty) {
-      _showError("Contact number is required");
-      _contactFocus.requestFocus();
-      return false;
-    }
-
-    if (_contactController.text.trim().length < 10) {
-      _showError("Contact number is invalid");
-      _contactFocus.requestFocus();
-      return false;
-    }
-
     if (_addressController.text.trim().isEmpty) {
       _showError("Please select an address");
       _addressFocus.requestFocus();
       return false;
     }
 
-    if (_birthdayController.text.trim().isEmpty) {
-      _showError("Birthday is required");
-      _birthdayFocus.requestFocus();
-      return false;
-    }
-
-    final age = ProfileUtility.calculateAge(_birthdayController.text.trim());
-    if (age < 18) {
-      _showError("You must be at least 18 years old");
-      _birthdayFocus.requestFocus();
-      return false;
-    }
-
-    if (_selectedGender == null) {
-      _showError("Please select a gender");
-      return false;
-    }
-
-    if (_signUpEmailController.text.trim().isEmpty) {
+    final email = _signUpEmailController.text.trim();
+    if (email.isEmpty) {
       _showError("Email is required");
       _signUpEmailFocus.requestFocus();
       return false;
     }
 
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    if (!emailRegex.hasMatch(_signUpEmailController.text.trim())) {
-      _showError("Invalid email format");
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    if (!emailRegex.hasMatch(email)) {
+      _showError("Please enter a valid email address");
       _signUpEmailFocus.requestFocus();
       return false;
     }
@@ -255,95 +185,10 @@ class _SignUpPageState extends State<SignUpPage>
     return true;
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
-  }
-
-  void _handleGoogleSignIn() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await GoogleOAuthService.signInWithGoogle();
-
-      if (result['success'] != true) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['message'] ?? 'Google sign in failed'),
-            ),
-          );
-        }
-        return;
-      }
-
-      final user = User.fromJson(result['user']);
-      final isNewUser = result['isNewUser'] ?? false;
-      final requiresEmailVerification =
-          result['requiresEmailVerification'] ?? false;
-
-      // Save session
-      await PreferenceUtility.saveSession(
-        user.id,
-        user.email,
-        user.firstName,
-        user.lastName,
-        user.gender,
-        user.contact,
-        user.address,
-        user.birthday,
-      );
-
-      if (mounted) {
-        if (requiresEmailVerification) {
-          // Navigate to email verification
-          final verificationResult = await Navigator.pushNamed(
-            context,
-            '/verify-otp',
-            arguments: {
-              'recipient': user.email,
-              'type': 'email',
-              'data': {'userId': user.id},
-            },
-          );
-
-          if (verificationResult != null &&
-              verificationResult is Map &&
-              verificationResult['verified'] == true) {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-        } else if (isNewUser &&
-            (user.contact == null || user.contact.isEmpty)) {
-          // New Google user might need to complete profile (add contact)
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Welcome! Please complete your profile.'),
-            ),
-          );
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          // Existing user, go to home
-          Navigator.pushReplacementNamed(context, '/home');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  // Updated _handleSignUp to include email verification
-  void _handleSignUpWithVerification() async {
+  void _handleSignUp() async {
     try {
       if (!_validateSignUpForm()) return;
+
       if (!_termsAccepted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Please accept the Terms of Service")),
@@ -353,59 +198,91 @@ class _SignUpPageState extends State<SignUpPage>
 
       setState(() => _isLoading = true);
 
-      final result = await AuthService.signup(
+      final verifyResult = await AuthService.sendEmailVerification(
+        email: _signUpEmailController.text.trim(),
+      );
+
+      if (verifyResult["success"] != true) {
+        throw Exception(
+          verifyResult["message"] ?? "Failed to send verification",
+        );
+      }
+
+      setState(() => _isLoading = false);
+
+      final verificationResult = await Navigator.pushNamed(
+        context,
+        '/verify-contacts',
+        arguments: {
+          'recipient': _signUpEmailController.text.trim(),
+          'type': 'email',
+          'expectedCode': verifyResult["code"],
+        },
+      );
+
+      if (verificationResult == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email verification was cancelled')),
+        );
+        return;
+      }
+      final result = verificationResult as Map<String, dynamic>;
+
+      if (result['verified'] != true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Email verification required'),
+          ),
+        );
+        return;
+      }
+      if (result['verified'] != false && result['match'] == false) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['message'] ?? 'Email verification did not match',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final emailVerificationCode = verifyResult['code'].toString();
+
+      setState(() => _isLoading = true);
+
+      final signupResult = await AuthService.signup(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
-        gender: _selectedGender.toString(),
-        contact: _contactController.text.trim(),
         address: _addressController.text.trim(),
-        birthday: _birthdayController.text.trim(),
         email: _signUpEmailController.text.trim(),
         password: _signUpPasswordController.text.trim(),
         confirmPassword: _confirmPasswordController.text.trim(),
+        emailVerificationCode: emailVerificationCode,
       );
 
-      if (result["success"] != true) {
-        throw Exception(result["message"] ?? "Signup failed");
+      setState(() => _isLoading = false);
+
+      if (signupResult["ok"] != true) {
+        throw Exception(signupResult["message"] ?? "Signup failed");
       }
 
-      final user = User.fromJson(result["user"]);
+      final user = User.fromJson(signupResult["user"]);
 
-      // Save session
       await PreferenceUtility.saveSession(
         user.id,
         user.email,
         user.firstName,
         user.lastName,
-        user.gender,
         user.contact,
         user.address,
-        user.birthday,
       );
 
-      if (mounted) {
-        setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Account created successfully!")),
+      );
 
-        // Navigate to email verification
-        final verificationResult = await Navigator.pushNamed(
-          context,
-          '/verify-otp',
-          arguments: {
-            'recipient': user.email,
-            'type': 'email',
-            'data': {'userId': user.id},
-          },
-        );
-
-        if (verificationResult != null &&
-            verificationResult is Map &&
-            verificationResult['verified'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account created successfully!')),
-          );
-          Navigator.pushReplacementNamed(context, '/home');
-        }
-      }
+      Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -416,7 +293,6 @@ class _SignUpPageState extends State<SignUpPage>
     }
   }
 
-  // Add this widget for the Google Sign In button
   Widget _buildGoogleSignInButton() {
     return Column(
       children: [
@@ -474,30 +350,49 @@ class _SignUpPageState extends State<SignUpPage>
   void _handleSignIn() async {
     try {
       if (!_validateSignInForm()) return;
+
       final result = await AuthService.signin(
         email: _signInEmailController.text.trim(),
         password: _signInPasswordController.text.trim(),
       );
 
-      if (result["success"] != true) {
+      // Handle MFA requirement
+      if (result['requiresMFA'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result["message"] ?? "Login failed")),
+          SnackBar(
+            content: Text(result['message'] ?? 'MFA verification required'),
+          ),
         );
 
-        throw Error();
+        // Navigate to MFA verification screen (optional)
+        if (mounted) {
+          Navigator.pushNamed(
+            context,
+            '/verify-mfa',
+            arguments: {'userId': result['userId']},
+          );
+        }
+        return;
       }
 
-      final user = User.fromJson(result["user"]);
+      // Handle login errors
+      if (result['ok'] != true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['error'] ?? 'Login failed')),
+        );
+        return;
+      }
+
+      // Successful login
+      final user = User.fromJson(result['user']);
 
       await PreferenceUtility.saveSession(
         user.id,
         user.email,
         user.firstName,
         user.lastName,
-        user.gender,
-        user.contact,
-        user.address,
-        user.birthday,
+        user.contact ?? '',
+        user.address ?? '',
       );
 
       if (mounted) {
@@ -505,77 +400,8 @@ class _SignUpPageState extends State<SignUpPage>
       }
     } catch (e) {
       print(e);
-    }
-  }
-
-  void _handleSignUp() async {
-    try {
-      if (!_validateSignUpForm()) return;
-      if (!_termsAccepted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please accept the Terms of Service")),
-        );
-        return;
-      }
-
-      if (_signUpPasswordController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Invalid Password")));
-        return;
-      }
-
-      // Validate password requirements
-      if (!_hasMinLength ||
-          !_hasUppercase ||
-          !_hasLowercase ||
-          !_hasDigit ||
-          !_hasSpecialChar) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Password does not meet all requirements"),
-          ),
-        );
-        return;
-      }
-
-      final result = await AuthService.signup(
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        gender: _selectedGender.toString(),
-        contact: _contactController.text.trim(),
-        address: _addressController.text.trim(),
-        birthday: _birthdayController.text.trim(),
-        email: _signUpEmailController.text.trim(),
-        password: _signUpPasswordController.text.trim(),
-        confirmPassword: _confirmPasswordController.text.trim(),
-      );
-
-      if (result["success"] != true) {
-        throw Exception(result["message"] ?? "Signup failed");
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Signup successful")));
-
-      final user = User.fromJson(result["user"]);
-
-      await PreferenceUtility.saveSession(
-        user.id,
-        user.email,
-        user.firstName,
-        user.lastName,
-        user.gender,
-        user.contact,
-        user.address,
-        user.birthday,
-      );
-
-      Navigator.pushNamed(context, '/home');
-    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        const SnackBar(content: Text("An unexpected error occurred")),
       );
     }
   }
@@ -583,6 +409,7 @@ class _SignUpPageState extends State<SignUpPage>
   void _handleForgotPassword() {
     // Navigate to forgot password/camera page
     Navigator.pushNamed(context, '/forgot-password');
+    return;
   }
 
   void _openMapPicker() async {
@@ -597,9 +424,6 @@ class _SignUpPageState extends State<SignUpPage>
       });
     }
   }
-
-  Color get _primaryColor => Theme.of(context).primaryColor;
-  Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -809,9 +633,8 @@ class _SignUpPageState extends State<SignUpPage>
             ),
           ),
 
-          // Google Sign In
-          _buildGoogleSignInButton(),
-
+          // Google Sign In INDEV
+          // _buildGoogleSignInButton(),
           const SizedBox(height: 24),
         ],
       ),
@@ -864,12 +687,6 @@ class _SignUpPageState extends State<SignUpPage>
             label: 'Address',
             onTap: _openMapPicker,
           ),
-          _buildDateField(
-            controller: _birthdayController,
-            focusNode: _birthdayFocus,
-            label: 'Birthday',
-            onTap: _pickBirthday,
-          ),
 
           _buildTextField(
             controller: _signUpEmailController,
@@ -878,22 +695,7 @@ class _SignUpPageState extends State<SignUpPage>
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4),
-            child: Text(
-              'Gender:',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
-              children: [
-                _buildRadioOption('Male'),
-                _buildRadioOption('Female'),
-              ],
-            ),
-          ),
+
           _buildTextField(
             controller: _signUpPasswordController,
             focusNode: _signUpPasswordFocus,
@@ -998,23 +800,37 @@ class _SignUpPageState extends State<SignUpPage>
           const SizedBox(height: 8),
           Center(
             child: ElevatedButton(
-              onPressed: _handleSignUpWithVerification, // Updated handler
+              onPressed: _isLoading
+                  ? null
+                  : _handleSignUp, // Disable when loading
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 52),
                 backgroundColor: _primaryColor,
+                disabledBackgroundColor: _primaryColor.withOpacity(
+                  0.5,
+                ), // Add this
                 elevation: 3,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(40),
                 ),
               ),
-              child: const Text(
-                'Create Account',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text(
+                      'Create Account',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 24),
@@ -1132,95 +948,6 @@ class _SignUpPageState extends State<SignUpPage>
     );
   }
 
-  Widget _buildRadioOption(String value) {
-    return Expanded(
-      child: SizedBox(
-        height: 32,
-        child: RadioListTile<String>(
-          title: Text(value, style: const TextStyle(fontSize: 13)),
-          value: value,
-          groupValue: _selectedGender,
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedGender = newValue;
-            });
-          },
-          activeColor: _primaryColor,
-          contentPadding: EdgeInsets.zero,
-          dense: true,
-          visualDensity: VisualDensity.compact,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _pickBirthday() async {
-    DateTime initialDate = DateTime(2000);
-    DateTime firstDate = DateTime(1900);
-    DateTime lastDate = DateTime.now();
-
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedBirthday ?? initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedBirthday = picked;
-        _birthdayController.text =
-            "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-      });
-    }
-  }
-
-  Widget _buildDateField({
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        readOnly: true,
-        onTap: onTap,
-        cursorColor: const Color(0xFF4B39EF),
-        style: const TextStyle(
-          color: Color(0xFF101213),
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(
-            color: Color(0xFF57636C),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
-            borderRadius: BorderRadius.circular(40),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: _primaryColor, width: 2),
-            borderRadius: BorderRadius.circular(40),
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.all(24),
-          suffixIcon: const Icon(
-            Icons.calendar_today_outlined,
-            color: Color(0xFF57636C),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildMapAddressField({
     required TextEditingController controller,
     required FocusNode focusNode,
@@ -1265,5 +992,125 @@ class _SignUpPageState extends State<SignUpPage>
         ),
       ),
     );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  void _validatePassword() {
+    final password = _signUpPasswordController.text;
+    setState(() {
+      _hasMinLength = password.length >= 8;
+      _hasUppercase = password.contains(RegExp(r'[A-Z]'));
+      _hasLowercase = password.contains(RegExp(r'[a-z]'));
+      _hasDigit = password.contains(RegExp(r'[0-9]'));
+      _hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    });
+  }
+
+  Future<void> _checkExistingSession() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    if (isLoggedIn && mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
+  }
+
+  void _navigateToTerms() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TermsAcceptancePage()),
+    );
+
+    if (result != null && result is bool) {
+      setState(() {
+        _termsRead = result;
+      });
+      if (_termsRead == true) {
+        _termsAccepted = result;
+      }
+    }
+  }
+
+  void _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await GoogleOAuthService.signInWithGoogle();
+
+      if (result['success'] != true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Google sign in failed'),
+            ),
+          );
+        }
+        return;
+      }
+
+      final user = User.fromJson(result['user']);
+      final isNewUser = result['isNewUser'] ?? false;
+      final requiresEmailVerification =
+          result['requiresEmailVerification'] ?? false;
+
+      // Save session
+      await PreferenceUtility.saveSession(
+        user.id,
+        user.email,
+        user.firstName,
+        user.lastName,
+        user.contact,
+        user.address,
+      );
+
+      if (mounted) {
+        if (requiresEmailVerification) {
+          // Navigate to email verification
+          final verificationResult = await Navigator.pushNamed(
+            context,
+            '/verify-otp',
+            arguments: {
+              'recipient': user.email,
+              'type': 'email',
+              'data': {'userId': user.id},
+            },
+          );
+
+          if (verificationResult != null &&
+              verificationResult is Map &&
+              verificationResult['verified'] == true) {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
+        } else if (isNewUser &&
+            (user.contact == null || user.contact.isEmpty)) {
+          // New Google user might need to complete profile (add contact)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Welcome! Please complete your profile.'),
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          // Existing user, go to home
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }

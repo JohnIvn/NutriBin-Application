@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 
+import 'package:nutribin_application/services/auth_service.dart';
+
 enum OtpVerificationType { email, contact, passwordReset }
 
 class ContactsVerification extends StatefulWidget {
@@ -21,6 +23,8 @@ class _ContactsVerificationState extends State<ContactsVerification> {
 
   bool _isLoading = false;
   String? _recipient; // Email or contact number
+  String? _userId; // Store userId from initial send if for OTP verification
+  String? _expectedCode;
   OtpVerificationType? _verificationType;
   Map<String, dynamic>? _additionalData;
   int _cooldownSeconds = 0;
@@ -34,6 +38,8 @@ class _ContactsVerificationState extends State<ContactsVerification> {
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       setState(() {
         _recipient = args?['recipient'] ?? '';
+        _userId = args?['userId'] ?? '';
+        _expectedCode = args?['expectedCode'] ?? '';
         final typeString = args?['type'] ?? 'email';
         _verificationType = _parseVerificationType(typeString);
         _additionalData = args?['data'];
@@ -44,10 +50,8 @@ class _ContactsVerificationState extends State<ContactsVerification> {
   OtpVerificationType _parseVerificationType(String type) {
     switch (type.toLowerCase()) {
       case 'contact':
-      case 'phone':
         return OtpVerificationType.contact;
       case 'passwordreset':
-      case 'password_reset':
         return OtpVerificationType.passwordReset;
       default:
         return OtpVerificationType.email;
@@ -155,56 +159,145 @@ class _ContactsVerificationState extends State<ContactsVerification> {
       return;
     }
 
+    // Check if expected code exists
+    if (_expectedCode == null || _expectedCode!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Verification session expired. Please go back and try again.',
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Replace with actual API calls
-      // switch (_verificationType) {
-      //   case OtpVerificationType.email:
-      //     await AuthService.verifyEmail(email: _recipient, otp: otp);
-      //     break;
-      //   case OtpVerificationType.contact:
-      //     await AuthService.verifyContact(contact: _recipient, otp: otp);
-      //     break;
-      //   case OtpVerificationType.passwordReset:
-      //     await AuthService.verifyPasswordResetOtp(email: _recipient, otp: otp);
-      //     break;
-      // }
+      Map<String, dynamic> result;
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      switch (_verificationType) {
+        case OtpVerificationType.email:
+          // Compare the entered OTP with the expected code
+          if (otp == _expectedCode) {
+            result = {
+              'success': true,
+              'match': true,
+              'message': 'Email verified successfully',
+              'code': otp,
+            };
+          } else {
+            result = {
+              'success': false,
+              'match': false,
+              'message': 'Invalid verification code',
+              'code': otp,
+            };
+          }
+          break;
+
+        case OtpVerificationType.contact:
+          // Contact verification
+          if (otp == _expectedCode) {
+            result = {
+              'success': true,
+              'match': true,
+              'message': 'Phone verified successfully',
+              'code': otp,
+            };
+          } else {
+            result = {
+              'success': false,
+              'match': false,
+              'message': 'Invalid verification code',
+              'code': otp,
+            };
+          }
+          break;
+
+        case OtpVerificationType.passwordReset:
+          // Compare the entered OTP with the expected code
+          if (otp == _expectedCode) {
+            result = {
+              'success': true,
+              'match': true,
+              'message': 'Code verified successfully',
+              'code': otp,
+            };
+          } else {
+            result = {
+              'success': false,
+              'match': false,
+              'message': 'Invalid verification code',
+              'code': otp,
+            };
+          }
+          break;
+
+        default:
+          result = {'success': false, 'message': 'Unknown verification type'};
+      }
 
       if (mounted) {
-        switch (_verificationType) {
-          case OtpVerificationType.email:
-            // Email verified, proceed to home or next step
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Email verified successfully!')),
-            );
-            Navigator.pushReplacementNamed(context, '/home');
-            break;
+        if (result['success'] == true && result['match'] == true) {
+          switch (_verificationType) {
+            case OtpVerificationType.email:
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Email verified successfully!')),
+              );
+              // Return success to previous screen or navigate to home
+              Navigator.pop(context, {
+                'verified': true,
+                'match': true,
+                'otp': otp,
+                'userId': _userId,
+              });
+              break;
 
-          case OtpVerificationType.contact:
-            // Contact verified, proceed to next step
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Phone number verified successfully!'),
-              ),
-            );
-            Navigator.pop(context, {'verified': true, 'otp': otp});
-            break;
+            case OtpVerificationType.contact:
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Phone number verified successfully!'),
+                ),
+              );
+              Navigator.pop(context, {
+                'verified': true,
+                'match': true,
+                'otp': otp,
+                'userId': _userId,
+              });
+              break;
 
-          case OtpVerificationType.passwordReset:
-            // Navigate to reset password page
-            Navigator.pushReplacementNamed(
-              context,
-              '/reset-password',
-              arguments: {'email': _recipient, 'otp': otp},
-            );
-            break;
+            case OtpVerificationType.passwordReset:
+              // Navigate to reset password screen with verified code
+              Navigator.pushReplacementNamed(
+                context,
+                '/reset-password',
+                arguments: {
+                  'email': _recipient,
+                  'userId': _userId,
+                  'otp': otp,
+                  'verified': true,
+                },
+              );
+              break;
 
-          default:
-            Navigator.pop(context, {'verified': true, 'otp': otp});
+            default:
+              Navigator.pop(context, {
+                'verified': true,
+                'match': true,
+                'otp': otp,
+                'userId': _userId,
+              });
+          }
+        } else {
+          // Show error message for invalid code
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Verification failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       }
     } catch (e) {
@@ -233,37 +326,51 @@ class _ContactsVerificationState extends State<ContactsVerification> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Replace with real API calls
-      // switch (_verificationType) {
-      //   case OtpVerificationType.email:
-      //     await AuthService.resendEmailOtp(email: _recipient!);
-      //     break;
-      //   case OtpVerificationType.contact:
-      //     await AuthService.resendContactOtp(contact: _recipient!);
-      //     break;
-      //   case OtpVerificationType.passwordReset:
-      //     await AuthService.resendPasswordResetOtp(email: _recipient!);
-      //     break;
-      // }
+      Map<String, dynamic> result;
 
-      // Simulate API delay
-      await Future.delayed(const Duration(seconds: 1));
-
-      for (final controller in _otpControllers) {
-        controller.clear();
+      switch (_verificationType) {
+        case OtpVerificationType.email:
+          result = await AuthService.sendEmailVerification(email: _recipient!);
+          break;
+        case OtpVerificationType.contact:
+          result = await AuthService.sendContactVerification(
+            contact: _recipient!,
+          );
+          break;
+        default:
+          result = {'success': false, 'message': 'Unknown verification type'};
       }
-      _otpFocusNodes.first.requestFocus();
-
-      _startCooldown(60);
 
       if (mounted) {
-        final message = _verificationType == OtpVerificationType.contact
-            ? 'Verification code sent to your phone'
-            : 'Verification code sent to your email';
+        if (result['success'] == true) {
+          // Update userId and expected code from new response
+          setState(() {
+            _userId = result['userId'] ?? _userId;
+            _expectedCode = result['code'] ?? result['expectedCode'] ?? '';
+          });
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+          // Clear all OTP input fields
+          for (final controller in _otpControllers) {
+            controller.clear();
+          }
+          _otpFocusNodes.first.requestFocus();
+
+          _startCooldown(60);
+
+          final message = _verificationType == OtpVerificationType.contact
+              ? 'Verification code sent to your phone'
+              : 'Verification code sent to your email';
+
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Failed to resend code'),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

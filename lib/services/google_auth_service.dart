@@ -71,8 +71,9 @@ class GoogleOAuthService {
     required String? accessToken,
   }) async {
     try {
-      final baseUrl = dotenv.env['REST_URL'] ?? 'http://localhost:3000';
-      final url = Uri.parse('$baseUrl/api/auth/google');
+      final baseUrl = dotenv.env['SUPABASE_URL'] ?? 'http://localhost:3000';
+      // final url = Uri.parse('$baseUrl/api/auth/google');
+      final url = Uri.parse('$baseUrl/functions/v1/googleAuth');
 
       final response = await http.post(
         url,

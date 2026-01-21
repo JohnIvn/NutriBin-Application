@@ -21,8 +21,10 @@ class _VerifyPasswordResetOtpPageState
 
   bool _isLoading = false;
   String? _email;
+  String? _userId;
   int _cooldownSeconds = 0;
   Timer? _cooldownTimer;
+  String? _expectedCode;
 
   @override
   void initState() {
@@ -31,7 +33,9 @@ class _VerifyPasswordResetOtpPageState
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       setState(() {
-        _email = args?['email'] ?? '';
+        _email = args?['recipient'] ?? '';
+        _userId = args?['userId'] ?? '';
+        _expectedCode = args?['expectedCode'] ?? '';
       });
     });
   }
@@ -70,6 +74,20 @@ class _VerifyPasswordResetOtpPageState
     });
   }
 
+  String _getMaskedEmail() {
+    if (_email == null || _email!.isEmpty) return '';
+
+    if (_email!.contains('@')) {
+      final parts = _email!.split('@');
+      final username = parts[0];
+      final domain = parts[1];
+      if (username.length > 2) {
+        return '${username.substring(0, 2)}***@$domain';
+      }
+    }
+    return _email!;
+  }
+
   void _handleVerifyOtp() async {
     final otp = _getOtpCode();
 
@@ -79,28 +97,56 @@ class _VerifyPasswordResetOtpPageState
       );
       return;
     }
-    // DEBUG (REDIRECT FOR NOW)
-    Navigator.pushNamed(context, '/reset-password');
+
+    // Check if expected code exists
+    if (_expectedCode == null || _expectedCode!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Verification session expired. Please go back and try again.',
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Replace with actual API call
-      // final result = await AuthService.verifyPasswordResetOtp(
-      //   email: _email,
-      //   otp: otp
-      // );
-
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
-
-      if (mounted) {
-        // Navigate to reset password page
-        Navigator.pushReplacementNamed(
+      // Compare the entered OTP with the expected code
+      Map<String, dynamic> result;
+      if (otp == _expectedCode) {
+        // result = {
+        //   'success': true,
+        //   'match': true,
+        //   'message': 'Code verified successfully',
+        //   'code': otp,
+        // };
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("OTP Verified Successfully"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushNamed(
           context,
           '/reset-password',
-          arguments: {'email': _email, 'otp': otp},
+          arguments: {"email": _email},
         );
+      } else {
+        // result = {
+        //   'success': false,
+        //   'match': false,
+        //   'message': 'Invalid verification code',
+        //   'code': otp,
+        // };
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("OTP Verification Invalid"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
       }
     } catch (e) {
       if (mounted) {
@@ -129,28 +175,53 @@ class _VerifyPasswordResetOtpPageState
 
     try {
       // TODO: Replace with real API call
-      // await AuthService.resendPasswordResetOtp(email: _email!);
+      // result = await AuthService.sendPasswordResetOtp(email: _email!);
 
       // Simulate API delay
       await Future.delayed(const Duration(seconds: 1));
 
-      for (final controller in _otpControllers) {
-        controller.clear();
-      }
-      _otpFocusNodes.first.requestFocus();
-
-      _startCooldown(60);
+      Map<String, dynamic> result = {
+        'success': true,
+        'message': 'Code sent successfully',
+        'userId': _userId,
+        'code':
+            _expectedCode, // In production, this will be the new code from API
+      };
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verification code sent to your email')),
-        );
+        if (result['success'] == true) {
+          // Update userId and expected code from new response
+          setState(() {
+            _userId = result['userId'] ?? _userId;
+            _expectedCode = result['code'] ?? result['expectedCode'] ?? '';
+          });
+
+          // Clear all OTP input fields
+          for (final controller in _otpControllers) {
+            controller.clear();
+          }
+          _otpFocusNodes.first.requestFocus();
+
+          _startCooldown(60);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Verification code sent to your email'),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Failed to resend code'),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to resend code')));
+        ).showSnackBar(const SnackBar(content: Text('Failed to resend code')));
       }
     } finally {
       if (mounted) {
@@ -194,7 +265,7 @@ class _VerifyPasswordResetOtpPageState
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.lock_open,
+                        Icons.lock_reset,
                         size: 50,
                         color: _primaryColor,
                       ),
@@ -223,7 +294,7 @@ class _VerifyPasswordResetOtpPageState
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _email ?? '',
+                      _getMaskedEmail(),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 14,

@@ -28,7 +28,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
   // Text controllers
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
-  late TextEditingController _birthdayController;
   late TextEditingController _addressController;
   late TextEditingController _contactController;
 
@@ -40,10 +39,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
 
   bool isLoading = true;
   String? errorMessage;
-
-  // Form state
-  String? selectedGender;
-  DateTime? selectedBirthday;
+  String? _originalContact; // Store original contact to check if changed
 
   @override
   void initState() {
@@ -52,7 +48,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     // Initialize controllers
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
-    _birthdayController = TextEditingController();
     _addressController = TextEditingController();
     _contactController = TextEditingController();
 
@@ -70,7 +65,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     // Dispose controllers
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _birthdayController.dispose();
     _addressController.dispose();
     _contactController.dispose();
 
@@ -171,73 +165,71 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                             ),
                           ),
 
-                          // Gender label
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(8, 16, 0, 4),
-                            child: Text(
-                              'Gender',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ),
-
-                          // Gender radios
-                          Row(
-                            children: [
-                              _genderTile('Male'),
-                              _genderTile('Female'),
-                            ],
-                          ),
-
-                          // Birthday with Calendar Picker
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: TextFormField(
-                              controller: _birthdayController,
-                              readOnly: true,
-                              decoration:
-                                  _inputDecoration(
-                                    'Birthday',
-                                    hint: 'yyyy-mm-dd',
-                                  ).copyWith(
-                                    suffixIcon: Icon(
-                                      Icons.calendar_today,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                              onTap: _selectBirthday,
-                            ),
-                          ),
-
                           // Address
                           Padding(
                             padding: const EdgeInsets.only(top: 16),
                             child: TextFormField(
                               controller: _addressController,
                               focusNode: _addressFocusNode,
-                              readOnly:
-                                  true,
+                              readOnly: true,
                               onTap: _openMapPicker,
-                              decoration: _inputDecoration(
-                                'Address',
-                                hint: 'Brgy 123 Phase 1 Purok 1',
-                              ),
+                              decoration:
+                                  _inputDecoration(
+                                    'Address',
+                                    hint: 'Brgy 123 Phase 1 Purok 1',
+                                  ).copyWith(
+                                    suffixIcon: const Icon(
+                                      Icons.location_on_outlined,
+                                      color: Color(0xFF57636C),
+                                    ),
+                                  ),
                             ),
                           ),
 
                           // Contact Number
                           Padding(
                             padding: const EdgeInsets.only(top: 16),
-                            child: TextFormField(
-                              controller: _contactController,
-                              focusNode: _contactFocusNode,
-                              keyboardType: TextInputType.phone,
-                              decoration: _inputDecoration(
-                                'Contact Number',
-                                hint: '+63 912 345 6789',
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                TextFormField(
+                                  controller: _contactController,
+                                  focusNode: _contactFocusNode,
+                                  keyboardType: TextInputType.phone,
+                                  decoration: _inputDecoration(
+                                    'Contact Number',
+                                    hint: '+63 912 345 6789',
+                                  ),
+                                ),
+                                if (_contactController.text.trim() !=
+                                    _originalContact)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 8,
+                                      left: 4,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline,
+                                          size: 14,
+                                          color: _primaryColor,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            'Changing your contact number requires verification',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12,
+                                              color: _primaryColor,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],
@@ -273,37 +265,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     );
   }
 
-  Future<void> _selectBirthday() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate:
-          selectedBirthday ??
-          DateTime.now().subtract(const Duration(days: 365 * 18)),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: _primaryColor,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null && picked != selectedBirthday) {
-      setState(() {
-        selectedBirthday = picked;
-        _birthdayController.text =
-            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-      });
-    }
-  }
-
   Future<void> _fetchAccount() async {
     try {
       setState(() {
@@ -314,7 +275,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
       final profile = await PreferenceUtility.getProfile(
         name: true,
         contacts: true,
-        birthday: true,
         email: true,
       );
 
@@ -324,21 +284,8 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         _firstNameController.text = profile["firstName"]?.toString() ?? '';
         _lastNameController.text = profile["lastName"]?.toString() ?? '';
         _addressController.text = profile["address"]?.toString() ?? '';
-
-        final birthdayStr = profile["birthday"]?.toString() ?? '';
-        _birthdayController.text = birthdayStr;
-
-        // Parse the birthday string to DateTime if it exists
-        if (birthdayStr.isNotEmpty) {
-          try {
-            selectedBirthday = DateTime.parse(birthdayStr);
-          } catch (e) {
-            // If parsing fails, leave selectedBirthday as null
-          }
-        }
-
         _contactController.text = profile["contact"]?.toString() ?? '';
-        selectedGender = profile["gender"]?.toString();
+        _originalContact = profile["contact"]?.toString() ?? '';
 
         isLoading = false;
       });
@@ -364,26 +311,155 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     }
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  bool _validateChanges() {
+    // Auto-trim inputs
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final contact = _contactController.text.trim();
+
+    // Update controllers with trimmed values
+    _firstNameController.text = firstName;
+    _lastNameController.text = lastName;
+    _contactController.text = contact;
+
+    // Name validation: letters and spaces only
+    final nameRegex = RegExp(r'^[A-Za-z\s]+$');
+
+    if (firstName.isEmpty || !nameRegex.hasMatch(firstName)) {
+      _showError('First name must contain letters only');
+      return false;
+    }
+
+    if (lastName.isEmpty || !nameRegex.hasMatch(lastName)) {
+      _showError('Last name must contain letters only');
+      return false;
+    }
+
+    // Contact validation
+    if (contact.isNotEmpty) {
+      if (contact.startsWith('+')) {
+        if (contact.length != 13 || !RegExp(r'^\+\d+$').hasMatch(contact)) {
+          _showError('Contact must be +63 followed by 10 digits');
+          return false;
+        }
+      } else if (contact.startsWith('09')) {
+        if (contact.length != 11 || !RegExp(r'^\d+$').hasMatch(contact)) {
+          _showError('Contact must be 09 followed by 9 digits');
+          return false;
+        }
+      } else {
+        _showError('Contact must start with +63 or 09');
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   Future<void> _handleSave() async {
+    if (!_validateChanges()) return;
+
+    final currentContact = _contactController.text.trim();
+    final contactChanged = currentContact != _originalContact;
+
+    // If contact changed, verify it first
+    if (contactChanged && currentContact.isNotEmpty) {
+      setState(() {
+        isLoading = true;
+      });
+
+      try {
+        // Send verification code to the new contact number
+        final verifyResult = await AuthService.sendContactVerification(
+          contact: currentContact,
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          isLoading = false;
+        });
+
+        if (verifyResult["success"] != true) {
+          _showError(
+            verifyResult["message"] ?? "Failed to send verification code",
+          );
+          return;
+        }
+
+        // Navigate to verification screen
+        final verificationResult = await Navigator.pushNamed(
+          context,
+          '/verify-contacts',
+          arguments: {
+            'recipient': currentContact,
+            'type': 'contact',
+            'expectedCode': verifyResult["code"],
+            'userId': verifyResult["userId"],
+          },
+        );
+
+        if (!mounted) return;
+
+        // Check if verification was successful
+        if (verificationResult == null ||
+            verificationResult is! Map<String, dynamic> ||
+            verificationResult['verified'] != true ||
+            verificationResult['match'] != true) {
+          _showError('Contact verification failed or cancelled');
+          return;
+        }
+
+        // Verification successful, proceed with update
+        _performUpdate();
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          isLoading = false;
+        });
+        _showError('Failed to send verification code: $e');
+      }
+    } else {
+      // No contact change, proceed with update directly
+      _performUpdate();
+    }
+  }
+
+  Future<void> _performUpdate() async {
+    setState(() {
+      isLoading = true;
+    });
+
     try {
       final result = await AuthService.updateUser(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
-        gender: selectedGender ?? "male",
         contact: _contactController.text.trim(),
         address: _addressController.text.trim(),
-        birthday: _birthdayController.text.trim(),
       );
 
       if (!mounted) return;
 
       if (result["success"] != true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result["data"]?.toString() ?? "Update failed"),
+            backgroundColor: Colors.red,
+          ),
+        );
         setState(() {
           isLoading = false;
-          errorMessage = result["data"]?.toString() ?? 'Failed to load account';
         });
         return;
       }
+
+      // Extract user object
       final user = User.fromJson(result["data"]);
 
       await PreferenceUtility.saveSession(
@@ -391,20 +467,28 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         user.email,
         user.firstName,
         user.lastName,
-        user.gender,
         user.contact,
         user.address,
-        user.birthday,
       );
 
-      if (result["success"] == true) {
-        Navigator.pop(context, true);
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Account updated successfully!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update account: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
       setState(() {
         isLoading = false;
-        errorMessage = 'Failed to load account: $e';
       });
     }
   }
@@ -422,20 +506,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
       focusedBorder: OutlineInputBorder(
         borderSide: const BorderSide(color: Colors.black, width: 2),
         borderRadius: BorderRadius.circular(8),
-      ),
-    );
-  }
-
-  Expanded _genderTile(String value) {
-    return Expanded(
-      child: RadioListTile<String>(
-        title: Text(value, style: GoogleFonts.inter(fontSize: 14)),
-        value: value,
-        groupValue: selectedGender,
-        onChanged: (v) => setState(() => selectedGender = v),
-        dense: true,
-        contentPadding: EdgeInsets.zero,
-        activeColor: _primaryColor,
       ),
     );
   }

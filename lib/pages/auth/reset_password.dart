@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/services/auth_service.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});
@@ -19,7 +20,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   bool _isLoading = false;
 
   String? _email;
-  String? _otp;
 
   @override
   void initState() {
@@ -29,7 +29,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       setState(() {
         _email = args?['email'] ?? '';
-        _otp = args?['otp'] ?? '';
       });
     });
   }
@@ -70,18 +69,24 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       return;
     }
 
-    // DEBUG (REDIRECT)
-    Navigator.pushNamed(context, '/');
-    
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Replace with actual API call
-      // final result = await AuthService.resetPassword(
-      //   email: _email,
-      //   otp: _otp,
-      //   newPassword: newPassword,
-      // );
+      final result = await AuthService.resetPassword(
+        email: _email.toString(),
+        newPassword: newPassword,
+      );
+
+      if (result["success"] != true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result["message"].toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+        Navigator.pushNamed(context, '/');
+        return;
+      }
 
       // Simulate API call
       await Future.delayed(const Duration(seconds: 1));

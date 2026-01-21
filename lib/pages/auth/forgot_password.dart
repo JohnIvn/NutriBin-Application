@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/services/auth_service.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -23,9 +24,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   void _handleSendCode() async {
     final email = _emailController.text.trim();
 
-    //Temporary (DEBUG MODE REDIRECT)
-    Navigator.pushNamed(context, '/verify-otp', arguments: {'email': email});
-
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter your email address')),
@@ -43,21 +41,34 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Replace with actual API call
-      // final result = await AuthService.sendPasswordResetOtp(email: email);
+      final verifyResult = await AuthService.sendEmailVerification(
+        email: _emailController.text.trim(),
+        type: "reset"
+      );
 
-      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verification code sent to your email')),
-        );
+      if (verifyResult["success"] == true) {
+        final expectedCode = verifyResult["code"];
 
         Navigator.pushNamed(
           context,
           '/verify-otp',
-          arguments: {'email': email},
+          arguments: {
+            'recipient': _emailController.text.trim(),
+            'type': 'email',
+            'expectedCode': expectedCode,
+          },
         );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              verifyResult['message'] ?? 'Failed to send verification code',
+            ),
+          ),
+        );
+        return;
       }
     } catch (e) {
       if (mounted) {

@@ -63,7 +63,6 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _loadUserProfile() async {
     final Map<String, Object?> user = await PreferenceUtility.getProfile(
       name: true,
-      birthday: false,
       contacts: false,
       email: true,
     );

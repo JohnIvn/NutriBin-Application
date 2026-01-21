@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 
 class ProfileWidget extends StatefulWidget {
@@ -21,9 +20,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   String lastName = '';
   String email = '';
   String phoneNumber = '';
-  String birthday = '';
-  String age = '';
-  String gender = '';
+  String address = '';
 
   bool isLoading = true;
   String? errorMessage;
@@ -84,7 +81,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       final profile = await PreferenceUtility.getProfile(
         name: true,
         contacts: true,
-        birthday: true,
         email: true,
       );
 
@@ -94,10 +90,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         firstName = profile["firstName"]?.toString() ?? '';
         lastName = profile["lastName"]?.toString() ?? '';
         phoneNumber = profile["contact"]?.toString() ?? '';
-        birthday = profile["birthday"]?.toString() ?? '';
-        age = profile["age"]?.toString() ?? '';
+        address = profile["address"]?.toString() ?? '';
         email = profile["email"]?.toString() ?? '';
-        gender = profile["gender"]?.toString() ?? '';
 
         isLoading = false;
       });
@@ -112,30 +106,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Failed to load profile')));
-    }
-  }
-
-  String _formatBirthday(String birthday) {
-    if (birthday.isEmpty) return '';
-    try {
-      final date = DateTime.parse(birthday);
-      final months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return '${months[date.month - 1]} ${date.day}, ${date.year}';
-    } catch (e) {
-      return birthday;
     }
   }
 
@@ -337,23 +307,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                       : lastName,
                                 ),
                                 _buildProfileRow(
-                                  icon: Icons.wc_outlined,
-                                  label: 'Gender',
-                                  value: gender.isEmpty ? 'Not set' : gender,
-                                ),
-                                _buildProfileRow(
-                                  icon: Icons.calendar_month_outlined,
-                                  label: 'Birthday',
-                                  value: birthday.isEmpty
+                                  icon: Icons.gps_fixed,
+                                  label: 'Address',
+                                  value: address.isEmpty
                                       ? 'Not set'
-                                      : _formatBirthday(birthday),
-                                ),
-                                _buildProfileRow(
-                                  icon: Icons.cake_outlined,
-                                  label: 'Age',
-                                  value: age == '0'
-                                      ? 'Not set'
-                                      : '$age years old',
+                                      : address,
                                 ),
                                 _buildProfileRow(
                                   icon: Icons.phone_outlined,
