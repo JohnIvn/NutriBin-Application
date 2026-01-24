@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/models/user.dart';
 import 'package:nutribin_application/services/auth_service.dart';
@@ -54,6 +55,11 @@ class _SignUpPageState extends State<SignUpPage>
   bool _hasLowercase = false;
   bool _hasDigit = false;
   bool _hasSpecialChar = false;
+
+  //Validations
+  bool _isFirstNameValid = true;
+  bool _isLastNameValid = true;
+  bool _isEmailValid = true;
 
   bool _isLoading = false;
 
@@ -206,6 +212,21 @@ class _SignUpPageState extends State<SignUpPage>
         throw Exception(
           verifyResult["message"] ?? "Failed to send verification",
         );
+      }
+      if (!_isFirstNameValid) {
+        _showError("Invalid firstname address");
+        _signUpEmailFocus.requestFocus();
+        return;
+      }
+      if (!_isLastNameValid) {
+        _showError("Invalid lastname address");
+        _signUpEmailFocus.requestFocus();
+        return;
+      }
+      if (!_isEmailValid) {
+        _showError("Invalid email address");
+        _signUpEmailFocus.requestFocus();
+        return;
       }
 
       setState(() => _isLoading = false);
@@ -663,16 +684,24 @@ class _SignUpPageState extends State<SignUpPage>
             controller: _firstNameController,
             focusNode: _firstNameFocus,
             label: 'First Name',
-            autofocus: false,
-            keyboardType: TextInputType.name,
-            autofillHints: const [AutofillHints.givenName],
+            errorText: _isFirstNameValid ? null : 'Invalid name',
+            onChanged: (value) {
+              setState(() {
+                _isFirstNameValid = validateName(value);
+              });
+            },
           ),
+
           _buildTextField(
             controller: _lastNameController,
             focusNode: _lastNameFocus,
             label: 'Last Name',
-            keyboardType: TextInputType.name,
-            autofillHints: const [AutofillHints.familyName],
+            errorText: _isFirstNameValid ? null : 'Invalid name',
+            onChanged: (value) {
+              setState(() {
+                _isLastNameValid = validateName(value);
+              });
+            },
           ),
           // _buildTextField(
           //   controller: _contactController,
@@ -694,6 +723,12 @@ class _SignUpPageState extends State<SignUpPage>
             label: 'Email',
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
+            errorText: _isEmailValid ? null : 'Invalid email address',
+            onChanged: (value) {
+              setState(() {
+                _isEmailValid = validateEmail(value);
+              });
+            },
           ),
 
           _buildTextField(
@@ -900,6 +935,9 @@ class _SignUpPageState extends State<SignUpPage>
     TextInputType? keyboardType,
     List<String>? autofillHints,
     Widget? suffixIcon,
+    String? errorText,
+    ValueChanged<String>? onChanged,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -910,6 +948,8 @@ class _SignUpPageState extends State<SignUpPage>
         autofillHints: autofillHints,
         obscureText: obscureText,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        onChanged: onChanged,
         cursorColor: const Color(0xFF4B39EF),
         style: const TextStyle(
           color: Color(0xFF101213),
@@ -923,6 +963,7 @@ class _SignUpPageState extends State<SignUpPage>
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
+          errorText: errorText,
           enabledBorder: OutlineInputBorder(
             borderSide: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
             borderRadius: BorderRadius.circular(40),
@@ -1011,6 +1052,33 @@ class _SignUpPageState extends State<SignUpPage>
     });
   }
 
+  bool validateName(String value) {
+    final name = value.trim();
+    if (name.length < 2) return false;
+
+    final RegExp nameRegex = RegExp(r'^[A-Za-z]+(?: [A-Za-z]+)*$');
+    return nameRegex.hasMatch(name);
+  }
+
+  bool validateContact(String value) {
+    final RegExp phContactRegex = RegExp(r'^(09\d{9}|\+639\d{9})$');
+    return phContactRegex.hasMatch(value.trim());
+  }
+
+  bool validateEmail(String value) {
+    final email = value.trim();
+
+    if (email.isEmpty) return false;
+
+    final RegExp emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@'
+      r'(?:[a-zA-Z0-9-]+\.)+'
+      r'[a-zA-Z]{2,}$',
+    );
+
+    return emailRegex.hasMatch(email);
+  }
+
   Future<void> _checkExistingSession() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -1087,8 +1155,7 @@ class _SignUpPageState extends State<SignUpPage>
               verificationResult['verified'] == true) {
             Navigator.pushReplacementNamed(context, '/home');
           }
-        } else if (isNewUser &&
-            (user.contact == null || user.contact.isEmpty)) {
+        } else if (isNewUser && (user.contact.isEmpty)) {
           // New Google user might need to complete profile (add contact)
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

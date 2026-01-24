@@ -509,4 +509,26 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
       ),
     );
   }
+
+  void autoPrefixPHContact(TextEditingController controller) {
+    final text = controller.text;
+
+    if (text.startsWith('09')) {
+      final newText = '+63${text.substring(1)}';
+      controller.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: newText.length),
+      );
+    }
+  }
+
+  String normalizePHContact(String value) {
+    final contact = value.trim();
+
+    if (contact.startsWith('09')) {
+      return '+63${contact.substring(1)}';
+    }
+
+    return contact;
+  }
 }

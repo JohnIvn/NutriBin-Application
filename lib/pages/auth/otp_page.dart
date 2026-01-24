@@ -305,67 +305,63 @@ class _VerifyPasswordResetOtpPageState
                     const SizedBox(height: 40),
 
                     // OTP Input Fields
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(6, (index) {
-                        return Container(
-                          width: 50,
-                          height: 60,
-                          margin: EdgeInsets.only(right: index < 5 ? 12 : 0),
-                          child: TextFormField(
-                            controller: _otpControllers[index],
-                            focusNode: _otpFocusNodes[index],
-                            textAlign: TextAlign.center,
-                            keyboardType: TextInputType.number,
-                            maxLength: 1,
-                            style: GoogleFonts.inter(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF101213),
-                            ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: InputDecoration(
-                              counterText: '',
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE0E3E7),
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: _primaryColor,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                            ),
-                            onChanged: (value) {
-                              if (value.isNotEmpty && index < 5) {
-                                _otpFocusNodes[index + 1].requestFocus();
-                              } else if (value.isEmpty && index > 0) {
-                                _otpFocusNodes[index - 1].requestFocus();
-                              }
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final boxWidth = (constraints.maxWidth - (5 * 8)) / 6;
 
-                              // Auto-verify when all fields are filled
-                              if (index == 5 && value.isNotEmpty) {
-                                final allFilled = _otpControllers.every(
-                                  (c) => c.text.isNotEmpty,
-                                );
-                                if (allFilled) {
-                                  FocusScope.of(context).unfocus();
-                                }
-                              }
-                            },
-                          ),
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(6, (index) {
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                right: index < 5 ? 8 : 0,
+                              ),
+                              child: SizedBox(
+                                width: boxWidth,
+                                height: boxWidth * 1.2,
+                                child: TextFormField(
+                                  controller: _otpControllers[index],
+                                  focusNode: _otpFocusNodes[index],
+                                  textAlign: TextAlign.center,
+                                  keyboardType: TextInputType.number,
+                                  maxLength: 1,
+                                  style: GoogleFonts.inter(
+                                    fontSize: boxWidth * 0.45,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  decoration: InputDecoration(
+                                    counterText: '',
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFFE0E3E7),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: _primaryColor,
+                                        width: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    if (value.isNotEmpty && index < 5) {
+                                      _otpFocusNodes[index + 1].requestFocus();
+                                    }
+                                  },
+                                ),
+                              ),
+                            );
+                          }),
                         );
-                      }),
+                      },
                     ),
+
                     const SizedBox(height: 40),
 
                     // Verify Button
