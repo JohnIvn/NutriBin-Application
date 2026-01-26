@@ -1,10 +1,8 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:nutribin_application/services/auth_service.dart';
 
 class GoogleOAuthService {
-  // Private instance
   static GoogleSignIn? _googleSignIn;
 
   /// Initialize Google OAuth
@@ -33,82 +31,68 @@ class GoogleOAuthService {
     return _googleSignIn!;
   }
 
-  /// Sign in with Google
+  /// Sign in with Google (tries sign-in first, then sign-up if needed)
   static Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
       final googleUser = await _instance.signIn();
 
       if (googleUser == null) {
-        return {'success': false, 'message': 'Sign in cancelled'};
+        return {'success': false, 'message': 'Sign in cancelled by user'};
       }
 
       final googleAuth = await googleUser.authentication;
 
-      final result = await _authenticateWithBackend(
-        email: googleUser.email,
-        displayName: googleUser.displayName,
-        photoUrl: googleUser.photoUrl,
-        idToken: googleAuth.idToken,
-        accessToken: googleAuth.accessToken,
+      // Validate tokens
+      if (googleAuth.idToken == null) {
+        return {
+          'success': false,
+          'message': 'Failed to get authentication token',
+        };
+      }
+
+      // Try to sign in first
+      final signInResult = await AuthService.googleSignIn(
+        idToken: googleAuth.idToken!,
       );
 
-      return result;
+      if (signInResult['ok'] == true) {
+        return {
+          'success': true,
+          'user': signInResult['user'],
+          'isNewUser': false,
+        };
+      }
+
+      // If sign-in failed because account doesn't exist, try sign-up
+      if (signInResult['message']?.contains('No account found') == true) {
+        final signUpResult = await AuthService.googleSignUp(
+          idToken: googleAuth.idToken!,
+        );
+
+        if (signUpResult['ok'] == true) {
+          return {
+            'success': true,
+            'user': signUpResult['user'],
+            'isNewUser': true,
+          };
+        }
+
+        return {
+          'success': false,
+          'message': signUpResult['message'] ?? 'Failed to create account',
+        };
+      }
+
+      // Other sign-in error
+      return {
+        'success': false,
+        'message': signInResult['message'] ?? 'Authentication failed',
+      };
     } catch (e) {
       print('Error signing in with Google: $e');
       return {
         'success': false,
         'message': 'Failed to sign in with Google: ${e.toString()}',
-      };
-    }
-  }
-
-  /// Authenticate with backend
-  static Future<Map<String, dynamic>> _authenticateWithBackend({
-    required String? email,
-    required String? displayName,
-    required String? photoUrl,
-    required String? idToken,
-    required String? accessToken,
-  }) async {
-    try {
-      final baseUrl = dotenv.env['SUPABASE_URL'] ?? 'http://localhost:3000';
-      // final url = Uri.parse('$baseUrl/api/auth/google');
-      final url = Uri.parse('$baseUrl/functions/v1/googleAuth');
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'displayName': displayName,
-          'photoUrl': photoUrl,
-          'idToken': idToken,
-          'accessToken': accessToken,
-        }),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return {
-          'success': true,
-          'user': data['user'],
-          'token': data['token'],
-          'isNewUser': data['isNewUser'] ?? false,
-          'requiresEmailVerification':
-              data['requiresEmailVerification'] ?? false,
-        };
-      } else {
-        final error = jsonDecode(response.body);
-        return {
-          'success': false,
-          'message': error['message'] ?? 'Authentication failed',
-        };
-      }
-    } catch (e) {
-      print('Backend authentication error: $e');
-      return {
-        'success': false,
-        'message': 'Failed to authenticate with server: ${e.toString()}',
       };
     }
   }

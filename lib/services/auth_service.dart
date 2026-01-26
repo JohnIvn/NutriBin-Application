@@ -9,6 +9,112 @@ class AuthService {
   static final String restBackend = dotenv.env["BACKEND_URL"].toString();
   static final String supabaseUrl = dotenv.env["SUPABASE_URL"].toString();
   static final String anonKey = dotenv.env["SUPABASE_ANON"].toString();
+  static Future<Map<String, dynamic>> googleSignIn({
+    required String idToken,
+  }) async {
+    try {
+      final url = Uri.parse("$restUrl/user/google-signin");
+
+      final response = await http
+          .post(
+            url,
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $anonKey",
+            },
+            body: jsonEncode({
+              "credential": idToken, // Backend expects "credential"
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              throw Exception('Connection timed out');
+            },
+          );
+
+      final data = jsonDecode(response.body);
+
+      // Check for successful response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (data['ok'] == true) {
+          return {
+            "ok": true,
+            "user": data['user'],
+            "message": data['message'] ?? 'Successfully signed in with Google',
+          };
+        }
+      }
+
+      // Handle errors from backend
+      return {
+        "ok": false,
+        "message": data['error'] ?? data['message'] ?? 'Google sign-in failed',
+      };
+    } catch (e) {
+      return {
+        "ok": false,
+        "message": e.toString().contains('timed out')
+            ? 'Connection timed out. Please check your internet.'
+            : 'Failed to sign in with Google: ${e.toString()}',
+      };
+    }
+  }
+
+  // Google Sign Up
+  static Future<Map<String, dynamic>> googleSignUp({
+    required String idToken,
+  }) async {
+    try {
+      final url = Uri.parse("$restUrl/user/google-signup");
+
+      final response = await http
+          .post(
+            url,
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $anonKey",
+            },
+            body: jsonEncode({
+              "credential": idToken, // Backend expects "credential"
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              throw Exception('Connection timed out');
+            },
+          );
+
+      final data = jsonDecode(response.body);
+
+      // Check for successful response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (data['ok'] == true) {
+          return {
+            "ok": true,
+            "user": data['user'],
+            "isNewUser": data['newAccount'] ?? true,
+            "message":
+                data['message'] ?? 'Successfully created account with Google',
+          };
+        }
+      }
+
+      // Handle errors from backend
+      return {
+        "ok": false,
+        "message": data['error'] ?? data['message'] ?? 'Google sign-up failed',
+      };
+    } catch (e) {
+      return {
+        "ok": false,
+        "message": e.toString().contains('timed out')
+            ? 'Connection timed out. Please check your internet.'
+            : 'Failed to sign up with Google: ${e.toString()}',
+      };
+    }
+  }
 
   static Future<Map<String, dynamic>> signup({
     required String firstName,
@@ -223,14 +329,6 @@ class AuthService {
     } catch (e) {
       return {"success": false, "message": e.toString()};
     }
-  }
-
-  // TODO: Implement contact verification request
-  static Future<Map<String, dynamic>> verifyContactOtp({
-    required String contact,
-  }) async {
-    // TODO: call backend endpoint to send verification code to contact number
-    return {"success": true};
   }
 
   // User Sign In

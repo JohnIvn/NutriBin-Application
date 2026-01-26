@@ -655,7 +655,7 @@ class _SignUpPageState extends State<SignUpPage>
           ),
 
           // Google Sign In INDEV
-          // _buildGoogleSignInButton(),
+          _buildGoogleSignInButton(),
           const SizedBox(height: 24),
         ],
       ),
@@ -1106,6 +1106,8 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _handleGoogleSignIn() async {
+    if (_isLoading) return; // Prevent multiple clicks
+
     setState(() => _isLoading = true);
 
     try {
@@ -1124,49 +1126,39 @@ class _SignUpPageState extends State<SignUpPage>
 
       final user = User.fromJson(result['user']);
       final isNewUser = result['isNewUser'] ?? false;
-      final requiresEmailVerification =
-          result['requiresEmailVerification'] ?? false;
 
-      // Save session
+      // Save session (no JWT token from your backend)
       await PreferenceUtility.saveSession(
         user.id,
         user.email,
         user.firstName,
         user.lastName,
-        user.contact,
-        user.address,
+        user.contact ?? '',
+        user.address ?? '',
       );
 
       if (mounted) {
-        if (requiresEmailVerification) {
-          // Navigate to email verification
-          final verificationResult = await Navigator.pushNamed(
-            context,
-            '/verify-otp',
-            arguments: {
-              'recipient': user.email,
-              'type': 'email',
-              'data': {'userId': user.id},
-            },
-          );
-
-          if (verificationResult != null &&
-              verificationResult is Map &&
-              verificationResult['verified'] == true) {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-        } else if (isNewUser && (user.contact.isEmpty)) {
-          // New Google user might need to complete profile (add contact)
+        // Show welcome message based on user status
+        if (isNewUser) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Welcome! Please complete your profile.'),
+              content: Text(
+                'Welcome! Account created. Check your email for your temporary password.',
+              ),
+              duration: Duration(seconds: 3),
             ),
           );
-          Navigator.pushReplacementNamed(context, '/home');
         } else {
-          // Existing user, go to home
-          Navigator.pushReplacementNamed(context, '/home');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Successfully signed in!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
         }
+
+        // Navigate to home
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
       if (mounted) {
