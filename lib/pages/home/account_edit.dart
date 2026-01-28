@@ -376,7 +376,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
 
       try {
         // Send verification code to the new contact number
-        final verifyResult = await AuthService.sendContactVerification(
+        final verifyResult = await AuthUtility.sendContactVerification(
           contact: currentContact,
         );
 
@@ -437,7 +437,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     });
 
     try {
-      final result = await AuthService.updateUser(
+      final result = await AuthUtility.updateUser(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         contact: _contactController.text.trim(),

@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/models/user.dart';
 import 'package:nutribin_application/services/account_service.dart';
 import 'package:nutribin_application/services/auth_service.dart';
-import 'package:nutribin_application/services/google_auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 import 'package:nutribin_application/widgets/google_button.dart';
 import 'package:nutribin_application/widgets/map_picker.dart';
@@ -33,40 +31,41 @@ class _SignUpPageState extends State<SignUpPage>
   bool _signInPasswordVisible = false;
 
   // Sign Up form controllers
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _addressController = TextEditingController();
+  final _signUpFirstNameController = TextEditingController();
+  final _signUpLastNameController = TextEditingController();
+  final _signUpAddressController = TextEditingController();
   final _signUpEmailController = TextEditingController();
   final _signUpPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _signUpConfirmPasswordController = TextEditingController();
 
-  final _firstNameFocus = FocusNode();
-  final _lastNameFocus = FocusNode();
-  final _contactFocus = FocusNode();
-  final _addressFocus = FocusNode();
+  final _signUpFirstNameFocus = FocusNode();
+  final _signUpLastNameFocus = FocusNode();
+  final _signUpAddressFocus = FocusNode();
   final _signUpEmailFocus = FocusNode();
   final _signUpPasswordFocus = FocusNode();
   final _confirmPasswordFocus = FocusNode();
-
-  bool _passwordVisible = false;
   bool _termsRead = false;
   bool _termsAccepted = false;
+  bool _signUpPasswordVisible = false;
 
+  // Password Validation
   bool _hasMinLength = false;
   bool _hasUppercase = false;
   bool _hasLowercase = false;
   bool _hasDigit = false;
   bool _hasSpecialChar = false;
 
-  //Validations
+  // Form Validations
   bool _isFirstNameValid = true;
   bool _isLastNameValid = true;
   bool _isEmailValid = true;
 
+  // State
   bool _isLoading = false;
 
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
+
   @override
   void initState() {
     super.initState();
@@ -83,16 +82,15 @@ class _SignUpPageState extends State<SignUpPage>
     _signInPasswordController.dispose();
     _signInEmailFocus.dispose();
     _signInPasswordFocus.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _addressController.dispose();
+    _signUpFirstNameController.dispose();
+    _signUpLastNameController.dispose();
+    _signUpAddressController.dispose();
     _signUpEmailController.dispose();
     _signUpPasswordController.dispose();
-    _confirmPasswordController.dispose();
-    _firstNameFocus.dispose();
-    _lastNameFocus.dispose();
-    _contactFocus.dispose();
-    _addressFocus.dispose();
+    _signUpConfirmPasswordController.dispose();
+    _signUpFirstNameFocus.dispose();
+    _signUpLastNameFocus.dispose();
+    _signUpAddressFocus.dispose();
     _signUpEmailFocus.dispose();
     _signUpPasswordFocus.dispose();
     _confirmPasswordFocus.dispose();
@@ -100,21 +98,21 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   bool _validateSignInForm() {
-    if (_signInEmailController.text.trim().isEmpty) {
-      _showError("Email is required");
+    final isValidEmail = ValidationUtility.validateEmail(
+      _signInEmailController.text.trim(),
+    );
+
+    final isValidPassword = ValidationUtility.validateEmail(
+      _signInPasswordController.text.trim(),
+    );
+    if (isValidEmail["ok"] != true) {
+      _showError(isValidEmail["message"]);
       _signInEmailFocus.requestFocus();
       return false;
     }
 
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    if (!emailRegex.hasMatch(_signInEmailController.text.trim())) {
-      _showError("Invalid email format");
-      _signInEmailFocus.requestFocus();
-      return false;
-    }
-
-    if (_signInPasswordController.text.isEmpty) {
-      _showError("Password is required");
+    if (isValidPassword["ok"] != true) {
+      _showError(isValidPassword["message"]);
       _signInPasswordFocus.requestFocus();
       return false;
     }
@@ -123,63 +121,57 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   bool _validateSignUpForm() {
-    if (_firstNameController.text.trim().isEmpty) {
-      _showError("First name is required");
-      _firstNameFocus.requestFocus();
-      return false;
-    }
-
-    if (_lastNameController.text.trim().isEmpty) {
-      _showError("Last name is required");
-      _lastNameFocus.requestFocus();
-      return false;
-    }
-
-    if (_addressController.text.trim().isEmpty) {
-      _showError("Please select an address");
-      _addressFocus.requestFocus();
-      return false;
-    }
-
-    final email = _signUpEmailController.text.trim();
-    if (email.isEmpty) {
-      _showError("Email is required");
-      _signUpEmailFocus.requestFocus();
-      return false;
-    }
-
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    final isValidFirstname = ValidationUtility.validateName(
+      _signUpFirstNameController.text.trim(),
     );
-    if (!emailRegex.hasMatch(email)) {
-      _showError("Please enter a valid email address");
+    final isValidLastname = ValidationUtility.validateName(
+      _signUpFirstNameController.text.trim(),
+    );
+    final isValidEmail = ValidationUtility.validateEmail(
+      _signUpFirstNameController.text.trim(),
+    );
+    final isValidPassword = ValidationUtility.validatePassword(
+      _signUpFirstNameController.text.trim(),
+    );
+
+    if (isValidFirstname["ok"] != true) {
+      _showError(isValidFirstname["message"]);
+      _signUpFirstNameFocus.requestFocus();
+      return false;
+    }
+
+    if (isValidLastname["ok"] != true) {
+      _showError(isValidLastname["message"]);
+      _signUpLastNameFocus.requestFocus();
+      return false;
+    }
+
+    if (_signUpAddressController.text.trim().isEmpty) {
+      _showError("Please select an address");
+      _signUpAddressFocus.requestFocus();
+      return false;
+    }
+
+    if (isValidEmail["ok"] != true) {
+      _showError(isValidEmail["message"]);
       _signUpEmailFocus.requestFocus();
       return false;
     }
 
-    if (_signUpPasswordController.text.isEmpty) {
-      _showError("Password is required");
+    if (isValidPassword["ok"] != true) {
+      _showError(isValidEmail["message"]);
       _signUpPasswordFocus.requestFocus();
       return false;
     }
 
-    if (!_hasMinLength ||
-        !_hasUppercase ||
-        !_hasLowercase ||
-        !_hasDigit ||
-        !_hasSpecialChar) {
-      _showError("Password does not meet all requirements");
-      _signUpPasswordFocus.requestFocus();
-      return false;
-    }
-
-    if (_confirmPasswordController.text.isEmpty) {
+    if (_signUpConfirmPasswordController.text.isEmpty) {
       _showError("Please confirm your password");
       _confirmPasswordFocus.requestFocus();
       return false;
     }
 
-    if (_signUpPasswordController.text != _confirmPasswordController.text) {
+    if (_signUpPasswordController.text !=
+        _signUpConfirmPasswordController.text) {
       _showError("Passwords do not match");
       _confirmPasswordFocus.requestFocus();
       return false;
@@ -206,7 +198,7 @@ class _SignUpPageState extends State<SignUpPage>
 
       setState(() => _isLoading = true);
 
-      final verifyResult = await AuthService.sendEmailVerification(
+      final verifyResult = await AuthUtility.sendEmailVerification(
         email: _signUpEmailController.text.trim(),
       );
 
@@ -275,12 +267,12 @@ class _SignUpPageState extends State<SignUpPage>
       setState(() => _isLoading = true);
 
       final signupResult = await AccountUtility.authSignUp(
-        firstname: _firstNameController.text.trim(),
-        lastname: _lastNameController.text.trim(),
-        address: _addressController.text.trim(),
+        firstname: _signUpFirstNameController.text.trim(),
+        lastname: _signUpLastNameController.text.trim(),
+        address: _signUpAddressController.text.trim(),
         email: _signUpEmailController.text.trim(),
         password: _signUpPasswordController.text.trim(),
-        confirmPassword: _confirmPasswordController.text.trim(),
+        confirmPassword: _signUpConfirmPasswordController.text.trim(),
       );
 
       setState(() => _isLoading = false);
@@ -388,7 +380,7 @@ class _SignUpPageState extends State<SignUpPage>
 
     if (result != null && result is String) {
       setState(() {
-        _addressController.text = result;
+        _signUpAddressController.text = result;
       });
     }
   }
@@ -628,8 +620,8 @@ class _SignUpPageState extends State<SignUpPage>
             ),
           ),
           _buildTextField(
-            controller: _firstNameController,
-            focusNode: _firstNameFocus,
+            controller: _signUpFirstNameController,
+            focusNode: _signUpFirstNameFocus,
             label: 'First Name',
             errorText: _isFirstNameValid ? null : 'Invalid name',
             onChanged: (value) {
@@ -640,8 +632,8 @@ class _SignUpPageState extends State<SignUpPage>
           ),
 
           _buildTextField(
-            controller: _lastNameController,
-            focusNode: _lastNameFocus,
+            controller: _signUpLastNameController,
+            focusNode: _signUpLastNameFocus,
             label: 'Last Name',
             errorText: _isFirstNameValid ? null : 'Invalid name',
             onChanged: (value) {
@@ -651,8 +643,8 @@ class _SignUpPageState extends State<SignUpPage>
             },
           ),
           _buildMapAddressField(
-            controller: _addressController,
-            focusNode: _addressFocus,
+            controller: _signUpAddressController,
+            focusNode: _signUpAddressFocus,
             label: 'Address',
             onTap: _openMapPicker,
           ),
@@ -675,17 +667,17 @@ class _SignUpPageState extends State<SignUpPage>
             controller: _signUpPasswordController,
             focusNode: _signUpPasswordFocus,
             label: 'Password',
-            obscureText: !_passwordVisible,
+            obscureText: !_signUpPasswordVisible,
             autofillHints: const [AutofillHints.password],
             suffixIcon: InkWell(
               onTap: () {
                 setState(() {
-                  _passwordVisible = !_passwordVisible;
+                  _signUpPasswordVisible = !_signUpPasswordVisible;
                 });
               },
               focusNode: FocusNode(skipTraversal: true),
               child: Icon(
-                _passwordVisible
+                _signUpPasswordVisible
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
                 color: const Color(0xFF57636C),
@@ -695,20 +687,20 @@ class _SignUpPageState extends State<SignUpPage>
           ),
           _buildPasswordRequirements(),
           _buildTextField(
-            controller: _confirmPasswordController,
+            controller: _signUpConfirmPasswordController,
             focusNode: _confirmPasswordFocus,
             label: 'Confirm Password',
-            obscureText: !_passwordVisible,
+            obscureText: !_signUpPasswordVisible,
             autofillHints: const [AutofillHints.password],
             suffixIcon: InkWell(
               onTap: () {
                 setState(() {
-                  _passwordVisible = !_passwordVisible;
+                  _signUpPasswordVisible = !_signUpPasswordVisible;
                 });
               },
               focusNode: FocusNode(skipTraversal: true),
               child: Icon(
-                _passwordVisible
+                _signUpPasswordVisible
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
                 color: const Color(0xFF57636C),

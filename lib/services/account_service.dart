@@ -57,7 +57,7 @@ class AccountUtility {
       );
       final data = jsonDecode(response.body);
       if (data["ok"] != true) {
-        throw Exception(data["message"]);
+        throw Exception(data["error"]);
       }
       return data;
     } catch (e) {
@@ -71,8 +71,7 @@ class AccountUtility {
   }) async {
     try {
       // URI Initialization
-      final signInUrl = Uri.parse("$restUser/user/signin");
-      final mfaUrl = Uri.parse("$restUser/user/mfa");
+      final url = Uri.parse("$restUser/user/signin");
 
       // Pre-API Validation
       final isValidEmail = ValidationUtility.validateEmail(email);
@@ -90,7 +89,7 @@ class AccountUtility {
 
       // Response (Signin)
       final responseSignin = await http.post(
-        signInUrl,
+        url,
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $anonKey",
@@ -105,27 +104,12 @@ class AccountUtility {
         throw Exception(data["message"]);
       }
 
-      // User Id
-      final uid = data["customer_id"];
-
-      // Response (Authentication)
-      final responseMfa = await http.post(
-        mfaUrl,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
-        },
-        body: jsonEncode({"customer_id": uid}),
-      );
-
-      final mfaData = jsonDecode(responseMfa.body);
-      // Error Handling (Signin)
-      if (mfaData["ok"] != true) {
-        throw Exception(data["message"]);
-      }
-
       // MFA Data is temporary
-      return {"ok": true, "data": data["data"].user, "mfa": mfaData["on"]};
+      return {
+        "ok": true,
+        "data": data["data"].user,
+        "mfa": data["requiresMfa"],
+      };
     } catch (e) {
       return ResponseUtility.invalid(e.toString());
     }
@@ -141,13 +125,11 @@ class AccountUtility {
 
       final googleAuth = await googleUser.authentication;
 
-      // Validate tokens
       if (googleAuth.idToken == null) {
         return ResponseUtility.invalid("Failed to get Google token");
       }
 
-      // Try to sign in first
-      final url = Uri.parse("$restUser/user/google-auth");
+      final url = Uri.parse("$restUser/user/google-signin");
 
       final response = await http.post(
         url,

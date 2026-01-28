@@ -83,7 +83,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   GoogleOAuthService.initialize();
-  AuthService().startServer();
+  AuthUtility().startServer();
   runApp(const MyApp());
 }
 

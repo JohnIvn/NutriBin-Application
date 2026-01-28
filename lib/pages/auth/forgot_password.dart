@@ -41,9 +41,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _isLoading = true);
 
     try {
-      final verifyResult = await AuthService.sendEmailVerification(
+      final verifyResult = await AuthUtility.sendEmailVerification(
         email: _emailController.text.trim(),
-        type: "reset"
       );
 
       if (!mounted) return;

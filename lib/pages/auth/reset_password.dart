@@ -72,7 +72,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     setState(() => _isLoading = true);
 
     try {
-      final result = await AuthService.resetPassword(
+      final result = await AuthUtility.resetPassword(
         email: _email.toString(),
         newPassword: newPassword,
       );

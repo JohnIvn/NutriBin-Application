@@ -4,18 +4,18 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:nutribin_application/utils/helpers.dart';
 
-class AuthService {
-  static final String restUrl = dotenv.env["REST_URL"].toString();
-  static final String restBackend = dotenv.env["BACKEND_URL"].toString();
-  static final String supabaseUrl = dotenv.env["SUPABASE_URL"].toString();
-  static final String anonKey = dotenv.env["SUPABASE_ANON"].toString();
+final String restUser = dotenv.env["RAILWAY_USER"].toString();
+final String restServer = dotenv.env["RAILWAY_SERVER"].toString();
+final String googleClient = dotenv.env["GOOGLE_CLIENT_ID"].toString();
+final String supabaseUrl = dotenv.env["SUPABASE_URL"].toString();
+final String anonKey = dotenv.env["SUPABASE_ANON"].toString();
 
+class AuthUtility {
   static Future<Map<String, dynamic>> sendEmailVerification({
     required String email,
-    String? type,
   }) async {
     try {
-      final url = Uri.parse("$restUrl/user/email-verification");
+      final url = Uri.parse("$restUser/user/send-verification");
 
       final response = await http.post(
         url,
@@ -24,7 +24,7 @@ class AuthService {
           "Authorization": "Bearer $anonKey",
           "apikey": anonKey,
         },
-        body: jsonEncode({"newEmail": email, "type": type}),
+        body: jsonEncode({"email": email}),
       );
 
       final data = jsonDecode(response.body);
@@ -32,19 +32,45 @@ class AuthService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data['ok'] == true) {
           return {
-            "success": true,
-            "code": data['code'],
+            "ok": true,
             "message": data['message'] ?? 'Verification code sent',
           };
         }
       }
 
-      return {
-        "success": false,
-        "message": data['message'] ?? 'Failed to send verification code',
-      };
+      return ResponseUtility.invalid(
+        data['message'] ?? 'Failed to send verification code',
+      );
     } catch (e) {
-      return {"success": false, "message": e.toString()};
+      return ResponseUtility.invalid(e.toString());
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyEmail({
+    required String code,
+  }) async {
+    try {
+      final url = Uri.parse("$restUser/user/verify-email");
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+          "apikey": anonKey,
+        },
+        body: jsonEncode({"verificationCode": code}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data["ok"] != true) {
+        return ResponseUtility.invalid(data["error"]);
+      }
+
+      return {"ok": true, "message": "Code verified successfully"};
+    } catch (e) {
+      return ResponseUtility.invalid(e.toString());
     }
   }
 
@@ -52,7 +78,7 @@ class AuthService {
     required String contact,
   }) async {
     try {
-      final url = Uri.parse("$restBackend/staff/phone/request");
+      final url = Uri.parse("$restServer/staff/phone/request");
 
       final response = await http.post(
         url,
@@ -69,19 +95,18 @@ class AuthService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data['ok'] == true) {
           return {
-            "success": true,
+            "ok": true,
             "code": data['code'],
             "message": data['message'] ?? 'Verification sms code sent',
           };
         }
       }
 
-      return {
-        "success": false,
-        "message": data['message'] ?? 'Failed to send sms code',
-      };
+      return ResponseUtility.invalid(
+        data['message'] ?? 'Failed to send sms code',
+      );
     } catch (e) {
-      return {"success": false, "message": e.toString()};
+      return ResponseUtility.invalid(e.toString());
     }
   }
 
@@ -105,19 +130,19 @@ class AuthService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data['ok'] == true) {
           return {
-            "success": true,
+            "ok": true,
             "message": data['message'] ?? 'Password Changed Successfully',
           };
         }
       } else {
         return {
-          "success": false,
+          "ok": false,
           "message": data["message"] ?? "Password Reset Failed",
         };
       }
-      return {"success": false, "message": "Password Reset Failed"};
+      return {"ok": false, "message": "Password Reset Failed"};
     } catch (e) {
-      return {"success": false, "message": e.toString()};
+      return {"ok": false, "message": e.toString()};
     }
   }
 
@@ -126,7 +151,7 @@ class AuthService {
     required String code,
   }) async {
     try {
-      final url = Uri.parse("$supabaseUrl/user/verify-email-otp");
+      final url = Uri.parse("$supabaseUrl/functions/v1/verify-email-otp");
 
       final response = await http.post(
         url,
@@ -143,65 +168,19 @@ class AuthService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data['ok'] == true) {
           return {
-            "success": true,
+            "ok": true,
             "message": data['message'] ?? 'Email verified successfully',
           };
         }
       }
 
       return {
-        "success": false,
+        "ok": false,
         "message": data['message'] ?? 'Invalid verification code',
       };
     } catch (e) {
-      return {"success": false, "message": e.toString()};
+      return {"ok": false, "message": e.toString()};
     }
-  }
-
-  // User Sign In
-  static Future<Map<String, dynamic>> signin({
-    required String email,
-    required String password,
-  }) async {
-    final url = Uri.parse(
-      "https://nutribin-user-backend-production.up.railway.app/user/signin",
-    );
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": email, "password": password}),
-    );
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      return {
-        "ok": false,
-        "error":
-            "Failed to connect to server. Status code: ${response.statusCode}",
-      };
-    }
-
-    final data = jsonDecode(response.body);
-
-    // Handle MFA requirement
-    if (data['requiresMFA'] == true) {
-      return {
-        "ok": true,
-        "requiresMFA": true,
-        "message": data['message'],
-        "userId": data['userId'],
-      };
-    }
-
-    // Handle errors from backend
-    if (data['ok'] == false) {
-      return {"ok": false, "error": data['error'] ?? "Unknown error"};
-    }
-
-    // Successful login
-    return {
-      "ok": true,
-      "user": data['user'], // contains safeUser fields
-    };
   }
 
   // User Update
@@ -214,10 +193,10 @@ class AuthService {
     try {
       String? userId = await PreferenceUtility.getUserId();
       if (userId == null) {
-        return {"success": false, "data": "User ID not found"};
+        return {"ok": false, "data": "User ID not found"};
       }
 
-      final url = Uri.parse("$restUrl/settings/$userId");
+      final url = Uri.parse("$restUser/settings/$userId");
 
       final response = await http.patch(
         url,
@@ -237,40 +216,14 @@ class AuthService {
       final data = jsonDecode(response.body);
 
       if (data["ok"] == true) {
-        return {"success": true, "data": data["user"]};
+        return {"ok": true, "data": data["user"]};
       } else {
-        return {"success": false, "data": data["error"] ?? "Update failed"};
+        return {"ok": false, "data": data["error"] ?? "Update failed"};
       }
     } catch (e) {
-      return {"success": false, "data": e.toString()};
+      return {"ok": false, "data": e.toString()};
     }
   }
-
-  // User Fetch
-  static Future<Map<String, dynamic>> fetchUser() async {
-    try {
-      String? userId = await PreferenceUtility.getUserId();
-      final url = Uri.parse(
-        "$restUrl/functions/v1/fetchAccount?customer_id=$userId",
-      );
-      print("USERID: $userId");
-
-      final response = await http.get(
-        url,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
-          "apikey": anonKey,
-        },
-      );
-
-      return jsonDecode(response.body);
-    } catch (e) {
-      return {"success": false, "data": e};
-    }
-  }
-
-  // User Email Verification
 
   Future<void> startServer() async {
     // Get phone's actual IP address

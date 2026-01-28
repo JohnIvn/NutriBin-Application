@@ -330,10 +330,10 @@ class _ContactsVerificationState extends State<ContactsVerification> {
 
       switch (_verificationType) {
         case OtpVerificationType.email:
-          result = await AuthService.sendEmailVerification(email: _recipient!);
+          result = await AuthUtility.sendEmailVerification(email: _recipient!);
           break;
         case OtpVerificationType.contact:
-          result = await AuthService.sendContactVerification(
+          result = await AuthUtility.sendContactVerification(
             contact: _recipient!,
           );
           break;
