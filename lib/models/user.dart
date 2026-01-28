@@ -7,6 +7,7 @@ class User {
   final String contact;
   final String address;
   final String birthday;
+  final String token;
 
   User.fromJson(Map<String, dynamic> json)
     : id = json["customer_id"] ?? '',
@@ -16,5 +17,6 @@ class User {
       gender = json["gender"] ?? '',
       contact = json["contact_number"] ?? '',
       address = json["address"] ?? '',
-      birthday = json["birthday"] ?? '';
+      birthday = json["birthday"] ?? '',
+      token = json["token"] ?? '';
 }

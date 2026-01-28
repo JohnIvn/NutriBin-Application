@@ -131,10 +131,7 @@ class AccountUtility {
     }
   }
 
-  static Future<Map<String, dynamic>> googleSignIn({
-    required String email,
-    required String password,
-  }) async {
+  static Future<Map<String, dynamic>> googleSignIn() async {
     try {
       final googleUser = await _instance.signIn();
 

@@ -274,14 +274,13 @@ class _SignUpPageState extends State<SignUpPage>
 
       setState(() => _isLoading = true);
 
-      final signupResult = await AuthService.signup(
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
+      final signupResult = await AccountUtility.authSignUp(
+        firstname: _firstNameController.text.trim(),
+        lastname: _lastNameController.text.trim(),
         address: _addressController.text.trim(),
         email: _signUpEmailController.text.trim(),
         password: _signUpPasswordController.text.trim(),
         confirmPassword: _confirmPasswordController.text.trim(),
-        emailVerificationCode: emailVerificationCode,
       );
 
       setState(() => _isLoading = false);
@@ -292,15 +291,15 @@ class _SignUpPageState extends State<SignUpPage>
 
       final user = User.fromJson(signupResult["user"]);
 
-      // await PreferenceUtility.saveSession(
-      //   user.id,
-      //   user.email,
-      //   user.firstName,
-      //   user.lastName,
-      //   user.contact,
-      //   user.address,
-      //   user.token,
-      // );
+      await PreferenceUtility.saveSession(
+        user.id,
+        user.email,
+        user.firstName,
+        user.lastName,
+        user.contact,
+        user.address,
+        user.token,
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Account created successfully!")),
@@ -355,14 +354,15 @@ class _SignUpPageState extends State<SignUpPage>
       // Successful login
       final user = User.fromJson(result['user']);
 
-      // await PreferenceUtility.saveSession(
-      //   user.id,
-      //   user.email,
-      //   user.firstName,
-      //   user.lastName,
-      //   user.contact,
-      //   user.address
-      // );
+      await PreferenceUtility.saveSession(
+        user.id,
+        user.email,
+        user.firstName,
+        user.lastName,
+        user.contact,
+        user.address,
+        user.token,
+      );
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');
@@ -1024,7 +1024,7 @@ class _SignUpPageState extends State<SignUpPage>
     setState(() => _isLoading = true);
 
     try {
-      final result = await GoogleOAuthService.signInWithGoogle();
+      final result = await AccountUtility.googleSignIn();
 
       if (result['success'] != true) {
         if (mounted) {
@@ -1041,14 +1041,15 @@ class _SignUpPageState extends State<SignUpPage>
       final isNewUser = result['isNewUser'] ?? false;
 
       // Save session (no JWT token from your backend)
-      // await PreferenceUtility.saveSession(
-      //   user.id,
-      //   user.email,
-      //   user.firstName,
-      //   user.lastName,
-      //   user.contact,
-      //   user.address,
-      // );
+      await PreferenceUtility.saveSession(
+        user.id,
+        user.email,
+        user.firstName,
+        user.lastName,
+        user.contact,
+        user.address,
+        user.token,
+      );
 
       if (mounted) {
         // Show welcome message based on user status
