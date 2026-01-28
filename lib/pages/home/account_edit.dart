@@ -462,14 +462,14 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
       // Extract user object
       final user = User.fromJson(result["data"]);
 
-      await PreferenceUtility.saveSession(
-        user.id,
-        user.email,
-        user.firstName,
-        user.lastName,
-        user.contact,
-        user.address,
-      );
+      // await PreferenceUtility.saveSession(
+      //   user.id,
+      //   user.email,
+      //   user.firstName,
+      //   user.lastName,
+      //   user.contact,
+      //   user.address
+      // );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

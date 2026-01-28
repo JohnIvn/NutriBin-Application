@@ -4,9 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/models/user.dart';
+import 'package:nutribin_application/services/account_service.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/services/google_auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
+import 'package:nutribin_application/widgets/google_button.dart';
 import 'package:nutribin_application/widgets/map_picker.dart';
 import 'package:nutribin_application/widgets/terms_accept.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -290,14 +292,15 @@ class _SignUpPageState extends State<SignUpPage>
 
       final user = User.fromJson(signupResult["user"]);
 
-      await PreferenceUtility.saveSession(
-        user.id,
-        user.email,
-        user.firstName,
-        user.lastName,
-        user.contact,
-        user.address,
-      );
+      // await PreferenceUtility.saveSession(
+      //   user.id,
+      //   user.email,
+      //   user.firstName,
+      //   user.lastName,
+      //   user.contact,
+      //   user.address,
+      //   user.token,
+      // );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Account created successfully!")),
@@ -314,70 +317,15 @@ class _SignUpPageState extends State<SignUpPage>
     }
   }
 
-  Widget _buildGoogleSignInButton() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Row(
-            children: [
-              Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'OR',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF57636C),
-                  ),
-                ),
-              ),
-              Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
-            ],
-          ),
-        ),
-
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _handleGoogleSignIn,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(230, 52),
-              side: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(40),
-              ),
-            ),
-            icon: Image.asset(
-              'assets/images/google_logo.png',
-              height: 24,
-              width: 24,
-            ),
-            label: Text(
-              'Continue with Google',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF101213),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   void _handleSignIn() async {
     try {
       if (!_validateSignInForm()) return;
 
-      final result = await AuthService.signin(
+      final result = await AccountUtility.authSignIn(
         email: _signInEmailController.text.trim(),
         password: _signInPasswordController.text.trim(),
       );
 
-      // Handle MFA requirement
       if (result['requiresMFA'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -407,14 +355,14 @@ class _SignUpPageState extends State<SignUpPage>
       // Successful login
       final user = User.fromJson(result['user']);
 
-      await PreferenceUtility.saveSession(
-        user.id,
-        user.email,
-        user.firstName,
-        user.lastName,
-        user.contact ?? '',
-        user.address ?? '',
-      );
+      // await PreferenceUtility.saveSession(
+      //   user.id,
+      //   user.email,
+      //   user.firstName,
+      //   user.lastName,
+      //   user.contact,
+      //   user.address
+      // );
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');
@@ -428,7 +376,6 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _handleForgotPassword() {
-    // Navigate to forgot password/camera page
     Navigator.pushNamed(context, '/forgot-password');
     return;
   }
@@ -655,7 +602,7 @@ class _SignUpPageState extends State<SignUpPage>
           ),
 
           // Google Sign In INDEV
-          _buildGoogleSignInButton(),
+          GoogleSignInButton(onPressed: _handleGoogleSignIn),
           const SizedBox(height: 24),
         ],
       ),
@@ -687,7 +634,7 @@ class _SignUpPageState extends State<SignUpPage>
             errorText: _isFirstNameValid ? null : 'Invalid name',
             onChanged: (value) {
               setState(() {
-                _isFirstNameValid = validateName(value);
+                _isFirstNameValid = ValidationUtility.validateName(value)["ok"];
               });
             },
           ),
@@ -699,17 +646,10 @@ class _SignUpPageState extends State<SignUpPage>
             errorText: _isFirstNameValid ? null : 'Invalid name',
             onChanged: (value) {
               setState(() {
-                _isLastNameValid = validateName(value);
+                _isLastNameValid = ValidationUtility.validateName(value)["ok"];
               });
             },
           ),
-          // _buildTextField(
-          //   controller: _contactController,
-          //   focusNode: _contactFocus,
-          //   label: 'Contact',
-          //   keyboardType: TextInputType.number,
-          //   autofillHints: const [AutofillHints.telephoneNumber],
-          // ),
           _buildMapAddressField(
             controller: _addressController,
             focusNode: _addressFocus,
@@ -726,7 +666,7 @@ class _SignUpPageState extends State<SignUpPage>
             errorText: _isEmailValid ? null : 'Invalid email address',
             onChanged: (value) {
               setState(() {
-                _isEmailValid = validateEmail(value);
+                _isEmailValid = ValidationUtility.validateEmail(value)["ok"];
               });
             },
           ),
@@ -1052,33 +992,6 @@ class _SignUpPageState extends State<SignUpPage>
     });
   }
 
-  bool validateName(String value) {
-    final name = value.trim();
-    if (name.length < 2) return false;
-
-    final RegExp nameRegex = RegExp(r'^[A-Za-z]+(?: [A-Za-z]+)*$');
-    return nameRegex.hasMatch(name);
-  }
-
-  bool validateContact(String value) {
-    final RegExp phContactRegex = RegExp(r'^(09\d{9}|\+639\d{9})$');
-    return phContactRegex.hasMatch(value.trim());
-  }
-
-  bool validateEmail(String value) {
-    final email = value.trim();
-
-    if (email.isEmpty) return false;
-
-    final RegExp emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@'
-      r'(?:[a-zA-Z0-9-]+\.)+'
-      r'[a-zA-Z]{2,}$',
-    );
-
-    return emailRegex.hasMatch(email);
-  }
-
   Future<void> _checkExistingSession() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -1128,14 +1041,14 @@ class _SignUpPageState extends State<SignUpPage>
       final isNewUser = result['isNewUser'] ?? false;
 
       // Save session (no JWT token from your backend)
-      await PreferenceUtility.saveSession(
-        user.id,
-        user.email,
-        user.firstName,
-        user.lastName,
-        user.contact ?? '',
-        user.address ?? '',
-      );
+      // await PreferenceUtility.saveSession(
+      //   user.id,
+      //   user.email,
+      //   user.firstName,
+      //   user.lastName,
+      //   user.contact,
+      //   user.address,
+      // );
 
       if (mounted) {
         // Show welcome message based on user status
