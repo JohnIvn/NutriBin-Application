@@ -128,10 +128,10 @@ class _SignUpPageState extends State<SignUpPage>
       _signUpFirstNameController.text.trim(),
     );
     final isValidEmail = ValidationUtility.validateEmail(
-      _signUpFirstNameController.text.trim(),
+      _signUpEmailController.text.trim(),
     );
     final isValidPassword = ValidationUtility.validatePassword(
-      _signUpFirstNameController.text.trim(),
+      _signUpPasswordController.text.trim(),
     );
 
     if (isValidFirstname["ok"] != true) {
@@ -231,7 +231,6 @@ class _SignUpPageState extends State<SignUpPage>
         arguments: {
           'recipient': _signUpEmailController.text.trim(),
           'type': 'email',
-          'expectedCode': verifyResult["code"],
         },
       );
 
@@ -273,6 +272,7 @@ class _SignUpPageState extends State<SignUpPage>
         email: _signUpEmailController.text.trim(),
         password: _signUpPasswordController.text.trim(),
         confirmPassword: _signUpConfirmPasswordController.text.trim(),
+        emailVerification: emailVerificationCode,
       );
 
       setState(() => _isLoading = false);
@@ -310,7 +310,7 @@ class _SignUpPageState extends State<SignUpPage>
 
   void _handleSignIn() async {
     try {
-      if (!_validateSignInForm()) return;
+      // if (!_validateSignInForm()) return;
 
       final result = await AccountUtility.authSignIn(
         email: _signInEmailController.text.trim(),
@@ -318,11 +318,7 @@ class _SignUpPageState extends State<SignUpPage>
       );
 
       if (result['requiresMFA'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'MFA verification required'),
-          ),
-        );
+        _showError(result["message"]);
 
         // Navigate to MFA verification screen (optional)
         if (mounted) {
@@ -338,13 +334,13 @@ class _SignUpPageState extends State<SignUpPage>
       // Handle login errors
       if (result['ok'] != true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['error'] ?? 'Login failed')),
+          SnackBar(content: Text(result['message'] ?? 'Login failed')),
         );
         return;
       }
 
       // Successful login
-      final user = User.fromJson(result['user']);
+      final user = User.fromJson(result['data']);
 
       await PreferenceUtility.saveSession(
         user.id,
@@ -360,10 +356,7 @@ class _SignUpPageState extends State<SignUpPage>
         Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An unexpected error occurred")),
-      );
+      _showError(e.toString());
     }
   }
 
@@ -635,7 +628,7 @@ class _SignUpPageState extends State<SignUpPage>
             controller: _signUpLastNameController,
             focusNode: _signUpLastNameFocus,
             label: 'Last Name',
-            errorText: _isFirstNameValid ? null : 'Invalid name',
+            errorText: _isLastNameValid ? null : 'Invalid name',
             onChanged: (value) {
               setState(() {
                 _isLastNameValid = ValidationUtility.validateName(value)["ok"];

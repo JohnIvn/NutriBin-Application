@@ -188,16 +188,25 @@ class ValidationUtility {
       return ResponseUtility.invalid("Empty email");
     }
 
-    final RegExp emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@'
-      r'(?:[a-zA-Z0-9-]+\.)+'
-      r'[a-zA-Z]{2,}$',
-    );
+    final parts = email.split('@');
 
-    if (!emailRegex.hasMatch(email)) {
-      return ResponseUtility.invalid(
-        "Email must only contain valid email characters",
-      );
+    if (parts.length != 2) {
+      return ResponseUtility.invalid("Invalid email format");
+    }
+
+    final localPart = parts[0].trim();
+    final domainPart = parts[1].trim().toLowerCase();
+
+    final RegExp localRegex = RegExp(r'^[a-zA-Z0-9._%+-]+$');
+
+    if (!localRegex.hasMatch(localPart)) {
+      return ResponseUtility.invalid("Invalid email name");
+    }
+
+    final RegExp domainRegex = RegExp(r'^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$');
+
+    if (!domainRegex.hasMatch(domainPart)) {
+      return ResponseUtility.invalid("Invalid email domain");
     }
 
     return {"ok": true, "message": "Valid email"};

@@ -23,6 +23,7 @@ class AccountUtility {
     required String email,
     required String password,
     required String confirmPassword,
+    required String emailVerification,
   }) async {
     try {
       final url = Uri.parse("$restUser/user/signup");
@@ -45,6 +46,7 @@ class AccountUtility {
         "address": address.trim(),
         "email": email.trim(),
         "password": password,
+        "emailVerification": emailVerification,
       };
 
       final response = await http.post(
@@ -75,7 +77,7 @@ class AccountUtility {
 
       // Pre-API Validation
       final isValidEmail = ValidationUtility.validateEmail(email);
-      final isValidPassword = ValidationUtility.validateEmail(password);
+      final isValidPassword = ValidationUtility.validatePassword(password);
 
       if (isValidEmail["ok"] != true) {
         return isValidEmail;
@@ -100,16 +102,19 @@ class AccountUtility {
       final data = jsonDecode(responseSignin.body);
 
       // Error Handling (Signin)
+
       if (data["ok"] != true) {
-        throw Exception(data["message"]);
+        return ResponseUtility.invalid(data["error"]);
       }
 
-      // MFA Data is temporary
-      return {
-        "ok": true,
-        "data": data["data"].user,
-        "mfa": data["requiresMfa"],
-      };
+      if (data["requiresMFA"] == true) {
+        return {
+          "ok": true,
+          "requiresMFA": true,
+          "userId": data["userId"] ?? data["customerId"],
+        };
+      }
+      return {"ok": true, "data": data["user"]};
     } catch (e) {
       return ResponseUtility.invalid(e.toString());
     }
@@ -177,10 +182,10 @@ class ProfileUtility {
 
       // Error Handling (Signin)
       if (data["ok"] != true) {
-        throw Exception(data["message"]);
+        throw Exception(data["error"]);
       }
 
-      return {"ok": true, "data": data["data"].user};
+      return {"ok": true, "data": data["user"]};
     } catch (e) {
       return ResponseUtility.invalid(e.toString());
     }
