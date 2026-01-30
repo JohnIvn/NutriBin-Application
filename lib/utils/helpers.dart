@@ -1,3 +1,4 @@
+import 'package:nutribin_application/services/google_auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferenceUtility {
@@ -70,6 +71,7 @@ class PreferenceUtility {
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    await GoogleOAuthService.signOut();
   }
 }
 
@@ -204,6 +206,7 @@ class ValidationUtility {
     }
 
     final RegExp domainRegex = RegExp(r'^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$');
+    final validDomains = ["gmail.com", "yahoo.com"];
 
     if (!domainRegex.hasMatch(domainPart)) {
       return ResponseUtility.invalid("Invalid email domain");

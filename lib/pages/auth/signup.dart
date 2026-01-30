@@ -102,7 +102,7 @@ class _SignUpPageState extends State<SignUpPage>
       _signInEmailController.text.trim(),
     );
 
-    final isValidPassword = ValidationUtility.validateEmail(
+    final isValidPassword = ValidationUtility.validatePassword(
       _signInPasswordController.text.trim(),
     );
     if (isValidEmail["ok"] != true) {
@@ -190,9 +190,7 @@ class _SignUpPageState extends State<SignUpPage>
       if (!_validateSignUpForm()) return;
 
       if (!_termsAccepted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please accept the Terms of Service")),
-        );
+        _showError("Please accept the Terms of Service");
         return;
       }
 
@@ -202,30 +200,15 @@ class _SignUpPageState extends State<SignUpPage>
         email: _signUpEmailController.text.trim(),
       );
 
-      if (verifyResult["success"] != true) {
+      if (verifyResult["ok"] != true) {
         throw Exception(
           verifyResult["message"] ?? "Failed to send verification",
         );
       }
-      if (!_isFirstNameValid) {
-        _showError("Invalid firstname address");
-        _signUpEmailFocus.requestFocus();
-        return;
-      }
-      if (!_isLastNameValid) {
-        _showError("Invalid lastname address");
-        _signUpEmailFocus.requestFocus();
-        return;
-      }
-      if (!_isEmailValid) {
-        _showError("Invalid email address");
-        _signUpEmailFocus.requestFocus();
-        return;
-      }
 
       setState(() => _isLoading = false);
 
-      final verificationResult = await Navigator.pushNamed(
+      final otpInput = await Navigator.pushNamed(
         context,
         '/verify-contacts',
         arguments: {
@@ -234,34 +217,13 @@ class _SignUpPageState extends State<SignUpPage>
         },
       );
 
-      if (verificationResult == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email verification was cancelled')),
-        );
+      if (otpInput == null) {
+        _showError("Email verification was cancelled");
         return;
       }
-      final result = verificationResult as Map<String, dynamic>;
+      final result = otpInput as Map<String, dynamic>;
 
-      if (result['verified'] != true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Email verification required'),
-          ),
-        );
-        return;
-      }
-      if (result['verified'] != false && result['match'] == false) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result['message'] ?? 'Email verification did not match',
-            ),
-          ),
-        );
-        return;
-      }
-
-      final emailVerificationCode = verifyResult['code'].toString();
+      final emailVerificationCode = result['otp'].toString();
 
       setState(() => _isLoading = true);
 
@@ -310,7 +272,7 @@ class _SignUpPageState extends State<SignUpPage>
 
   void _handleSignIn() async {
     try {
-      // if (!_validateSignInForm()) return;
+      if (!_validateSignInForm()) return;
 
       final result = await AccountUtility.authSignIn(
         email: _signInEmailController.text.trim(),

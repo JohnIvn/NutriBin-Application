@@ -4,9 +4,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 class GoogleOAuthService {
   static GoogleSignIn? _googleSignIn;
 
-  /// Initialize Google OAuth
   static void initialize() {
-    final clientId = dotenv.env['GOOGLE_CLIENT_ID'];
+    final clientId = dotenv.env['GOOGLE_CLIENT_ID'].toString();
 
     if (clientId == null || clientId.isEmpty) {
       throw Exception(
@@ -14,13 +13,9 @@ class GoogleOAuthService {
       );
     }
 
-    _googleSignIn = GoogleSignIn(
-      clientId: clientId,
-      scopes: ['email', 'profile'],
-    );
+    _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
   }
 
-  /// Ensure service is initialized
   static GoogleSignIn get _instance {
     if (_googleSignIn == null) {
       throw Exception(
@@ -30,7 +25,6 @@ class GoogleOAuthService {
     return _googleSignIn!;
   }
 
-  /// Sign out
   static Future<void> signOut() async {
     try {
       await _instance.signOut();

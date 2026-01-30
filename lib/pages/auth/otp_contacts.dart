@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 
 import 'package:nutribin_application/services/auth_service.dart';
+import 'package:nutribin_application/utils/helpers.dart';
 
 enum OtpVerificationType { email, contact, passwordReset }
 
@@ -22,8 +23,8 @@ class _ContactsVerificationState extends State<ContactsVerification> {
   final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
 
   bool _isLoading = false;
-  String? _recipient; // Email or contact number
-  String? _userId; // Store userId from initial send if for OTP verification
+  String? _recipient;
+  String? _userId;
   String? _expectedCode;
   OtpVerificationType? _verificationType;
   Map<String, dynamic>? _additionalData;
@@ -149,7 +150,7 @@ class _ContactsVerificationState extends State<ContactsVerification> {
     return _recipient!;
   }
 
-  void _handleVerifyOtp() async {
+  void _handleVerifyOtp() {
     final otp = _getOtpCode();
 
     if (otp.length != 6) {
@@ -159,158 +160,12 @@ class _ContactsVerificationState extends State<ContactsVerification> {
       return;
     }
 
-    // Check if expected code exists
-    if (_expectedCode == null || _expectedCode!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Verification session expired. Please go back and try again.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      Map<String, dynamic> result;
-
-      switch (_verificationType) {
-        case OtpVerificationType.email:
-          // Compare the entered OTP with the expected code
-          if (otp == _expectedCode) {
-            result = {
-              'success': true,
-              'match': true,
-              'message': 'Email verified successfully',
-              'code': otp,
-            };
-          } else {
-            result = {
-              'success': false,
-              'match': false,
-              'message': 'Invalid verification code',
-              'code': otp,
-            };
-          }
-          break;
-
-        case OtpVerificationType.contact:
-          // Contact verification
-          if (otp == _expectedCode) {
-            result = {
-              'success': true,
-              'match': true,
-              'message': 'Phone verified successfully',
-              'code': otp,
-            };
-          } else {
-            result = {
-              'success': false,
-              'match': false,
-              'message': 'Invalid verification code',
-              'code': otp,
-            };
-          }
-          break;
-
-        case OtpVerificationType.passwordReset:
-          // Compare the entered OTP with the expected code
-          if (otp == _expectedCode) {
-            result = {
-              'success': true,
-              'match': true,
-              'message': 'Code verified successfully',
-              'code': otp,
-            };
-          } else {
-            result = {
-              'success': false,
-              'match': false,
-              'message': 'Invalid verification code',
-              'code': otp,
-            };
-          }
-          break;
-
-        default:
-          result = {'success': false, 'message': 'Unknown verification type'};
-      }
-
-      if (mounted) {
-        if (result['success'] == true && result['match'] == true) {
-          switch (_verificationType) {
-            case OtpVerificationType.email:
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Email verified successfully!')),
-              );
-              // Return success to previous screen or navigate to home
-              Navigator.pop(context, {
-                'verified': true,
-                'match': true,
-                'otp': otp,
-                'userId': _userId,
-              });
-              break;
-
-            case OtpVerificationType.contact:
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Phone number verified successfully!'),
-                ),
-              );
-              Navigator.pop(context, {
-                'verified': true,
-                'match': true,
-                'otp': otp,
-                'userId': _userId,
-              });
-              break;
-
-            case OtpVerificationType.passwordReset:
-              // Navigate to reset password screen with verified code
-              Navigator.pushReplacementNamed(
-                context,
-                '/reset-password',
-                arguments: {
-                  'email': _recipient,
-                  'userId': _userId,
-                  'otp': otp,
-                  'verified': true,
-                },
-              );
-              break;
-
-            default:
-              Navigator.pop(context, {
-                'verified': true,
-                'match': true,
-                'otp': otp,
-                'userId': _userId,
-              });
-          }
-        } else {
-          // Show error message for invalid code
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['message'] ?? 'Verification failed'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Verification failed: ${e.toString()}')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    Navigator.pop(context, {
+      'email': _recipient,
+      'userId': _userId,
+      'otp': otp,
+      'ok': true,
+    });
   }
 
   void _handleResendOtp() async {
