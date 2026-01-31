@@ -125,7 +125,7 @@ class _SignUpPageState extends State<SignUpPage>
       _signUpFirstNameController.text.trim(),
     );
     final isValidLastname = ValidationUtility.validateName(
-      _signUpFirstNameController.text.trim(),
+      _signUpLastNameController.text.trim(),
     );
     final isValidEmail = ValidationUtility.validateEmail(
       _signUpEmailController.text.trim(),
@@ -221,7 +221,13 @@ class _SignUpPageState extends State<SignUpPage>
         _showError("Email verification was cancelled");
         return;
       }
+
       final result = otpInput as Map<String, dynamic>;
+
+      if (result["ok"] != true) {
+        _showError("Email verification failed");
+        return;
+      }
 
       final emailVerificationCode = result['otp'].toString();
 
@@ -240,7 +246,9 @@ class _SignUpPageState extends State<SignUpPage>
       setState(() => _isLoading = false);
 
       if (signupResult["ok"] != true) {
-        throw Exception(signupResult["message"] ?? "Signup failed");
+        throw Exception(
+          signupResult["error"] ?? signupResult["message"] ?? "Signup failed, please try again",
+        );
       }
 
       final user = User.fromJson(signupResult["user"]);
@@ -581,7 +589,8 @@ class _SignUpPageState extends State<SignUpPage>
             errorText: _isFirstNameValid ? null : 'Invalid name',
             onChanged: (value) {
               setState(() {
-                _isFirstNameValid = ValidationUtility.validateName(value)["ok"];
+                _isFirstNameValid =
+                    ValidationUtility.validateName(value)["ok"] == true;
               });
             },
           ),
@@ -593,7 +602,8 @@ class _SignUpPageState extends State<SignUpPage>
             errorText: _isLastNameValid ? null : 'Invalid name',
             onChanged: (value) {
               setState(() {
-                _isLastNameValid = ValidationUtility.validateName(value)["ok"];
+                _isLastNameValid =
+                    ValidationUtility.validateName(value)["ok"] == true;
               });
             },
           ),
@@ -613,7 +623,8 @@ class _SignUpPageState extends State<SignUpPage>
             errorText: _isEmailValid ? null : 'Invalid email address',
             onChanged: (value) {
               setState(() {
-                _isEmailValid = ValidationUtility.validateEmail(value)["ok"];
+                _isEmailValid =
+                    ValidationUtility.validateEmail(value)["ok"] == true;
               });
             },
           ),

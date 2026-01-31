@@ -160,12 +160,7 @@ class _ContactsVerificationState extends State<ContactsVerification> {
       return;
     }
 
-    Navigator.pop(context, {
-      'email': _recipient,
-      'userId': _userId,
-      'otp': otp,
-      'ok': true,
-    });
+    Navigator.pop(context, {'otp': otp, 'ok': true});
   }
 
   void _handleResendOtp() async {

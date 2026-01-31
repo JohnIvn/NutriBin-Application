@@ -27,18 +27,18 @@ class AccountUtility {
   }) async {
     try {
       final url = Uri.parse("$restUser/user/signup");
-      final validation = ValidationUtility.validatePayload(
-        firstname: firstname,
-        lastname: lastname,
-        address: address,
-        email: email,
-        password: password,
-        confirmPassword: confirmPassword,
-      );
+      // final validation = ValidationUtility.validatePayload(
+      //   firstname: firstname,
+      //   lastname: lastname,
+      //   address: address,
+      //   email: email,
+      //   password: password,
+      //   confirmPassword: confirmPassword,
+      // );
 
-      if (validation["ok"] != true) {
-        return validation;
-      }
+      // if (validation["ok"] != true) {
+      //   return validation;
+      // }
 
       final body = {
         "firstname": firstname.trim(),
@@ -46,7 +46,7 @@ class AccountUtility {
         "address": address.trim(),
         "email": email.trim(),
         "password": password,
-        "emailVerification": emailVerification,
+        "emailVerificationCode": emailVerification,
       };
 
       final response = await http.post(
@@ -59,7 +59,10 @@ class AccountUtility {
       );
       final data = jsonDecode(response.body);
       if (data["ok"] != true) {
-        throw Exception(data["error"]);
+        if (data["error"]) {
+          throw Exception(data["error"]);
+        }
+        throw Exception(data["message"]);
       }
       return data;
     } catch (e) {
