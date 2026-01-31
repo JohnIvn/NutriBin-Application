@@ -138,6 +138,7 @@ class AccountUtility {
       }
 
       final url = Uri.parse("$restUser/user/google-signin");
+      final token = googleAuth.idToken.toString();
 
       final response = await http.post(
         url,
@@ -145,7 +146,7 @@ class AccountUtility {
           "Content-Type": "application/json",
           "Authorization": "Bearer $anonKey",
         },
-        body: jsonEncode({"idToken": googleAuth.idToken}),
+        body: jsonEncode({"idToken": token}),
       );
 
       final data = jsonDecode(response.body);

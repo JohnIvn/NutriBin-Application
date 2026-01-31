@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 
 import 'package:nutribin_application/services/auth_service.dart';
-import 'package:nutribin_application/utils/helpers.dart';
 
 enum OtpVerificationType { email, contact, passwordReset }
 

@@ -5,15 +5,18 @@ class GoogleOAuthService {
   static GoogleSignIn? _googleSignIn;
 
   static void initialize() {
-    final clientId = dotenv.env['GOOGLE_CLIENT_ID'].toString();
+    final clientId = dotenv.env['ANDROID_GOOGLE_CLIENT_ID'].toString();
 
-    if (clientId == null || clientId.isEmpty) {
+    if (clientId.isEmpty) {
       throw Exception(
         "GOOGLE_CLIENT_ID not found in .env. Make sure to load dotenv first.",
       );
     }
 
-    _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+    _googleSignIn = GoogleSignIn(
+      scopes: ['email', 'profile'],
+      clientId: dotenv.env['ANDROID_GOOGLE_CLIENT_ID'].toString(),
+    );
   }
 
   static GoogleSignIn get _instance {
