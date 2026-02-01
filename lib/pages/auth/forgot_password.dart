@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/services/auth_service.dart';
+import 'package:nutribin_application/utils/helpers.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -47,28 +48,44 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
       if (!mounted) return;
 
-      if (verifyResult["success"] == true) {
-        final expectedCode = verifyResult["code"];
-
-        Navigator.pushNamed(
-          context,
-          '/verify-otp',
-          arguments: {
-            'recipient': _emailController.text.trim(),
-            'type': 'email',
-            'expectedCode': expectedCode,
-          },
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              verifyResult['message'] ?? 'Failed to send verification code',
-            ),
-          ),
+      if (verifyResult["ok"] != true) {
+        _showError(
+          verifyResult['message'] ?? 'Failed to send verification code',
         );
         return;
       }
+
+      final otpResult = await Navigator.pushNamed(
+        context,
+        '/verify-contacts',
+        arguments: {'recipient': _emailController.text.trim(), 'type': 'email'},
+      );
+
+      final verificationResult = otpResult as Map<String, dynamic>;
+
+      if (verificationResult["ok"] != true) {
+        _showError(
+          verificationResult["message"] ??
+              verificationResult["error"] ??
+              "OTP Verification Failed",
+        );
+        return;
+      }
+
+      final otpVerification = await AuthUtility.verifyEmail(
+        code: verificationResult["otp"],
+      );
+
+      if (otpVerification["ok"] != true) {
+        _showError(otpVerification["message"] ?? "Code verification failed");
+        return;
+      }
+
+      Navigator.pushNamed(
+        context,
+        '/reset-password',
+        arguments: {'email': _emailController.text.trim()},
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -277,6 +294,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 }

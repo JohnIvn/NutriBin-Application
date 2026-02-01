@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/services/auth_service.dart';
+import 'package:nutribin_application/utils/helpers.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});
@@ -15,6 +16,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final _newPasswordFocus = FocusNode();
   final _confirmPasswordFocus = FocusNode();
 
+  String? _verificationCode;
   bool _newPasswordVisible = false;
   bool _confirmPasswordVisible = false;
   bool _isLoading = false;
@@ -53,12 +55,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       return;
     }
 
-    if (newPassword.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password must be at least 8 characters long'),
-        ),
-      );
+    final validPassword = ValidationUtility.validatePassword(newPassword);
+
+    if (validPassword["ok"] != true) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(validPassword["message"])));
       return;
     }
 
@@ -72,24 +74,24 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     setState(() => _isLoading = true);
 
     try {
-      final result = await AuthUtility.resetPassword(
+      final result = await AuthUtility.updatePassword(
         email: _email.toString(),
-        newPassword: newPassword,
+        password: newPassword,
+        confirmPassword: confirmPassword,
       );
 
-      if (result["success"] != true) {
+      if (result["ok"] != true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result["message"].toString()),
+            content: Text(
+              result["data"] ?? "Reset Password failed, try again later",
+            ),
             backgroundColor: Colors.red,
           ),
         );
-        Navigator.pushNamed(context, '/');
+        print("Error Found: ${result.toString()}");
         return;
       }
-
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -99,8 +101,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           ),
         );
 
-        // Navigate back to sign in page
-        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        Navigator.pushNamed(context, '/home');
       }
     } catch (e) {
       if (mounted) {
@@ -258,7 +259,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     TextFormField(
                       controller: _confirmPasswordController,
                       focusNode: _confirmPasswordFocus,
-                      obscureText: !_confirmPasswordVisible,
+                      obscureText: !_newPasswordVisible,
                       cursorColor: const Color(0xFF4B39EF),
                       style: GoogleFonts.inter(
                         fontSize: 14,
@@ -279,13 +280,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         suffixIcon: InkWell(
                           onTap: () {
                             setState(() {
-                              _confirmPasswordVisible =
-                                  !_confirmPasswordVisible;
+                              _newPasswordVisible = !_newPasswordVisible;
                             });
                           },
                           focusNode: FocusNode(skipTraversal: true),
                           child: Icon(
-                            _confirmPasswordVisible
+                            _newPasswordVisible
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
                             color: const Color(0xFF57636C),

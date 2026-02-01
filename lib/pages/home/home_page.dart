@@ -52,7 +52,7 @@ class _HomePageState extends State<HomePage> {
           await Future.delayed(const Duration(milliseconds: 500));
 
           if (mounted) {
-            Navigator.pushReplacementNamed(context, '/signup');
+            Navigator.pushReplacementNamed(context, '/');
           }
         }
       } else {
@@ -74,7 +74,7 @@ class _HomePageState extends State<HomePage> {
           ),
         );
 
-        Navigator.pushReplacementNamed(context, '/signup');
+        Navigator.pushReplacementNamed(context, '/');
       }
     }
   }
@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
           await Future.delayed(const Duration(milliseconds: 500));
 
           if (mounted) {
-            Navigator.pushReplacementNamed(context, '/signup');
+            Navigator.pushReplacementNamed(context, '/');
           }
         }
       }

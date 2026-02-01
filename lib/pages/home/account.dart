@@ -76,8 +76,7 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> logOut() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      await PreferenceUtility.clearSession();
 
       if (!mounted) return;
 

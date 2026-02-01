@@ -78,7 +78,12 @@ class AuthUtility {
     required String contact,
   }) async {
     try {
-      final url = Uri.parse("$restServer/staff/phone/request");
+      String? userId = await PreferenceUtility.getUserId();
+      if (userId == null) {
+        return {"ok": false, "data": "User ID not found"};
+      }
+      // final url = Uri.parse("$restServer/staff/phone/request");
+      final url = Uri.parse("$restUser/settings/$userId/phone/verify/request");
 
       final response = await http.post(
         url,
@@ -87,9 +92,11 @@ class AuthUtility {
           "Authorization": "Bearer $anonKey",
           "apikey": anonKey,
         },
-        body: jsonEncode({"phone": contact}),
+        body: jsonEncode({"newPhone": contact}),
       );
 
+      print("DEBUG - Response status: ${response.statusCode}"); // ← Add debug
+      print("DEBUG - Response body: ${response.body}");
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -146,44 +153,54 @@ class AuthUtility {
     }
   }
 
-  static Future<Map<String, dynamic>> verifyEmailOtp({
-    required String userId,
-    required String code,
+  static Future<Map<String, dynamic>> updatePassword({
+    required String email,
+    required String password,
+    required String confirmPassword,
   }) async {
     try {
-      final url = Uri.parse("$supabaseUrl/functions/v1/verify-email-otp");
+      if (password != confirmPassword) {
+        return ResponseUtility.invalid(
+          "Password and Confirm Password must match",
+        );
+      }
 
-      final response = await http.post(
+      final url = Uri.parse("$restUser/user/update-password");
+
+      final response = await http.patch(
         url,
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $anonKey",
           "apikey": anonKey,
         },
-        body: jsonEncode({"userId": userId, "code": code}),
+        body: jsonEncode({"email": email, "newPassword": password}),
       );
 
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (data['ok'] == true) {
-          return {
-            "ok": true,
-            "message": data['message'] ?? 'Email verified successfully',
-          };
+        if (data["ok"] == true) {
+          return {"ok": true, "data": data["message"]};
+        } else {
+          return {"ok": false, "data": data["message"] ?? "Update failed"};
         }
+      } else {
+        // Handle non-200 responses
+        final errorData = jsonDecode(response.body);
+        return {
+          "ok": false,
+          "data":
+              errorData["message"] ??
+              "Update failed with status ${response.statusCode}",
+        };
       }
-
-      return {
-        "ok": false,
-        "message": data['message'] ?? 'Invalid verification code',
-      };
     } catch (e) {
-      return {"ok": false, "message": e.toString()};
+      print("Error: $e");
+      return {"ok": false, "data": e.toString()};
     }
   }
 
-  // User Update
   static Future<Map<String, dynamic>> updateUser({
     required String firstName,
     required String lastName,
@@ -212,15 +229,73 @@ class AuthUtility {
           "address": address,
         }),
       );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      final data = jsonDecode(response.body);
-
-      if (data["ok"] == true) {
-        return {"ok": true, "data": data["user"]};
+        if (data["ok"] == true) {
+          return {"ok": true, "data": data["user"]};
+        } else {
+          return {"ok": false, "data": data["message"] ?? "Update failed"};
+        }
       } else {
-        return {"ok": false, "data": data["error"] ?? "Update failed"};
+        // Handle non-200 responses
+        final errorData = jsonDecode(response.body);
+        return {
+          "ok": false,
+          "data":
+              errorData["message"] ??
+              "Update failed with status ${response.statusCode}",
+        };
       }
     } catch (e) {
+      print("Error: $e");
+      return {"ok": false, "data": e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyContact({
+    required String newPhone,
+    required String code,
+  }) async {
+    try {
+      String? userId = await PreferenceUtility.getUserId();
+      if (userId == null) {
+        return {"ok": false, "data": "User ID not found"};
+      }
+
+      final url = Uri.parse("$restUser/settings/$userId/phone/verify");
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+          "apikey": anonKey,
+        },
+        body: jsonEncode({"code": code, "newPhone": newPhone}),
+      );
+      print("DEBUG - Response status: ${response.statusCode}"); // ← Add debug
+      print("DEBUG - Response body: ${response.body}");
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body);
+
+        if (data["ok"] == true) {
+          return {"ok": true, "data": data["user"]};
+        } else {
+          return {"ok": false, "data": data["message"] ?? "Update failed"};
+        }
+      } else {
+        // Handle non-200 responses
+        final errorData = jsonDecode(response.body);
+        return {
+          "ok": false,
+          "data":
+              errorData["message"] ??
+              "Update failed with status ${response.statusCode}",
+        };
+      }
+    } catch (e) {
+      print("Error: $e");
       return {"ok": false, "data": e.toString()};
     }
   }

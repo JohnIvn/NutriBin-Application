@@ -20,7 +20,9 @@ class PreferenceUtility {
     await prefs.setString('lastName', lastName);
     await prefs.setString('contact', contact);
     await prefs.setString('address', address);
-    await prefs.setString('token', token);
+    if (token.isNotEmpty) {
+      await prefs.setString('token', token);
+    }
     await prefs.setInt('loginTimestamp', DateTime.now().millisecondsSinceEpoch);
   }
 

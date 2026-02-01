@@ -312,9 +312,9 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   bool _validateChanges() {
@@ -376,7 +376,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
 
       try {
         // Send verification code to the new contact number
-        final verifyResult = await AuthUtility.sendContactVerification(
+        final sendCodeResult = await AuthUtility.sendContactVerification(
           contact: currentContact,
         );
 
@@ -386,9 +386,9 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
           isLoading = false;
         });
 
-        if (verifyResult["success"] != true) {
+        if (sendCodeResult["ok"] != true) {
           _showError(
-            verifyResult["message"] ?? "Failed to send verification code",
+            sendCodeResult["message"] ?? "Failed to send verification code",
           );
           return;
         }
@@ -397,25 +397,35 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         final verificationResult = await Navigator.pushNamed(
           context,
           '/verify-contacts',
-          arguments: {
-            'recipient': currentContact,
-            'type': 'contact',
-            'expectedCode': verifyResult["code"],
-            'userId': verifyResult["userId"],
-          },
+          arguments: {'recipient': currentContact, 'type': 'contact'},
         );
 
-        if (!mounted) return;
-
-        // Check if verification was successful
-        if (verificationResult == null ||
-            verificationResult is! Map<String, dynamic> ||
-            verificationResult['verified'] != true ||
-            verificationResult['match'] != true) {
-          _showError('Contact verification failed or cancelled');
+        if (verificationResult == null) {
+          _showError('Verification Cancelled');
           return;
         }
 
+        if (!mounted) return;
+
+        final otpResult = verificationResult as Map<String, dynamic>;
+
+        // Check if verification was successful
+        if (otpResult["ok"] != true) {
+          _showError(otpResult["error"] ?? 'OTP verification failed');
+          return;
+        }
+
+        final verifyContactResult = await AuthUtility.verifyContact(
+          newPhone: currentContact,
+          code: otpResult["otp"],
+        );
+
+        if (verifyContactResult["ok"] != true) {
+          _showError(
+            verifyContactResult["message"] ?? "Contact verification failed",
+          );
+          return;
+        }
         // Verification successful, proceed with update
         _performUpdate();
       } catch (e) {
@@ -446,7 +456,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
 
       if (!mounted) return;
 
-      if (result["success"] != true) {
+      if (result["ok"] != true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result["data"]?.toString() ?? "Update failed"),
@@ -462,19 +472,20 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
       // Extract user object
       final user = User.fromJson(result["data"]);
 
-      // await PreferenceUtility.saveSession(
-      //   user.id,
-      //   user.email,
-      //   user.firstName,
-      //   user.lastName,
-      //   user.contact,
-      //   user.address
-      // );
+      await PreferenceUtility.saveSession(
+        user.id,
+        user.email,
+        user.firstName,
+        user.lastName,
+        user.contact,
+        user.address,
+        user.token,
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Account updated successfully!"),
-          backgroundColor: Colors.green,
+          backgroundColor: Color.fromARGB(255, 0, 134, 4),
         ),
       );
 

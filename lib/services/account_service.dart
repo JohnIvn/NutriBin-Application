@@ -27,18 +27,18 @@ class AccountUtility {
   }) async {
     try {
       final url = Uri.parse("$restUser/user/signup");
-      // final validation = ValidationUtility.validatePayload(
-      //   firstname: firstname,
-      //   lastname: lastname,
-      //   address: address,
-      //   email: email,
-      //   password: password,
-      //   confirmPassword: confirmPassword,
-      // );
+      final validation = ValidationUtility.validatePayload(
+        firstname: firstname,
+        lastname: lastname,
+        address: address,
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+      );
 
-      // if (validation["ok"] != true) {
-      //   return validation;
-      // }
+      if (validation["ok"] != true) {
+        return validation;
+      }
 
       final body = {
         "firstname": firstname.trim(),
