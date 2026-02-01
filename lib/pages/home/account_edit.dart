@@ -21,9 +21,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   Color get _primaryColor => Theme.of(context).primaryColor;
-  Color get _secondaryColor => const Color(0xFFA63000);
-  Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
-  Color get _secondaryText => const Color(0xFF57636C);
 
   // Text controllers
   late TextEditingController _firstNameController;

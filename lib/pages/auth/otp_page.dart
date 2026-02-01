@@ -114,7 +114,6 @@ class _VerifyPasswordResetOtpPageState
 
     try {
       // Compare the entered OTP with the expected code
-      Map<String, dynamic> result;
       if (otp == _expectedCode) {
         // result = {
         //   'success': true,

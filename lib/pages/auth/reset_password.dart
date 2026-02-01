@@ -16,9 +16,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final _newPasswordFocus = FocusNode();
   final _confirmPasswordFocus = FocusNode();
 
-  String? _verificationCode;
   bool _newPasswordVisible = false;
-  bool _confirmPasswordVisible = false;
   bool _isLoading = false;
 
   String? _email;

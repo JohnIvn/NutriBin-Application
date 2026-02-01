@@ -27,7 +27,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
   // Color scheme
   Color get _primaryColor => Theme.of(context).primaryColor;
-  Color get _secondaryColor => const Color(0xFF39D2C0);
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
   Color get _secondaryText => const Color(0xFF57636C);
 

@@ -12,7 +12,6 @@ class _NutriBinPageState extends State<NutriBinPage> {
 
   // Color scheme
   Color get _primaryColor => Theme.of(context).primaryColor;
-  Color get _secondaryColor => const Color.fromARGB(255, 57, 136, 210);
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
   Color get _secondaryText => const Color(0xFF57636C);
 

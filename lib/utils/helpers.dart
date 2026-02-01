@@ -208,7 +208,6 @@ class ValidationUtility {
     }
 
     final RegExp domainRegex = RegExp(r'^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$');
-    final validDomains = ["gmail.com", "yahoo.com"];
 
     if (!domainRegex.hasMatch(domainPart)) {
       return ResponseUtility.invalid("Invalid email domain");

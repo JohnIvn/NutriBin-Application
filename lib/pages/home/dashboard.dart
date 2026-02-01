@@ -17,10 +17,7 @@ class _DashboardPageState extends State<DashboardPage>
   int? _expandedMachineReportIndex;
 
   Color get _primaryColor => Theme.of(context).colorScheme.primary;
-  Color get _secondaryColor => Theme.of(context).colorScheme.secondary;
   Color get _tertiaryColor => Theme.of(context).colorScheme.tertiary;
-  Color get _secondaryText =>
-      Theme.of(context).colorScheme.onSurface.withOpacity(0.6);
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
 
   final List<Map<String, dynamic>> _fertilizerData = [

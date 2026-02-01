@@ -24,9 +24,7 @@ class _ContactsVerificationState extends State<ContactsVerification> {
   bool _isLoading = false;
   String? _recipient;
   String? _userId;
-  String? _expectedCode;
   OtpVerificationType? _verificationType;
-  Map<String, dynamic>? _additionalData;
   int _cooldownSeconds = 0;
   Timer? _cooldownTimer;
 
@@ -39,10 +37,8 @@ class _ContactsVerificationState extends State<ContactsVerification> {
       setState(() {
         _recipient = args?['recipient'] ?? '';
         _userId = args?['userId'] ?? '';
-        _expectedCode = args?['expectedCode'] ?? '';
         final typeString = args?['type'] ?? 'email';
         _verificationType = _parseVerificationType(typeString);
-        _additionalData = args?['data'];
       });
     });
   }
@@ -187,15 +183,14 @@ class _ContactsVerificationState extends State<ContactsVerification> {
           );
           break;
         default:
-          result = {'success': false, 'message': 'Unknown verification type'};
+          result = {'ok': false, 'message': 'Unknown verification type'};
       }
 
       if (mounted) {
-        if (result['success'] == true) {
+        if (result['ok'] == true) {
           // Update userId and expected code from new response
           setState(() {
             _userId = result['userId'] ?? _userId;
-            _expectedCode = result['code'] ?? result['expectedCode'] ?? '';
           });
 
           // Clear all OTP input fields
