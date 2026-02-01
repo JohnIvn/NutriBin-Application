@@ -247,7 +247,9 @@ class _SignUpPageState extends State<SignUpPage>
 
       if (signupResult["ok"] != true) {
         throw Exception(
-          signupResult["error"] ?? signupResult["message"] ?? "Signup failed, please try again",
+          signupResult["error"] ??
+              signupResult["message"] ??
+              "Signup failed, please try again",
         );
       }
 
@@ -977,25 +979,27 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _handleGoogleSignIn() async {
-    if (_isLoading) return; // Prevent multiple clicks
+    if (_isLoading) return;
 
     setState(() => _isLoading = true);
 
     try {
-      final result = await AccountUtility.googleSignIn();
+      final result = await AccountUtility.googleAuth();
 
       if (result['ok'] != true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result['message'] ?? 'Google sign in failed'),
+              content: Text(
+                result['message'] ?? 'Google authentication failed',
+              ),
             ),
           );
         }
         return;
       }
 
-      final user = User.fromJson(result['user']);
+      final user = User.fromJson(result['data']);
       final isNewUser = result['isNewUser'] ?? false;
 
       // Save session (no JWT token from your backend)

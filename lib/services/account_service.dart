@@ -146,7 +146,7 @@ class AccountUtility {
           "Content-Type": "application/json",
           "Authorization": "Bearer $anonKey",
         },
-        body: jsonEncode({"idToken": token}),
+        body: jsonEncode({"credential": token}),
       );
 
       final data = jsonDecode(response.body);
@@ -156,6 +156,93 @@ class AccountUtility {
 
       return {"ok": true, "data": data["user"], "isNewUser": data["isNewUser"]};
     } catch (e) {
+      return ResponseUtility.invalid(e.toString());
+    }
+  }
+
+  static Future<Map<String, dynamic>> googleSignUp() async {
+    try {
+      final googleUser = await _instance.signIn();
+
+      if (googleUser == null) {
+        return ResponseUtility.invalid("Google sign in cancelled");
+      }
+
+      final googleAuth = await googleUser.authentication;
+
+      if (googleAuth.idToken == null) {
+        return ResponseUtility.invalid("Failed to get Google token");
+      }
+
+      final url = Uri.parse("$restUser/user/google-signup");
+      final token = googleAuth.idToken.toString();
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+        body: jsonEncode({"credential": token}),
+      );
+
+      final data = jsonDecode(response.body);
+      if (data["ok"] != true) {
+        throw Exception(data["message"]);
+      }
+
+      return {"ok": true, "data": data["user"], "isNewUser": data["isNewUser"]};
+    } catch (e) {
+      return ResponseUtility.invalid(e.toString());
+    }
+  }
+
+  static Future<Map<String, dynamic>> googleAuth() async {
+    try {
+      final googleUser = await _instance.signIn();
+
+      if (googleUser == null) {
+        return ResponseUtility.invalid("Google sign in cancelled");
+      }
+
+      final googleAuth = await googleUser.authentication;
+
+      if (googleAuth.idToken == null) {
+        return ResponseUtility.invalid("Failed to get Google token");
+      }
+
+      final url = Uri.parse("$restUser/user/google-auth");
+      final token = googleAuth.idToken.toString();
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+        body: jsonEncode({"credential": token}),
+      );
+
+      print("Status Code: ${response.statusCode}");
+      print("Response Body: ${response.body}");
+
+      if (response.body.isEmpty) {
+        return ResponseUtility.invalid("Empty response from server");
+      }
+
+      final data = jsonDecode(response.body);
+
+      if (data["ok"] != true) {
+        throw Exception(data["error"] ?? "Unknown error");
+      }
+
+      return {
+        "ok": true,
+        "data": data["user"],
+        "isNewUser": data["isNewUser"] ?? false,
+      };
+    } catch (e) {
+      print("Error in googleAuth: $e");
       return ResponseUtility.invalid(e.toString());
     }
   }
