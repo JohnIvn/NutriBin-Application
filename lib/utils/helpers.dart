@@ -152,7 +152,7 @@ class ValidationUtility {
       );
     }
 
-    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>_]'))) {
       return ResponseUtility.invalid(
         "Password must contain special characters",
       );
