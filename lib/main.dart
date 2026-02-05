@@ -4,6 +4,7 @@ import 'package:nutribin_application/pages/auth/forgot_password.dart';
 import 'package:nutribin_application/pages/auth/otp_contacts.dart';
 import 'package:nutribin_application/pages/auth/otp_page.dart';
 import 'package:nutribin_application/pages/auth/reset_password.dart';
+import 'package:nutribin_application/pages/home/mfa_settings.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/pages/common/about.dart';
 import 'package:nutribin_application/pages/home/account.dart';
@@ -115,6 +116,7 @@ class MyApp extends StatelessWidget {
         '/map-picker': (context) => const MapPickerPage(),
         '/verify-contacts': (context) => const ContactsVerification(),
         '/terms-acceptance': (context) => const TermsAcceptancePage(),
+        '/mfa-settings': (context) => const MfaSettingsPage(),
 
         // Common Routes
         '/support': (context) => const ContactWidget(),

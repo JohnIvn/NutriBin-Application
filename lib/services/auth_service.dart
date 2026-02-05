@@ -274,8 +274,6 @@ class AuthUtility {
         },
         body: jsonEncode({"code": code, "newPhone": newPhone}),
       );
-      print("DEBUG - Response status: ${response.statusCode}"); // ← Add debug
-      print("DEBUG - Response body: ${response.body}");
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(response.body);
 
@@ -297,6 +295,65 @@ class AuthUtility {
     } catch (e) {
       print("Error: $e");
       return {"ok": false, "data": e.toString()};
+    }
+  }
+
+  static Future<dynamic> toggleMfa({required String type}) async {
+    try {
+      String? userId = await PreferenceUtility.getUserId();
+      if (userId == null) {
+        return {"ok": false, "message": "User ID not found"};
+      }
+
+      String mfaType;
+      if (type == 'disable') {
+        mfaType = 'N/A';
+      } else if (type == 'email') {
+        mfaType = 'email';
+      } else if (type == 'sms') {
+        mfaType = 'sms';
+      } else {
+        return {"ok": false, "message": "Invalid MFA type"};
+      }
+
+      final url = Uri.parse("$restUser/authentication/$userId/mfa");
+
+      final response = await http.patch(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+          "apikey": anonKey,
+        },
+        body: jsonEncode({"mfaType": mfaType}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        return {
+          "ok": true,
+          "message":
+              responseData["message"] ?? "MFA settings updated successfully",
+          "data": responseData["mfaType"],
+        };
+      } else if (response.statusCode == 400) {
+        final errorData = jsonDecode(response.body);
+        return {"ok": false, "message": errorData["message"] ?? "Bad request"};
+      } else if (response.statusCode == 500) {
+        return {
+          "ok": false,
+          "message": "Server error. Please try again later.",
+        };
+      } else {
+        print("Test: ${response}");
+        return {
+          "ok": false,
+          "message":
+              "Failed to update MFA settings. Status code: ${response.statusCode}",
+        };
+      }
+    } catch (e) {
+      return {"ok": false, "message": "An error occurred: ${e.toString()}"};
     }
   }
 

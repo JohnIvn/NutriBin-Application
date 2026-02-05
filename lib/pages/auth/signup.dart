@@ -262,6 +262,7 @@ class _SignUpPageState extends State<SignUpPage>
         user.lastName,
         user.contact,
         user.address,
+        false,
         user.token,
       );
 
@@ -290,7 +291,7 @@ class _SignUpPageState extends State<SignUpPage>
       );
 
       if (result['requiresMFA'] == true) {
-        _showError(result["message"]);
+        // _showError(result["message"]);
 
         // Navigate to MFA verification screen (optional)
         if (mounted) {
@@ -303,15 +304,11 @@ class _SignUpPageState extends State<SignUpPage>
         return;
       }
 
-      // Handle login errors
       if (result['ok'] != true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'Login failed')),
-        );
+        _showError(result["message"] ?? "Login Failed");
         return;
       }
 
-      // Successful login
       final user = User.fromJson(result['data']);
 
       await PreferenceUtility.saveSession(
@@ -321,6 +318,7 @@ class _SignUpPageState extends State<SignUpPage>
         user.lastName,
         user.contact,
         user.address,
+        result['requiresMFA'],
         user.token,
       );
 
@@ -1002,7 +1000,6 @@ class _SignUpPageState extends State<SignUpPage>
       final user = User.fromJson(result['data']);
       final isNewUser = result['isNewUser'] ?? false;
 
-      // Save session (no JWT token from your backend)
       await PreferenceUtility.saveSession(
         user.id,
         user.email,
@@ -1010,11 +1007,11 @@ class _SignUpPageState extends State<SignUpPage>
         user.lastName,
         user.contact,
         user.address,
+        isNewUser == false,
         user.token,
       );
 
       if (mounted) {
-        // Show welcome message based on user status
         if (isNewUser) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1033,7 +1030,6 @@ class _SignUpPageState extends State<SignUpPage>
           );
         }
 
-        // Navigate to home
         Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {

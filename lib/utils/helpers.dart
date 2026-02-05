@@ -9,6 +9,7 @@ class PreferenceUtility {
     String lastName,
     String contact,
     String address,
+    bool? mfa,
     String token,
   ) async {
     final prefs = await SharedPreferences.getInstance();
@@ -20,6 +21,7 @@ class PreferenceUtility {
     await prefs.setString('lastName', lastName);
     await prefs.setString('contact', contact);
     await prefs.setString('address', address);
+    await prefs.setBool('mfa', mfa == true);
     if (token.isNotEmpty) {
       await prefs.setString('token', token);
     }

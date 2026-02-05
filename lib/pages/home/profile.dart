@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/pages/home/mfa_settings.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 
 class ProfileWidget extends StatefulWidget {
@@ -21,6 +22,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   String email = '';
   String phoneNumber = '';
   String address = '';
+  String mfaType = 'disable'; // 'disable', 'email', or 'sms'
 
   bool isLoading = true;
   String? errorMessage;
@@ -91,6 +93,16 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         phoneNumber = profile["contact"]?.toString() ?? '';
         address = profile["address"]?.toString() ?? '';
         email = profile["email"]?.toString() ?? '';
+
+        // Set MFA type based on profile data
+        final mfaValue = profile["mfa"];
+        if (mfaValue == true || mfaValue == 'true' || mfaValue == 'email') {
+          mfaType = 'email';
+        } else if (mfaValue == 'sms') {
+          mfaType = 'sms';
+        } else {
+          mfaType = 'disable';
+        }
 
         isLoading = false;
       });
@@ -308,9 +320,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                 _buildProfileRow(
                                   icon: Icons.gps_fixed,
                                   label: 'Address',
-                                  value: address.isEmpty
-                                      ? 'Not set'
-                                      : address,
+                                  value: address.isEmpty ? 'Not set' : address,
                                 ),
                                 _buildProfileRow(
                                   icon: Icons.phone_outlined,
@@ -324,6 +334,22 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                   label: 'Email',
                                   value: email.isEmpty ? 'Not set' : email,
                                 ),
+
+                                // Security Section
+                                const SizedBox(height: 24),
+                                Text(
+                                  'Security',
+                                  style: GoogleFonts.interTight(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w600,
+                                    color: _secondaryText,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                // MFA Status Row
+                                _buildMfaStatusRow(),
+
                                 const SizedBox(height: 24),
                                 _buildActionButton(
                                   icon: Icons.edit_outlined,
@@ -408,6 +434,110 @@ class _ProfileWidgetState extends State<ProfileWidget> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMfaStatusRow() {
+    final bool isEnabled = mfaType != 'disable';
+    String statusText = 'Disabled';
+    IconData statusIcon = Icons.cancel;
+
+    if (mfaType == 'email') {
+      statusText = 'Email';
+      statusIcon = Icons.email_outlined;
+    } else if (mfaType == 'sms') {
+      statusText = 'SMS';
+      statusIcon = Icons.sms_outlined;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E3E7), width: 1),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12), // optional for nicer ripple
+        onTap: () {
+          // Navigator.pushNamed(context, "/mfa-settings");
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MfaSettingsPage()),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 12,
+          ), // gives better tap area
+          child: Row(
+            children: [
+              Icon(
+                Icons.security,
+                color: isEnabled ? const Color(0xFF34A853) : _secondaryText,
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Two-Factor Authentication',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: _secondaryText,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isEnabled
+                                ? const Color(0xFF34A853).withOpacity(0.1)
+                                : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                statusIcon,
+                                size: 14,
+                                color: isEnabled
+                                    ? const Color(0xFF34A853)
+                                    : Colors.grey[600],
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                statusText,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: isEnabled
+                                      ? const Color(0xFF34A853)
+                                      : Colors.grey[600],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, color: _secondaryText, size: 16),
+            ],
+          ),
         ),
       ),
     );

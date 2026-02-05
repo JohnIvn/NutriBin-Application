@@ -37,6 +37,8 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
   bool isLoading = true;
   String? errorMessage;
   String? _originalContact; // Store original contact to check if changed
+  String _mfaType = 'disable'; // MFA type: 'disable', 'email', or 'sms'
+  bool _isMfaLoading = false; // Loading state for MFA toggle
 
   @override
   void initState() {
@@ -284,6 +286,16 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         _contactController.text = profile["contact"]?.toString() ?? '';
         _originalContact = profile["contact"]?.toString() ?? '';
 
+        // Set MFA type based on profile data
+        final mfaValue = profile["mfa"];
+        if (mfaValue == true || mfaValue == 'true' || mfaValue == 'email') {
+          _mfaType = 'email';
+        } else if (mfaValue == 'sms') {
+          _mfaType = 'sms';
+        } else {
+          _mfaType = 'disable';
+        }
+
         isLoading = false;
       });
     } catch (e) {
@@ -476,6 +488,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         user.lastName,
         user.contact,
         user.address,
+        user.mfa,
         user.token,
       );
 

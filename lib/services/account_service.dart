@@ -343,7 +343,7 @@ class ProfileUtility {
         address: address,
       );
 
-      return {"ok": true, "data": data["data"].user};
+      return {"ok": true, "data": data["user"]};
     } catch (e) {
       return ResponseUtility.invalid(e.toString());
     }
@@ -354,6 +354,7 @@ class ProfileUtility {
     String? lastname,
     String? contact,
     String? address,
+    bool? mfa,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -368,6 +369,9 @@ class ProfileUtility {
     }
     if (address != null) {
       await prefs.setString('address', address);
+    }
+    if (mfa != null) {
+      await prefs.setBool('mfa', mfa);
     }
   }
 }
