@@ -27,20 +27,18 @@ class AuthUtility {
         body: jsonEncode({"email": email}),
       );
 
-      final data = jsonDecode(response.body);
+      final result = jsonDecode(response.body) as Map<String, dynamic>;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (data['ok'] == true) {
-          return {
-            "ok": true,
-            "message": data['message'] ?? 'Verification code sent',
-          };
-        }
+      if (result["ok"] != true) {
+        return ResponseUtility.invalid(
+          result['message'] ?? 'Failed to send verification code',
+        );
       }
 
-      return ResponseUtility.invalid(
-        data['message'] ?? 'Failed to send verification code',
-      );
+      return {
+        "ok": true,
+        "message": result['message'] ?? 'Verification code sent',
+      };
     } catch (e) {
       return ResponseUtility.invalid(e.toString());
     }
@@ -95,8 +93,6 @@ class AuthUtility {
         body: jsonEncode({"newPhone": contact}),
       );
 
-      print("DEBUG - Response status: ${response.statusCode}"); // ← Add debug
-      print("DEBUG - Response body: ${response.body}");
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -133,21 +129,14 @@ class AuthUtility {
         },
         body: jsonEncode({"email": email, "password": newPassword}),
       );
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (data['ok'] == true) {
-          return {
-            "ok": true,
-            "message": data['message'] ?? 'Password Changed Successfully',
-          };
-        }
-      } else {
-        return {
-          "ok": false,
-          "message": data["message"] ?? "Password Reset Failed",
-        };
+      final result = jsonDecode(response.body) as Map<String, dynamic>;
+      if (result["ok"] != true) {
+        return ResponseUtility.invalid(result["message"]);
       }
-      return {"ok": false, "message": "Password Reset Failed"};
+      return {
+        "ok": true,
+        "message": result['message'] ?? 'Password Changed Successfully',
+      };
     } catch (e) {
       return {"ok": false, "message": e.toString()};
     }
@@ -298,7 +287,7 @@ class AuthUtility {
     }
   }
 
-  static Future<dynamic> toggleMfa({required String type}) async {
+  static Future<Map<String, dynamic>> toggleMfa({required String type}) async {
     try {
       String? userId = await PreferenceUtility.getUserId();
       if (userId == null) {
@@ -318,7 +307,7 @@ class AuthUtility {
 
       final url = Uri.parse("$restUser/authentication/$userId/mfa");
 
-      final response = await http.patch(
+      final result = await http.patch(
         url,
         headers: {
           "Content-Type": "application/json",
@@ -328,30 +317,57 @@ class AuthUtility {
         body: jsonEncode({"mfaType": mfaType}),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final responseData = jsonDecode(response.body);
-        return {
-          "ok": true,
-          "message":
-              responseData["message"] ?? "MFA settings updated successfully",
-          "data": responseData["mfaType"],
-        };
-      } else if (response.statusCode == 400) {
-        final errorData = jsonDecode(response.body);
-        return {"ok": false, "message": errorData["message"] ?? "Bad request"};
-      } else if (response.statusCode == 500) {
-        return {
-          "ok": false,
-          "message": "Server error. Please try again later.",
-        };
-      } else {
-        print("Test: ${response}");
-        return {
-          "ok": false,
-          "message":
-              "Failed to update MFA settings. Status code: ${response.statusCode}",
-        };
+      final response = jsonDecode(result.body) as Map<String, dynamic>;
+
+      if (response["ok"] != true) {
+        return ResponseUtility.invalid(
+          response["message"] ?? response["error"],
+        );
       }
+      return {
+        "ok": true,
+        "message": response["message"] ?? "MFA settings updated successfully",
+        "data": response["mfaType"],
+      };
+    } catch (e) {
+      return {"ok": false, "message": "An error occurred: ${e.toString()}"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> fetchMfa({String? uid}) async {
+    try {
+      String? userId = await PreferenceUtility.getUserId();
+      final url;
+      if (userId == null) {
+        return {"ok": false, "message": "User ID not found"};
+      }
+      if (userId.isNotEmpty) {
+        url = Uri.parse("$restUser/authentication/$userId/mfa");
+      } else {
+        url = Uri.parse("$restUser/authentication/$uid/mfa");
+      }
+      print("User ID: ${userId} | UID: ${uid}");
+
+      final result = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+          "apikey": anonKey,
+        },
+      );
+
+      final response = jsonDecode(result.body) as Map<String, dynamic>;
+
+      if (response["ok"] != true) {
+        return ResponseUtility.invalid(response["message"].toString());
+      }
+
+      return {
+        "ok": true,
+        "message": response["message"] ?? "MFA settings updated successfully",
+        "data": response["mfaType"],
+      };
     } catch (e) {
       return {"ok": false, "message": "An error occurred: ${e.toString()}"};
     }

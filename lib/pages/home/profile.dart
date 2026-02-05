@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/pages/home/mfa_settings.dart';
+import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 
 class ProfileWidget extends StatefulWidget {
@@ -22,7 +23,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   String email = '';
   String phoneNumber = '';
   String address = '';
-  String mfaType = 'disable'; // 'disable', 'email', or 'sms'
+  String mfaType = 'disable';
 
   bool isLoading = true;
   String? errorMessage;
@@ -72,6 +73,28 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     _fetchAccount();
   }
 
+  void _fetchMfa() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final response = await AuthUtility.fetchMfa();
+      if (response["ok"] != true) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to load mfa')));
+      }
+      setState(() {
+        mfaType = response["data"] ?? "disabled";
+        isLoading = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to load MFA')));
+    }
+  }
+
   void _fetchAccount() async {
     try {
       setState(() {
@@ -94,18 +117,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         address = profile["address"]?.toString() ?? '';
         email = profile["email"]?.toString() ?? '';
 
-        // Set MFA type based on profile data
-        final mfaValue = profile["mfa"];
-        if (mfaValue == true || mfaValue == 'true' || mfaValue == 'email') {
-          mfaType = 'email';
-        } else if (mfaValue == 'sms') {
-          mfaType = 'sms';
-        } else {
-          mfaType = 'disable';
-        }
-
         isLoading = false;
       });
+      _fetchMfa();
     } catch (e) {
       if (!mounted) return;
 
@@ -440,7 +454,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   }
 
   Widget _buildMfaStatusRow() {
-    final bool isEnabled = mfaType != 'disable';
+    final bool isEnabled = mfaType == 'email' || mfaType == 'sms';
     String statusText = 'Disabled';
     IconData statusIcon = Icons.cancel;
 
@@ -460,18 +474,16 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         border: Border.all(color: const Color(0xFFE0E3E7), width: 1),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12), // optional for nicer ripple
-        onTap: () {
-          // Navigator.pushNamed(context, "/mfa-settings");
-          Navigator.push(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => MfaSettingsPage()),
           );
+          _fetchMfa();
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: 12,
-          ), // gives better tap area
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: Row(
             children: [
               Icon(

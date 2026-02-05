@@ -9,7 +9,7 @@ class PreferenceUtility {
     String lastName,
     String contact,
     String address,
-    bool? mfa,
+    String? mfa,
     String token,
   ) async {
     final prefs = await SharedPreferences.getInstance();
@@ -21,7 +21,7 @@ class PreferenceUtility {
     await prefs.setString('lastName', lastName);
     await prefs.setString('contact', contact);
     await prefs.setString('address', address);
-    await prefs.setBool('mfa', mfa == true);
+    await prefs.setString('mfa', mfa ?? "");
     if (token.isNotEmpty) {
       await prefs.setString('token', token);
     }
@@ -90,7 +90,7 @@ class ValidationUtility {
     required String confirmPassword,
   }) {
     final firstNameValidation = validateName(firstname);
-    if (!firstNameValidation["valid"]) {
+    if (!firstNameValidation["ok"]) {
       return {
         "ok": false,
         "message": "Firstname: ${firstNameValidation["message"]}",
@@ -98,7 +98,7 @@ class ValidationUtility {
     }
 
     final lastNameValidation = validateName(lastname);
-    if (!lastNameValidation["valid"]) {
+    if (!lastNameValidation["ok"]) {
       return {
         "ok": false,
         "message": "Lastname: ${lastNameValidation["message"]}",
@@ -106,19 +106,18 @@ class ValidationUtility {
     }
 
     final emailValidation = validateEmail(email);
-    if (!emailValidation["valid"]) {
+    if (!emailValidation["ok"]) {
       return {"ok": false, "message": emailValidation["message"]};
     }
-
-    if (contact.toString().isNotEmpty) {
-      final contactValidation = validateContact(contact.toString());
-      if (!contactValidation["valid"]) {
+    if (contact != null && contact.trim().isNotEmpty) {
+      final contactValidation = validateContact(contact);
+      if (!contactValidation["ok"]) {
         return {"ok": false, "message": contactValidation["message"]};
       }
     }
 
     final passwordValidation = validatePassword(password);
-    if (!passwordValidation["valid"]) {
+    if (!passwordValidation["ok"]) {
       return {"ok": false, "message": passwordValidation["message"]};
     }
 

@@ -159,7 +159,7 @@ class _SignUpPageState extends State<SignUpPage>
     }
 
     if (isValidPassword["ok"] != true) {
-      _showError(isValidEmail["message"]);
+      _showError(isValidPassword["message"]);
       _signUpPasswordFocus.requestFocus();
       return false;
     }
@@ -216,7 +216,6 @@ class _SignUpPageState extends State<SignUpPage>
           'type': 'email',
         },
       );
-
       if (otpInput == null) {
         _showError("Email verification was cancelled");
         return;
@@ -253,6 +252,7 @@ class _SignUpPageState extends State<SignUpPage>
         );
       }
 
+      final mfaResponse = await AuthUtility.fetchMfa();
       final user = User.fromJson(signupResult["user"]);
 
       await PreferenceUtility.saveSession(
@@ -262,7 +262,7 @@ class _SignUpPageState extends State<SignUpPage>
         user.lastName,
         user.contact,
         user.address,
-        false,
+        mfaResponse["data"] ?? "disabled",
         user.token,
       );
 
@@ -999,6 +999,7 @@ class _SignUpPageState extends State<SignUpPage>
 
       final user = User.fromJson(result['data']);
       final isNewUser = result['isNewUser'] ?? false;
+      final mfaResponse = await AuthUtility.fetchMfa();
 
       await PreferenceUtility.saveSession(
         user.id,
@@ -1007,7 +1008,7 @@ class _SignUpPageState extends State<SignUpPage>
         user.lastName,
         user.contact,
         user.address,
-        isNewUser == false,
+        mfaResponse["mfaType"],
         user.token,
       );
 

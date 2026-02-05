@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/models/user.dart';
+import 'package:nutribin_application/services/account_service.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MfaSettingsPage extends StatefulWidget {
   const MfaSettingsPage({super.key});
@@ -18,9 +21,10 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
 
   Color get _primaryColor => Theme.of(context).primaryColor;
 
-  String _mfaType = 'disable'; // MFA type: 'disable', 'email', or 'sms'
-  bool _isMfaLoading = false; // Loading state for MFA toggle
+  String _mfaType = 'disable';
+  bool _isMfaLoading = false;
   bool _isInitialLoading = true;
+  bool _isMfa = false;
   String? _errorMessage;
 
   @override
@@ -279,19 +283,24 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
         _isInitialLoading = true;
         _errorMessage = null;
       });
+      final response = await AuthUtility.fetchMfa();
 
-      final profile = await PreferenceUtility.getProfile(
-        name: true,
-        contacts: true,
-        email: true,
-      );
+      if (response["ok"] != true) {
+        setState(() {
+          _isInitialLoading = false;
+          _errorMessage = response["message"] ?? "Failed to fetch MFA settings";
+        });
+        return;
+      }
 
       if (!mounted) return;
 
       setState(() {
-        // Set MFA type based on profile data
-        final mfaValue = profile["mfa"];
-        if (mfaValue == true || mfaValue == 'true' || mfaValue == 'email') {
+        final mfaValue = response["data"]?.toString() ?? 'N/A';
+
+        if (mfaValue == 'N/A' || mfaValue == 'false' || mfaValue == null) {
+          _mfaType = 'disable';
+        } else if (mfaValue == 'email') {
           _mfaType = 'email';
         } else if (mfaValue == 'sms') {
           _mfaType = 'sms';
@@ -299,9 +308,11 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
           _mfaType = 'disable';
         }
 
+        print("🔍 Fetched MFA type: $mfaValue -> Mapped to: $_mfaType");
         _isInitialLoading = false;
       });
     } catch (e) {
+      print("❌ Error fetching MFA: $e");
       if (!mounted) return;
       setState(() {
         _isInitialLoading = false;
@@ -316,9 +327,7 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
     });
 
     try {
-      // Call your MFA toggle API here
       final result = await AuthUtility.toggleMfa(type: type);
-
       if (!mounted) return;
 
       if (result["ok"] == true) {
@@ -327,22 +336,10 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
           _isMfaLoading = false;
         });
 
-        // Update stored session
-        final profile = await PreferenceUtility.getProfile(
-          name: true,
-          contacts: true,
-          email: true,
-        );
-        await PreferenceUtility.saveSession(
-          profile["id"],
-          profile["email"],
-          profile["firstName"],
-          profile["lastName"],
-          profile["contact"],
-          profile["address"],
-          true,
-          profile["token"],
-        );
+        final mfaTypeFromResponse = result["data"]?.toString() ?? 'N/A';
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('mfa', mfaTypeFromResponse);
 
         if (!mounted) return;
 

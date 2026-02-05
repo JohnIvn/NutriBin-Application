@@ -7,7 +7,7 @@ class User {
   final String contact;
   final String address;
   final String birthday;
-  final bool mfa;
+  final String mfa;
   final String token;
 
   User.fromJson(Map<String, dynamic> json)
@@ -19,6 +19,6 @@ class User {
       contact = json["contact_number"] ?? '',
       address = json["address"] ?? '',
       birthday = json["birthday"] ?? '',
-      mfa = json["mfa"] ?? false,
+      mfa = json["mfa"] ?? '',
       token = json["token"] ?? '';
 }
