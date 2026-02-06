@@ -115,11 +115,16 @@ class AccountUtility {
           "userId": data["userId"] ?? data["customerId"],
           "mfaType": data["mfaType"],
           "message": data["message"],
+          "data": data["user"],
         };
       }
 
       // Sign-in successful - no MFA required
-      return {"ok": true, "data": data["user"] ?? data["data"]};
+      return {
+        "ok": true,
+        "message": data["message"],
+        "data": data["user"] ?? data["data"],
+      };
     } catch (e) {
       return Error.errorResponse(e.toString());
     }

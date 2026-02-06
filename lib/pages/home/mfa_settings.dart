@@ -24,13 +24,22 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
   String _mfaType = 'disable';
   bool _isMfaLoading = false;
   bool _isInitialLoading = true;
-  bool _isMfa = false;
+  bool _isPhoneVerified = false;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
+    _fetchPhone();
     _fetchMfaSettings();
+  }
+
+  Future<void> _fetchPhone() async {
+    String? contact = await PreferenceUtility.getContact();
+    if (contact == null) return;
+    setState(() {
+      _isPhoneVerified = contact.toString().isNotEmpty;
+    });
   }
 
   @override
@@ -312,7 +321,7 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
         _isInitialLoading = false;
       });
     } catch (e) {
-      print("❌ Error fetching MFA: $e");
+      print("Error fetching MFA: $e");
       if (!mounted) return;
       setState(() {
         _isInitialLoading = false;
@@ -382,8 +391,13 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
   }) {
     final isSelected = _mfaType == value;
 
+    // 👉 Disable SMS if phone not verified
+    final bool isDisabled = value == 'sms' && !_isPhoneVerified;
+
     return InkWell(
-      onTap: _isMfaLoading ? null : () => _handleMfaToggle(value),
+      onTap: (_isMfaLoading || isDisabled)
+          ? null
+          : () => _handleMfaToggle(value),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -393,54 +407,70 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? _primaryColor : Colors.grey[300]!,
+            color: isSelected
+                ? _primaryColor
+                : isDisabled
+                ? Colors.grey[300]!
+                : Colors.grey[300]!,
             width: isSelected ? 2 : 1,
           ),
         ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? _primaryColor : Colors.grey[600],
-              size: 24,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? _primaryColor : Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
+        child: Opacity(
+          // 👈 visually dim if disabled
+          opacity: isDisabled ? 0.5 : 1,
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: isSelected
+                    ? _primaryColor
+                    : isDisabled
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
+                size: 24,
               ),
-            ),
-            Radio<String>(
-              value: value,
-              groupValue: _mfaType,
-              onChanged: _isMfaLoading
-                  ? null
-                  : (String? newValue) {
-                      if (newValue != null) {
-                        _handleMfaToggle(newValue);
-                      }
-                    },
-              activeColor: _primaryColor,
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? _primaryColor
+                            : isDisabled
+                            ? Colors.grey[400]
+                            : Colors.grey[800],
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: isDisabled ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Radio<String>(
+                value: value,
+                groupValue: _mfaType,
+                activeColor: _primaryColor,
+                onChanged: (_isMfaLoading || isDisabled)
+                    ? null
+                    : (String? newValue) {
+                        if (newValue != null) {
+                          _handleMfaToggle(newValue);
+                        }
+                      },
+              ),
+            ],
+          ),
         ),
       ),
     );

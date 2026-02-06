@@ -299,22 +299,23 @@ class _SignUpPageState extends State<SignUpPage>
 
       // MFA required - code has already been sent by mobileSignIn
       if (result['requiresMFA'] == true) {
-        final mfaType = result["mfaType"]; // 'email' or 'sms'
-        final userId = result["userId"];
+        final mfaType = result["mfaType"];
 
-        print("DEBUG: MFA Type = $mfaType");
-
-        // Navigate to verification screen
         final otpInput = await Navigator.pushNamed(
           context,
           '/verify-contacts',
           arguments: {
             'recipient': mfaType == 'email'
                 ? _signInEmailController.text.trim()
-                : 'your phone', // or fetch from user data if needed
+                : 'your phone',
             'type': mfaType,
           },
         );
+
+        if (otpInput == null) {
+          _showError("MFA Cancelled");
+          return;
+        }
 
         final otpData = otpInput as Map<String, dynamic>;
 
@@ -330,23 +331,13 @@ class _SignUpPageState extends State<SignUpPage>
           return;
         }
 
+        print("DEBUG: $verifyResult");
         if (verifyResult["ok"] != true) {
           _showError(verifyResult["message"] ?? "Verification failed");
           return;
         }
 
-        // After successful verification, sign in again to get user data
-        final finalSignIn = await AccountUtility.authSignIn(
-          email: _signInEmailController.text.trim(),
-          password: _signInPasswordController.text.trim(),
-        );
-
-        if (finalSignIn['ok'] != true || finalSignIn['requiresMFA'] == true) {
-          _showError("Failed to complete sign-in after verification");
-          return;
-        }
-
-        final user = User.fromJson(finalSignIn['data']);
+        final user = User.fromJson(result['data']);
 
         await PreferenceUtility.saveSession(
           user.id,

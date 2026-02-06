@@ -46,6 +46,11 @@ class PreferenceUtility {
     return prefs.getString("userId");
   }
 
+  static Future<String?> getContact() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("contact");
+  }
+
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('isLoggedIn') ?? false;
@@ -139,9 +144,7 @@ class ValidationUtility {
     }
 
     if (!password.contains(RegExp(r'[A-Z]'))) {
-      return Error.errorResponse(
-        "Password must contain capital characters",
-      );
+      return Error.errorResponse("Password must contain capital characters");
     }
 
     if (!password.contains(RegExp(r'[a-z]'))) {
@@ -149,15 +152,11 @@ class ValidationUtility {
     }
 
     if (!password.contains(RegExp(r'[0-9]'))) {
-      return Error.errorResponse(
-        "Password must contain numeric characters",
-      );
+      return Error.errorResponse("Password must contain numeric characters");
     }
 
     if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>_]'))) {
-      return Error.errorResponse(
-        "Password must contain special characters",
-      );
+      return Error.errorResponse("Password must contain special characters");
     }
 
     return {"ok": true, "message": "Valid password"};
@@ -218,5 +217,3 @@ class ValidationUtility {
     return {"ok": true, "message": "Valid email"};
   }
 }
-
-
