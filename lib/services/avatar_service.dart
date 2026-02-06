@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:nutribin_application/utils/helpers.dart';
+import 'package:nutribin_application/utils/response_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final String restUser = dotenv.env["RAILWAY_USER"].toString();

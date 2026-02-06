@@ -1,4 +1,5 @@
 import 'package:nutribin_application/services/google_auth_service.dart';
+import 'package:nutribin_application/utils/response_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferenceUtility {
@@ -218,8 +219,4 @@ class ValidationUtility {
   }
 }
 
-class ResponseUtility {
-  static Map<String, dynamic> invalid(String message) {
-    return {"ok": false, "message": message};
-  }
-}
+
