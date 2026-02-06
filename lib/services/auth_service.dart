@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 import 'package:nutribin_application/utils/response_handler.dart';
 
@@ -293,11 +294,9 @@ class AuthUtility {
     try {
       String? userId = await PreferenceUtility.getUserId();
       Uri url;
-
-      if (userId == null) {
-        return Error.errorResponse("Please Login First");
-      }
-      if (userId.isNotEmpty) {
+      if (userId.toString().isNotEmpty ||
+          userId != null ||
+          userId.toString() != "null") {
         url = Uri.parse("$restUser/authentication/$userId/mfa");
       } else {
         url = Uri.parse("$restUser/authentication/$uid/mfa");
@@ -313,6 +312,65 @@ class AuthUtility {
       );
 
       final data = jsonDecode(result.body);
+
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
+      }
+
+      return {
+        "ok": true,
+        "message": data["message"] ?? "MFA settings updated successfully",
+        "data": data["mfaType"],
+      };
+    } catch (e) {
+      return {"ok": false, "message": "An error occurred: ${e.toString()}"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyMfa({
+    required String type,
+    required String otp,
+  }) async {
+    try {
+      String? userId = await PreferenceUtility.getUserId();
+      Uri url;
+      dynamic data;
+
+      if (userId == null) {
+        return Error.errorResponse("Please Login First");
+      }
+      if (type == "sms") {
+        url = Uri.parse("$restUser/settings/$userId/phone/verify");
+        final result = await http.get(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $anonKey",
+            "apikey": anonKey,
+          },
+        );
+        data = jsonDecode(result.body);
+        if (data["ok"] != true) {
+          return Error.errorResponse(data["message"] ?? data["data"]);
+        }
+      } else if (type == "email") {
+        url = Uri.parse("$restUser/user/verify-email");
+        final result = await http.post(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $anonKey",
+            "apikey": anonKey,
+          },
+          body: jsonEncode({"verificationCode": otp}),
+        );
+        data = jsonDecode(result.body);
+        if (data["ok"] != true) {
+          return Error.errorResponse(data["message"] ?? data["data"]);
+        }
+      } else {
+        return Error.errorResponse("Invalid mfa type");
+      }
 
       if (data["ok"] != true) {
         return Error.errorResponse(data["message"] ?? data["error"]);

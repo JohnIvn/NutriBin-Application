@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -290,23 +292,50 @@ class _SignUpPageState extends State<SignUpPage>
         password: _signInPasswordController.text.trim(),
       );
 
-      if (result['requiresMFA'] == true) {
-        // _showError(result["message"]);
-
-        // Navigate to MFA verification screen (optional)
-        if (mounted) {
-          Navigator.pushNamed(
-            context,
-            '/verify-mfa',
-            arguments: {'userId': result['userId']},
-          );
-        }
-        return;
-      }
-
       if (result['ok'] != true) {
         _showError(result["message"] ?? "Login Failed");
         return;
+      }
+
+      final mfaType = await AuthUtility.fetchMfa(uid: result["userId"]);
+      print("DEBUG: $mfaType");
+      if (result['requiresMFA'] == true) {
+        if (mfaType.toString() == "email") {
+          final sendEmailResponse = await AuthUtility.sendEmailVerification(
+            email: _signInEmailController.text.trim(),
+          );
+
+          if (sendEmailResponse["ok"] != true) {
+            _showError(
+              sendEmailResponse["message"] ??
+                  "Failed to send email verification",
+            );
+            return;
+          }
+
+          final otpInput = await Navigator.pushNamed(
+            context,
+            '/verify-contacts',
+            arguments: {
+              'recipient': _signUpEmailController.text.trim(),
+              'type': mfaType,
+            },
+          );
+
+          final otpData = otpInput as Map<String, dynamic>;
+
+          final verifyContactResult = await AuthUtility.verifyEmail(
+            code: otpData["otp"],
+          );
+
+          if (verifyContactResult["ok"] != true) {
+            _showError(verifyContactResult["message"]);
+            return;
+          }
+        }
+        if (mfaType == "sms") {
+          //TODO
+        }
       }
 
       final user = User.fromJson(result['data']);
@@ -318,7 +347,7 @@ class _SignUpPageState extends State<SignUpPage>
         user.lastName,
         user.contact,
         user.address,
-        result['requiresMFA'],
+        mfaType.toString(),
         user.token,
       );
 
