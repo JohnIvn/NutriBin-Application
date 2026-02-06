@@ -36,22 +36,18 @@ class GoogleOAuthService {
     }
   }
 
-  /// Check if signed in
   static Future<bool> isSignedIn() async {
     return await _instance.isSignedIn();
   }
 
-  /// Get current user
   static GoogleSignInAccount? getCurrentUser() {
     return _instance.currentUser;
   }
 
-  /// Silent sign in
   static Future<GoogleSignInAccount?> signInSilently() async {
     try {
       return await _instance.signInSilently();
     } catch (e) {
-      print('Silent sign in failed: $e');
       return null;
     }
   }

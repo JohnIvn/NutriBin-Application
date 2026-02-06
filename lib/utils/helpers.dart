@@ -135,27 +135,27 @@ class ValidationUtility {
 
   static Map<String, dynamic> validatePassword(String password) {
     if (password.length < 8) {
-      return ResponseUtility.invalid("Password must be 8 characters or more");
+      return Error.errorResponse("Password must be 8 characters or more");
     }
 
     if (!password.contains(RegExp(r'[A-Z]'))) {
-      return ResponseUtility.invalid(
+      return Error.errorResponse(
         "Password must contain capital characters",
       );
     }
 
     if (!password.contains(RegExp(r'[a-z]'))) {
-      return ResponseUtility.invalid("Password must contain small characters");
+      return Error.errorResponse("Password must contain small characters");
     }
 
     if (!password.contains(RegExp(r'[0-9]'))) {
-      return ResponseUtility.invalid(
+      return Error.errorResponse(
         "Password must contain numeric characters",
       );
     }
 
     if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>_]'))) {
-      return ResponseUtility.invalid(
+      return Error.errorResponse(
         "Password must contain special characters",
       );
     }
@@ -166,12 +166,12 @@ class ValidationUtility {
   static Map<String, dynamic> validateName(String value) {
     final name = value.trim();
     if (name.length < 2) {
-      return ResponseUtility.invalid("Name must be greater than 2 characters");
+      return Error.errorResponse("Name must be greater than 2 characters");
     }
 
     final RegExp nameRegex = RegExp(r'^[A-Za-z]+(?: [A-Za-z]+)*$');
     if (!nameRegex.hasMatch(name)) {
-      return ResponseUtility.invalid(
+      return Error.errorResponse(
         "Name must only contain alphabetical characters",
       );
     }
@@ -181,7 +181,7 @@ class ValidationUtility {
   static Map<String, dynamic> validateContact(String value) {
     final RegExp phContactRegex = RegExp(r'^(09\d{9}|\+639\d{9})$');
     if (!phContactRegex.hasMatch(value.trim())) {
-      return ResponseUtility.invalid("Please use PH format numbers (+63)");
+      return Error.errorResponse("Please use PH format numbers (+63)");
     }
 
     return {"ok": true, "message": "Valid contacts"};
@@ -191,13 +191,13 @@ class ValidationUtility {
     final email = value.trim();
 
     if (email.isEmpty) {
-      return ResponseUtility.invalid("Empty email");
+      return Error.errorResponse("Empty email");
     }
 
     final parts = email.split('@');
 
     if (parts.length != 2) {
-      return ResponseUtility.invalid("Invalid email format");
+      return Error.errorResponse("Invalid email format");
     }
 
     final localPart = parts[0].trim();
@@ -206,13 +206,13 @@ class ValidationUtility {
     final RegExp localRegex = RegExp(r'^[a-zA-Z0-9._%+-]+$');
 
     if (!localRegex.hasMatch(localPart)) {
-      return ResponseUtility.invalid("Invalid email name");
+      return Error.errorResponse("Invalid email name");
     }
 
     final RegExp domainRegex = RegExp(r'^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$');
 
     if (!domainRegex.hasMatch(domainPart)) {
-      return ResponseUtility.invalid("Invalid email domain");
+      return Error.errorResponse("Invalid email domain");
     }
 
     return {"ok": true, "message": "Valid email"};

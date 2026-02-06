@@ -31,17 +31,14 @@ class AuthUtility {
       final result = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (result["ok"] != true) {
-        return ResponseUtility.invalid(
+        return Error.errorResponse(
           result['message'] ?? 'Failed to send verification code',
         );
       }
 
-      return {
-        "ok": true,
-        "message": result['message'] ?? 'Verification code sent',
-      };
+      return {"ok": true, "message": result['message']};
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -64,12 +61,15 @@ class AuthUtility {
       final data = jsonDecode(response.body);
 
       if (data["ok"] != true) {
-        return ResponseUtility.invalid(data["error"]);
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
 
-      return {"ok": true, "message": "Code verified successfully"};
+      return {
+        "ok": true,
+        "message": data["message"] ?? "Code verified successfully",
+      };
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -79,9 +79,9 @@ class AuthUtility {
     try {
       String? userId = await PreferenceUtility.getUserId();
       if (userId == null) {
-        return {"ok": false, "data": "User ID not found"};
+        Error.errorResponse("Please Login First");
       }
-      // final url = Uri.parse("$restServer/staff/phone/request");
+
       final url = Uri.parse("$restUser/settings/$userId/phone/verify/request");
 
       final response = await http.post(
@@ -96,21 +96,19 @@ class AuthUtility {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (data['ok'] == true) {
-          return {
-            "ok": true,
-            "code": data['code'],
-            "message": data['message'] ?? 'Verification sms code sent',
-          };
-        }
+      if (data['ok'] != true) {
+        return Error.errorResponse(
+          data['message'] ?? data["error"] ?? 'Failed to send sms code',
+        );
       }
 
-      return ResponseUtility.invalid(
-        data['message'] ?? 'Failed to send sms code',
-      );
+      return {
+        "ok": true,
+        "code": data['code'],
+        "message": data['message'] ?? 'Verification sms code sent',
+      };
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -130,16 +128,16 @@ class AuthUtility {
         },
         body: jsonEncode({"email": email, "password": newPassword}),
       );
-      final result = jsonDecode(response.body) as Map<String, dynamic>;
-      if (result["ok"] != true) {
-        return ResponseUtility.invalid(result["message"]);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
       return {
         "ok": true,
-        "message": result['message'] ?? 'Password Changed Successfully',
+        "message": data['message'] ?? 'Password Changed Successfully',
       };
     } catch (e) {
-      return {"ok": false, "message": e.toString()};
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -150,9 +148,7 @@ class AuthUtility {
   }) async {
     try {
       if (password != confirmPassword) {
-        return ResponseUtility.invalid(
-          "Password and Confirm Password must match",
-        );
+        return Error.errorResponse("Password and Confirm Password must match");
       }
 
       final url = Uri.parse("$restUser/user/update-password");
@@ -167,27 +163,14 @@ class AuthUtility {
         body: jsonEncode({"email": email, "newPassword": password}),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data["ok"] == true) {
-          return {"ok": true, "data": data["message"]};
-        } else {
-          return {"ok": false, "data": data["message"] ?? "Update failed"};
-        }
-      } else {
-        // Handle non-200 responses
-        final errorData = jsonDecode(response.body);
-        return {
-          "ok": false,
-          "data":
-              errorData["message"] ??
-              "Update failed with status ${response.statusCode}",
-        };
+      final data = jsonDecode(response.body);
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
+
+      return {"ok": true, "message": data["message"]};
     } catch (e) {
-      print("Error: $e");
-      return {"ok": false, "data": e.toString()};
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -200,7 +183,7 @@ class AuthUtility {
     try {
       String? userId = await PreferenceUtility.getUserId();
       if (userId == null) {
-        return {"ok": false, "data": "User ID not found"};
+        return Error.errorResponse("Please Login First");
       }
 
       final url = Uri.parse("$restUser/settings/$userId");
@@ -219,27 +202,13 @@ class AuthUtility {
           "address": address,
         }),
       );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data["ok"] == true) {
-          return {"ok": true, "data": data["user"]};
-        } else {
-          return {"ok": false, "data": data["message"] ?? "Update failed"};
-        }
-      } else {
-        // Handle non-200 responses
-        final errorData = jsonDecode(response.body);
-        return {
-          "ok": false,
-          "data":
-              errorData["message"] ??
-              "Update failed with status ${response.statusCode}",
-        };
+      final data = jsonDecode(response.body);
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
+      return {"ok": true, "data": data["user"]};
     } catch (e) {
-      print("Error: $e");
-      return {"ok": false, "data": e.toString()};
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -250,7 +219,7 @@ class AuthUtility {
     try {
       String? userId = await PreferenceUtility.getUserId();
       if (userId == null) {
-        return {"ok": false, "data": "User ID not found"};
+        return Error.errorResponse("Please Login First");
       }
 
       final url = Uri.parse("$restUser/settings/$userId/phone/verify");
@@ -264,27 +233,14 @@ class AuthUtility {
         },
         body: jsonEncode({"code": code, "newPhone": newPhone}),
       );
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-        if (data["ok"] == true) {
-          return {"ok": true, "data": data["user"]};
-        } else {
-          return {"ok": false, "data": data["message"] ?? "Update failed"};
-        }
-      } else {
-        // Handle non-200 responses
-        final errorData = jsonDecode(response.body);
-        return {
-          "ok": false,
-          "data":
-              errorData["message"] ??
-              "Update failed with status ${response.statusCode}",
-        };
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
+      return {"ok": true, "data": data["user"]};
     } catch (e) {
-      print("Error: $e");
-      return {"ok": false, "data": e.toString()};
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -292,7 +248,7 @@ class AuthUtility {
     try {
       String? userId = await PreferenceUtility.getUserId();
       if (userId == null) {
-        return {"ok": false, "message": "User ID not found"};
+        return Error.errorResponse("Please Login First");
       }
 
       String mfaType;
@@ -318,36 +274,34 @@ class AuthUtility {
         body: jsonEncode({"mfaType": mfaType}),
       );
 
-      final response = jsonDecode(result.body) as Map<String, dynamic>;
+      final data = jsonDecode(result.body);
 
-      if (response["ok"] != true) {
-        return ResponseUtility.invalid(
-          response["message"] ?? response["error"],
-        );
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
       return {
         "ok": true,
-        "message": response["message"] ?? "MFA settings updated successfully",
-        "data": response["mfaType"],
+        "message": data["message"] ?? "MFA settings updated successfully",
+        "data": data["mfaType"],
       };
     } catch (e) {
-      return {"ok": false, "message": "An error occurred: ${e.toString()}"};
+      return Error.errorResponse(e.toString());
     }
   }
 
   static Future<Map<String, dynamic>> fetchMfa({String? uid}) async {
     try {
       String? userId = await PreferenceUtility.getUserId();
-      final url;
+      Uri url;
+
       if (userId == null) {
-        return {"ok": false, "message": "User ID not found"};
+        return Error.errorResponse("Please Login First");
       }
       if (userId.isNotEmpty) {
         url = Uri.parse("$restUser/authentication/$userId/mfa");
       } else {
         url = Uri.parse("$restUser/authentication/$uid/mfa");
       }
-      print("User ID: ${userId} | UID: ${uid}");
 
       final result = await http.get(
         url,
@@ -358,24 +312,24 @@ class AuthUtility {
         },
       );
 
-      final response = jsonDecode(result.body) as Map<String, dynamic>;
+      final data = jsonDecode(result.body);
 
-      if (response["ok"] != true) {
-        return ResponseUtility.invalid(response["message"].toString());
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
 
       return {
         "ok": true,
-        "message": response["message"] ?? "MFA settings updated successfully",
-        "data": response["mfaType"],
+        "message": data["message"] ?? "MFA settings updated successfully",
+        "data": data["mfaType"],
       };
     } catch (e) {
       return {"ok": false, "message": "An error occurred: ${e.toString()}"};
     }
   }
 
+  // Ivan did this (IDK how it works)
   Future<void> startServer() async {
-    // Get phone's actual IP address
     String phoneIP = '0.0.0.0';
     try {
       final interfaces = await NetworkInterface.list(

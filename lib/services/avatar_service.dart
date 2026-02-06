@@ -18,7 +18,7 @@ class AvatarService {
     try {
       String? userId = await PreferenceUtility.getUserId();
       if (userId == null || userId.isEmpty) {
-        return ResponseUtility.invalid("Please login first");
+        return Error.errorResponse("Please login first");
       }
 
       final url = Uri.parse("$restUser/settings/$userId/photo");
@@ -36,7 +36,7 @@ class AvatarService {
       final result = jsonDecode(response.body);
 
       if (result["ok"] != true) {
-        return ResponseUtility.invalid(
+        return Error.errorResponse(
           result["message"] ??
               result["error"] ??
               "Failed to upload profile picture, try again later",
@@ -49,7 +49,7 @@ class AvatarService {
         "data": result["data"],
       };
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -57,7 +57,7 @@ class AvatarService {
     try {
       String? userId = await PreferenceUtility.getUserId();
       if (userId == null || userId.isEmpty) {
-        return ResponseUtility.invalid("Please login first");
+        return Error.errorResponse("Please login first");
       }
 
       final url = Uri.parse("$restUser/settings/$userId/photo");
@@ -74,7 +74,7 @@ class AvatarService {
       final result = jsonDecode(response.body);
 
       if (result["ok"] != true) {
-        return ResponseUtility.invalid(
+        return Error.errorResponse(
           result["message"] ??
               result["error"] ??
               "Failed to fetch profile picture, try again later",
@@ -87,7 +87,7 @@ class AvatarService {
         "data": result["data"],
       };
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 }

@@ -38,7 +38,9 @@ class AccountUtility {
       );
 
       if (validation["ok"] != true) {
-        return validation;
+        return Error.errorResponse(
+          validation["message"] ?? validation["error"],
+        );
       }
 
       final body = {
@@ -58,16 +60,16 @@ class AccountUtility {
         },
         body: jsonEncode(body),
       );
+
       final data = jsonDecode(response.body);
+
       if (data["ok"] != true) {
-        if (data["error"]) {
-          throw Exception(data["error"]);
-        }
-        throw Exception(data["message"]);
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
-      return data;
+
+      return {"ok": true, "data": data["user"] ?? data["data"]};
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -76,10 +78,8 @@ class AccountUtility {
     required String password,
   }) async {
     try {
-      // URI Initialization
       final url = Uri.parse("$restUser/user/signin");
 
-      // Pre-API Validation
       final isValidEmail = ValidationUtility.validateEmail(email);
       final isValidPassword = ValidationUtility.validatePassword(password);
 
@@ -90,10 +90,8 @@ class AccountUtility {
         return isValidPassword;
       }
 
-      // Body Initialization (Signin)
       final body = {"email": email.trim(), "password": password};
 
-      // Response (Signin)
       final responseSignin = await http.post(
         url,
         headers: {
@@ -105,10 +103,8 @@ class AccountUtility {
 
       final data = jsonDecode(responseSignin.body);
 
-      // Error Handling (Signin)
-
       if (data["ok"] != true) {
-        return ResponseUtility.invalid(data["error"]);
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
 
       if (data["requiresMFA"] == true) {
@@ -118,9 +114,9 @@ class AccountUtility {
           "userId": data["userId"] ?? data["customerId"],
         };
       }
-      return {"ok": true, "data": data["user"]};
+      return {"ok": true, "data": data["user"] ?? data["data"]};
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -129,13 +125,13 @@ class AccountUtility {
       final googleUser = await _instance.signIn();
 
       if (googleUser == null) {
-        return ResponseUtility.invalid("Google sign in cancelled");
+        return Error.errorResponse("Google sign in cancelled");
       }
 
       final googleAuth = await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
-        return ResponseUtility.invalid("Failed to get Google token");
+        return Error.errorResponse("Failed to get Google token");
       }
 
       final url = Uri.parse("$restUser/user/google-signin");
@@ -152,12 +148,16 @@ class AccountUtility {
 
       final data = jsonDecode(response.body);
       if (data["ok"] != true) {
-        throw Exception(data["message"]);
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
 
-      return {"ok": true, "data": data["user"], "isNewUser": data["isNewUser"]};
+      return {
+        "ok": true,
+        "data": data["user"] ?? data["data"],
+        "isNewUser": data["isNewUser"],
+      };
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -166,13 +166,13 @@ class AccountUtility {
       final googleUser = await _instance.signIn();
 
       if (googleUser == null) {
-        return ResponseUtility.invalid("Google sign in cancelled");
+        return Error.errorResponse("Google sign in cancelled");
       }
 
       final googleAuth = await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
-        return ResponseUtility.invalid("Failed to get Google token");
+        return Error.errorResponse("Failed to get Google token");
       }
 
       final url = Uri.parse("$restUser/user/google-signup");
@@ -189,12 +189,16 @@ class AccountUtility {
 
       final data = jsonDecode(response.body);
       if (data["ok"] != true) {
-        throw Exception(data["message"]);
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
 
-      return {"ok": true, "data": data["user"], "isNewUser": data["isNewUser"]};
+      return {
+        "ok": true,
+        "data": data["user"] ?? data["data"],
+        "isNewUser": data["isNewUser"],
+      };
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -203,13 +207,13 @@ class AccountUtility {
       final googleUser = await _instance.signIn();
 
       if (googleUser == null) {
-        return ResponseUtility.invalid("Google sign in cancelled");
+        return Error.errorResponse("Google sign in cancelled");
       }
 
       final googleAuth = await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
-        return ResponseUtility.invalid("Failed to get Google token");
+        return Error.errorResponse("Failed to get Google token");
       }
 
       final url = Uri.parse("$restUser/user/google-auth");
@@ -224,17 +228,14 @@ class AccountUtility {
         body: jsonEncode({"credential": token}),
       );
 
-      print("Status Code: ${response.statusCode}");
-      print("Response Body: ${response.body}");
-
       if (response.body.isEmpty) {
-        return ResponseUtility.invalid("Empty response from server");
+        return Error.errorResponse("Empty response from server");
       }
 
       final data = jsonDecode(response.body);
 
       if (data["ok"] != true) {
-        throw Exception(data["error"] ?? "Unknown error");
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
 
       return {
@@ -243,8 +244,7 @@ class AccountUtility {
         "isNewUser": data["isNewUser"] ?? false,
       };
     } catch (e) {
-      print("Error in googleAuth: $e");
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 }
@@ -255,13 +255,11 @@ class ProfileUtility {
       final customerId = await PreferenceUtility.getUserId();
 
       if (customerId == null || customerId.isEmpty) {
-        return ResponseUtility.invalid("Customer ID not found, please sign in");
+        return Error.errorResponse("Customer ID not found, please sign in");
       }
 
-      // URI Initialization
       final url = Uri.parse("$restUser/user/$customerId");
 
-      // Response (Signin)
       final responseSignin = await http.get(
         url,
         headers: {
@@ -272,14 +270,13 @@ class ProfileUtility {
 
       final data = jsonDecode(responseSignin.body);
 
-      // Error Handling (Signin)
       if (data["ok"] != true) {
-        throw Exception(data["error"]);
+        return Error.errorResponse(data["message"] ?? data["error"]);
       }
 
-      return {"ok": true, "data": data["user"]};
+      return {"ok": true, "data": data["user"] ?? data["data"]};
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -308,7 +305,7 @@ class ProfileUtility {
         return isValidLastname;
       }
       if (address.toString().isEmpty) {
-        return ResponseUtility.invalid("Address must not be empty");
+        return Error.errorResponse("Address must not be empty");
       }
       if (isValidContact["ok"] != true) {
         return isValidFirstname;
@@ -346,7 +343,7 @@ class ProfileUtility {
 
       return {"ok": true, "data": data["user"]};
     } catch (e) {
-      return ResponseUtility.invalid(e.toString());
+      return Error.errorResponse(e.toString());
     }
   }
 
@@ -376,5 +373,3 @@ class ProfileUtility {
     }
   }
 }
-
-class SessionUtility {}
