@@ -13,6 +13,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _emailController = TextEditingController();
   final _emailFocus = FocusNode();
   bool _isLoading = false;
+  String? _type;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      setState(() {
+        _type = args?['type'] ?? '';
+      });
+    });
+  }
 
   @override
   void dispose() {
@@ -142,7 +154,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
                     // Title
                     Text(
-                      'Forgot Password?',
+                      _type == "change"
+                          ? "Change Password"
+                          : "Forgot Password?",
                       style: GoogleFonts.interTight(
                         fontSize: 28,
                         fontWeight: FontWeight.w600,

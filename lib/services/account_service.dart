@@ -78,7 +78,7 @@ class AccountUtility {
     required String password,
   }) async {
     try {
-      final url = Uri.parse("$restUser/user/signin");
+      final url = Uri.parse("$restUser/user/mobile-signin");
 
       final isValidEmail = ValidationUtility.validateEmail(email);
       final isValidPassword = ValidationUtility.validatePassword(password);
@@ -107,13 +107,18 @@ class AccountUtility {
         return Error.errorResponse(data["message"] ?? data["error"]);
       }
 
+      // MFA is required - verification code has been sent
       if (data["requiresMFA"] == true) {
         return {
           "ok": true,
           "requiresMFA": true,
           "userId": data["userId"] ?? data["customerId"],
+          "mfaType": data["mfaType"],
+          "message": data["message"],
         };
       }
+
+      // Sign-in successful - no MFA required
       return {"ok": true, "data": data["user"] ?? data["data"]};
     } catch (e) {
       return Error.errorResponse(e.toString());

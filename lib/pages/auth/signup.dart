@@ -297,47 +297,75 @@ class _SignUpPageState extends State<SignUpPage>
         return;
       }
 
-      final mfaType = await AuthUtility.fetchMfa(uid: result["userId"]);
-      print("DEBUG: $mfaType");
+      // MFA required - code has already been sent by mobileSignIn
       if (result['requiresMFA'] == true) {
-        if (mfaType.toString() == "email") {
-          final sendEmailResponse = await AuthUtility.sendEmailVerification(
-            email: _signInEmailController.text.trim(),
-          );
+        final mfaType = result["mfaType"]; // 'email' or 'sms'
+        final userId = result["userId"];
 
-          if (sendEmailResponse["ok"] != true) {
-            _showError(
-              sendEmailResponse["message"] ??
-                  "Failed to send email verification",
-            );
-            return;
-          }
+        print("DEBUG: MFA Type = $mfaType");
 
-          final otpInput = await Navigator.pushNamed(
-            context,
-            '/verify-contacts',
-            arguments: {
-              'recipient': _signUpEmailController.text.trim(),
-              'type': mfaType,
-            },
-          );
+        // Navigate to verification screen
+        final otpInput = await Navigator.pushNamed(
+          context,
+          '/verify-contacts',
+          arguments: {
+            'recipient': mfaType == 'email'
+                ? _signInEmailController.text.trim()
+                : 'your phone', // or fetch from user data if needed
+            'type': mfaType,
+          },
+        );
 
-          final otpData = otpInput as Map<String, dynamic>;
+        final otpData = otpInput as Map<String, dynamic>;
 
-          final verifyContactResult = await AuthUtility.verifyEmail(
-            code: otpData["otp"],
-          );
+        // Verify based on MFA type
+        Map<String, dynamic> verifyResult;
 
-          if (verifyContactResult["ok"] != true) {
-            _showError(verifyContactResult["message"]);
-            return;
-          }
+        if (mfaType == "email") {
+          verifyResult = await AuthUtility.verifyEmail(code: otpData["otp"]);
+        } else if (mfaType == "sms") {
+          verifyResult = await AuthUtility.verifySms(code: otpData["otp"]);
+        } else {
+          _showError("Unknown MFA type: $mfaType");
+          return;
         }
-        if (mfaType == "sms") {
-          //TODO
+
+        if (verifyResult["ok"] != true) {
+          _showError(verifyResult["message"] ?? "Verification failed");
+          return;
         }
+
+        // After successful verification, sign in again to get user data
+        final finalSignIn = await AccountUtility.authSignIn(
+          email: _signInEmailController.text.trim(),
+          password: _signInPasswordController.text.trim(),
+        );
+
+        if (finalSignIn['ok'] != true || finalSignIn['requiresMFA'] == true) {
+          _showError("Failed to complete sign-in after verification");
+          return;
+        }
+
+        final user = User.fromJson(finalSignIn['data']);
+
+        await PreferenceUtility.saveSession(
+          user.id,
+          user.email,
+          user.firstName,
+          user.lastName,
+          user.contact,
+          user.address,
+          mfaType.toString(),
+          user.token,
+        );
+
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+        return;
       }
 
+      // No MFA required - direct sign-in
       final user = User.fromJson(result['data']);
 
       await PreferenceUtility.saveSession(
@@ -347,7 +375,7 @@ class _SignUpPageState extends State<SignUpPage>
         user.lastName,
         user.contact,
         user.address,
-        mfaType.toString(),
+        "disabled",
         user.token,
       );
 
@@ -360,7 +388,11 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _handleForgotPassword() {
-    Navigator.pushNamed(context, '/forgot-password');
+    Navigator.pushNamed(
+      context,
+      '/forgot-password',
+      arguments: {'type': "forgot"},
+    );
     return;
   }
 

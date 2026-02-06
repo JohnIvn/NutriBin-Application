@@ -74,6 +74,35 @@ class AuthUtility {
     }
   }
 
+  static Future<Map<String, dynamic>> verifySms({required String code}) async {
+    try {
+      final url = Uri.parse("$restUser/user/verify-sms");
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+          "apikey": anonKey,
+        },
+        body: jsonEncode({"verificationCode": code}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
+      }
+
+      return {
+        "ok": true,
+        "message": data["message"] ?? "Code verified successfully",
+      };
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
   static Future<Map<String, dynamic>> sendContactVerification({
     required String contact,
   }) async {

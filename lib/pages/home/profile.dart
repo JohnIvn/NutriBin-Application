@@ -387,6 +387,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                     Navigator.pushNamed(
                                       context,
                                       '/forgot-password',
+                                      arguments: {'type': "change"},
                                     );
                                   },
                                 ),
