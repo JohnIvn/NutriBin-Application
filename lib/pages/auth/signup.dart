@@ -1051,7 +1051,7 @@ class _SignUpPageState extends State<SignUpPage>
 
       final user = User.fromJson(result['data']);
       final isNewUser = result['isNewUser'] ?? false;
-      final mfaResponse = await AuthUtility.fetchMfa();
+      final mfaResponse = await AuthUtility.fetchMfa(uid: user.id);
 
       await PreferenceUtility.saveSession(
         user.id,
