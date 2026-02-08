@@ -38,7 +38,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
   String? errorMessage;
   String? _originalContact; // Store original contact to check if changed
   String _mfaType = 'disable'; // MFA type: 'disable', 'email', or 'sms'
-  bool _isMfaLoading = false; // Loading state for MFA toggle
+  final bool _isMfaLoading = false; // Loading state for MFA toggle
 
   @override
   void initState() {

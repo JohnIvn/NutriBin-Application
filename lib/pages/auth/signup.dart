@@ -257,7 +257,7 @@ class _SignUpPageState extends State<SignUpPage>
       final user = User.fromJson(signupResult["data"]);
       final mfaResponse = await AuthUtility.fetchMfa(uid: user.id);
 
-      print("DEBUG: ${mfaResponse}");
+      print("DEBUG: $mfaResponse");
 
       await PreferenceUtility.saveSession(
         user.id,
@@ -992,7 +992,7 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _showError(String message) {
-    print("DEBUG: ${message}");
+    print("DEBUG: $message");
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );

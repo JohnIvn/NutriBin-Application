@@ -307,7 +307,7 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
       setState(() {
         final mfaValue = response["data"]?.toString() ?? 'N/A';
 
-        if (mfaValue == 'N/A' || mfaValue == 'false' || mfaValue == null) {
+        if (mfaValue == 'N/A' || mfaValue == 'false') {
           _mfaType = 'disable';
         } else if (mfaValue == 'email') {
           _mfaType = 'email';
