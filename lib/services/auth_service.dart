@@ -73,9 +73,12 @@ class AuthUtility {
     }
   }
 
-  static Future<Map<String, dynamic>> verifySms({required String code}) async {
+  static Future<Map<String, dynamic>> verifySms({
+    required String code,
+    required String customerId,
+  }) async {
     try {
-      final url = Uri.parse("$restUser/user/verify-sms");
+      final url = Uri.parse("$restUser/authentication/verify-mfa-sms");
 
       final response = await http.post(
         url,
@@ -84,7 +87,7 @@ class AuthUtility {
           "Authorization": "Bearer $anonKey",
           "apikey": anonKey,
         },
-        body: jsonEncode({"verificationCode": code}),
+        body: jsonEncode({"code": code, "customerId": customerId}),
       );
 
       final data = jsonDecode(response.body);
@@ -141,29 +144,39 @@ class AuthUtility {
     }
   }
 
-  static Future<Map<String, dynamic>> resetPassword({
-    required String email,
-    required String newPassword,
+  static Future<Map<String, dynamic>> sendContactOtp({
+    required String contact,
   }) async {
     try {
-      final url = Uri.parse("$supabaseUrl/functions/v1/changePassword");
+      String? userId = await PreferenceUtility.getUserId();
+      if (userId == null) {
+        Error.errorResponse("Please Login First");
+      }
 
-      final response = await http.put(
+      final url = Uri.parse("$restUser/settings//phone/verify/request");
+
+      final response = await http.post(
         url,
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $anonKey",
           "apikey": anonKey,
         },
-        body: jsonEncode({"email": email, "password": newPassword}),
+        body: jsonEncode({"contact": contact}),
       );
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      if (data["ok"] != true) {
-        return Error.errorResponse(data["message"] ?? data["error"]);
+
+      final data = jsonDecode(response.body);
+
+      if (data['ok'] != true) {
+        return Error.errorResponse(
+          data['message'] ?? data["error"] ?? 'Failed to send sms code',
+        );
       }
+
       return {
         "ok": true,
-        "message": data['message'] ?? 'Password Changed Successfully',
+        "code": data['code'],
+        "message": data['message'] ?? 'Verification sms code sent',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());

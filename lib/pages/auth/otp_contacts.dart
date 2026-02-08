@@ -45,7 +45,7 @@ class _ContactsVerificationState extends State<ContactsVerification> {
 
   OtpVerificationType _parseVerificationType(String type) {
     switch (type.toLowerCase()) {
-      case 'contact':
+      case 'sms':
         return OtpVerificationType.contact;
       case 'passwordreset':
         return OtpVerificationType.passwordReset;

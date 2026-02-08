@@ -254,8 +254,10 @@ class _SignUpPageState extends State<SignUpPage>
         );
       }
 
-      final mfaResponse = await AuthUtility.fetchMfa();
-      final user = User.fromJson(signupResult["user"]);
+      final user = User.fromJson(signupResult["data"]);
+      final mfaResponse = await AuthUtility.fetchMfa(uid: user.id);
+
+      print("DEBUG: ${mfaResponse}");
 
       await PreferenceUtility.saveSession(
         user.id,
@@ -301,14 +303,17 @@ class _SignUpPageState extends State<SignUpPage>
       if (result['requiresMFA'] == true) {
         final mfaType = result["mfaType"];
 
+        final user = User.fromJson(result['data']);
         final otpInput = await Navigator.pushNamed(
           context,
           '/verify-contacts',
           arguments: {
             'recipient': mfaType == 'email'
                 ? _signInEmailController.text.trim()
-                : 'your phone',
+                : user.contact,
             'type': mfaType,
+            'userId': user.id,
+            'mfaType': mfaType,
           },
         );
 
@@ -325,7 +330,10 @@ class _SignUpPageState extends State<SignUpPage>
         if (mfaType == "email") {
           verifyResult = await AuthUtility.verifyEmail(code: otpData["otp"]);
         } else if (mfaType == "sms") {
-          verifyResult = await AuthUtility.verifySms(code: otpData["otp"]);
+          verifyResult = await AuthUtility.verifySms(
+            code: otpData["otp"],
+            customerId: user.id,
+          );
         } else {
           _showError("Unknown MFA type: $mfaType");
           return;
@@ -336,8 +344,6 @@ class _SignUpPageState extends State<SignUpPage>
           _showError(verifyResult["message"] ?? "Verification failed");
           return;
         }
-
-        final user = User.fromJson(result['data']);
 
         await PreferenceUtility.saveSession(
           user.id,
@@ -986,6 +992,7 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _showError(String message) {
+    print("DEBUG: ${message}");
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
