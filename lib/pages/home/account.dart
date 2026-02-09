@@ -35,7 +35,7 @@ class _AccountPageState extends State<AccountPage> {
         final last = user["lastName"] as String? ?? "";
         userName = "$first $last".trim();
         if (userName.isEmpty) userName = "NutriBin User";
-        
+
         userEmail = user["email"] as String? ?? "";
       });
     }
@@ -52,7 +52,7 @@ class _AccountPageState extends State<AccountPage> {
 
   Color _getAvatarColor(bool isDarkMode) {
     if (userName.isEmpty) return Theme.of(context).primaryColor;
-    
+
     // pallette
     final colors = [
       const Color(0xFF4285F4), // Blue
@@ -83,13 +83,12 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   void _handleLogout() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).cardTheme.color,
         title: Text(
-          'Log Out', 
+          'Log Out',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         content: Text(
@@ -133,7 +132,8 @@ class _AccountPageState extends State<AccountPage> {
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final cardColor = Theme.of(context).cardTheme.color!;
     final textColor = Theme.of(context).colorScheme.onSurface;
-    final subTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -146,10 +146,15 @@ class _AccountPageState extends State<AccountPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildProfileHeader(cardColor, textColor, subTextColor, isDarkMode),
-                
+                _buildProfileHeader(
+                  cardColor,
+                  textColor,
+                  subTextColor,
+                  isDarkMode,
+                ),
+
                 const SizedBox(height: 16),
-                
+
                 _buildSectionTitle('Account', subTextColor),
                 _buildMenuItem(
                   icon: Icons.person_outline_rounded,
@@ -159,10 +164,10 @@ class _AccountPageState extends State<AccountPage> {
                   textColor: textColor,
                   isDarkMode: isDarkMode,
                 ),
-                
+
                 _buildSectionTitle('General', subTextColor),
                 _buildMenuItem(
-                  icon: Icons.headset_mic_outlined, // More modern icon
+                  icon: Icons.headset_mic_outlined,
                   title: 'Support',
                   onTap: () => Navigator.pushNamed(context, '/support'),
                   cardColor: cardColor,
@@ -177,7 +182,7 @@ class _AccountPageState extends State<AccountPage> {
                   textColor: textColor,
                   isDarkMode: isDarkMode,
                 ),
-                
+
                 // DEBUG ITEM
                 _buildMenuItem(
                   icon: Icons.restart_alt_rounded,
@@ -189,7 +194,7 @@ class _AccountPageState extends State<AccountPage> {
                 ),
 
                 const SizedBox(height: 24),
-                
+
                 // LOGOUT BUTTON
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -200,8 +205,8 @@ class _AccountPageState extends State<AccountPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: isDarkMode 
-                            ? Colors.red.withOpacity(0.1) 
+                        color: isDarkMode
+                            ? Colors.red.withOpacity(0.1)
                             : Colors.red.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
@@ -231,22 +236,29 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildProfileHeader(Color cardColor, Color textColor, Color subTextColor, bool isDarkMode) {
+  Widget _buildProfileHeader(
+    Color cardColor,
+    Color textColor,
+    Color subTextColor,
+    bool isDarkMode,
+  ) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardColor,
         // Bottom border for separation in Dark Mode
-        border: isDarkMode 
-            ? Border(bottom: BorderSide(color: Colors.white10)) 
+        border: isDarkMode
+            ? Border(bottom: BorderSide(color: Colors.white10))
             : null,
-        boxShadow: isDarkMode ? [] : [
-          const BoxShadow(
-            blurRadius: 4,
-            color: Color(0x1A000000),
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDarkMode
+            ? []
+            : [
+                const BoxShadow(
+                  blurRadius: 4,
+                  color: Color(0x1A000000),
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -297,10 +309,7 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 4),
                   Text(
                     userEmail,
-                    style: GoogleFonts.inter(
-                      color: subTextColor,
-                      fontSize: 14,
-                    ),
+                    style: GoogleFonts.inter(color: subTextColor, fontSize: 14),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -311,7 +320,9 @@ class _AccountPageState extends State<AccountPage> {
                     child: Text(
                       'Edit Profile',
                       style: GoogleFonts.inter(
-                        color: Theme.of(context).primaryColor,
+                        color: isDarkMode
+                            ? Colors.white
+                            : Theme.of(context).primaryColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -356,13 +367,15 @@ class _AccountPageState extends State<AccountPage> {
           color: cardColor,
           borderRadius: BorderRadius.circular(12),
           border: isDarkMode ? Border.all(color: Colors.white10) : null,
-          boxShadow: isDarkMode ? [] : [
-            const BoxShadow(
-              blurRadius: 2,
-              color: Color(0x0D000000),
-              offset: Offset(0, 1),
-            ),
-          ],
+          boxShadow: isDarkMode
+              ? []
+              : [
+                  const BoxShadow(
+                    blurRadius: 2,
+                    color: Color(0x0D000000),
+                    offset: Offset(0, 1),
+                  ),
+                ],
         ),
         child: InkWell(
           onTap: onTap,
@@ -384,9 +397,9 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 Icon(
-                  Icons.chevron_right_rounded, 
-                  color: textColor.withOpacity(0.3), 
-                  size: 20
+                  Icons.chevron_right_rounded,
+                  color: textColor.withOpacity(0.3),
+                  size: 20,
                 ),
               ],
             ),

@@ -20,8 +20,6 @@ class AccountEditWidget extends StatefulWidget {
 class _AccountEditWidgetState extends State<AccountEditWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
-  Color get _primaryColor => Theme.of(context).primaryColor;
-
   // Text controllers
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -36,9 +34,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
 
   bool isLoading = true;
   String? errorMessage;
-  String? _originalContact; // Store original contact to check if changed
-  String _mfaType = 'disable'; // MFA type: 'disable', 'email', or 'sms'
-  final bool _isMfaLoading = false; // Loading state for MFA toggle
+  String? _originalContact;
 
   @override
   void initState() {
@@ -78,11 +74,19 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final cardColor = Theme.of(context).cardTheme.color!;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    final appBarBg = isDarkMode ? cardColor : primaryColor;
+
     return Scaffold(
       key: scaffoldKey,
-      backgroundColor: Colors.grey[50],
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: _primaryColor,
+        backgroundColor: appBarBg,
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(
@@ -132,7 +136,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                             style: GoogleFonts.interTight(
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey[600],
+                              color: textColor,
                             ),
                           ),
                         ],
@@ -150,7 +154,13 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                             child: TextFormField(
                               controller: _firstNameController,
                               focusNode: _firstNameFocusNode,
-                              decoration: _inputDecoration('First Name'),
+                              style: GoogleFonts.inter(color: textColor),
+                              decoration: _inputDecoration(
+                                'First Name',
+                                cardColor: cardColor,
+                                textColor: textColor,
+                                isDarkMode: isDarkMode,
+                              ),
                             ),
                           ),
 
@@ -160,7 +170,13 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                             child: TextFormField(
                               controller: _lastNameController,
                               focusNode: _lastNameFocusNode,
-                              decoration: _inputDecoration('Last Name'),
+                              style: GoogleFonts.inter(color: textColor),
+                              decoration: _inputDecoration(
+                                'Last Name',
+                                cardColor: cardColor,
+                                textColor: textColor,
+                                isDarkMode: isDarkMode,
+                              ),
                             ),
                           ),
 
@@ -171,15 +187,21 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                               controller: _addressController,
                               focusNode: _addressFocusNode,
                               readOnly: true,
+                              style: GoogleFonts.inter(color: textColor),
                               onTap: _openMapPicker,
                               decoration:
                                   _inputDecoration(
                                     'Address',
                                     hint: 'Brgy 123 Phase 1 Purok 1',
+                                    cardColor: cardColor,
+                                    textColor: textColor,
+                                    isDarkMode: isDarkMode,
                                   ).copyWith(
-                                    suffixIcon: const Icon(
+                                    suffixIcon: Icon(
                                       Icons.location_on_outlined,
-                                      color: Color(0xFF57636C),
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : const Color(0xFF57636C),
                                     ),
                                   ),
                             ),
@@ -195,9 +217,13 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                                   controller: _contactController,
                                   focusNode: _contactFocusNode,
                                   keyboardType: TextInputType.phone,
+                                  style: GoogleFonts.inter(color: textColor),
                                   decoration: _inputDecoration(
                                     'Contact Number',
                                     hint: '+63 912 345 6789',
+                                    cardColor: cardColor,
+                                    textColor: textColor,
+                                    isDarkMode: isDarkMode,
                                   ),
                                 ),
                                 if (_contactController.text.trim() !=
@@ -212,7 +238,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                                         Icon(
                                           Icons.info_outline,
                                           size: 14,
-                                          color: _primaryColor,
+                                          color: primaryColor,
                                         ),
                                         const SizedBox(width: 4),
                                         Expanded(
@@ -220,7 +246,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                                             'Changing your contact number requires verification',
                                             style: GoogleFonts.inter(
                                               fontSize: 12,
-                                              color: _primaryColor,
+                                              color: primaryColor,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
@@ -241,7 +267,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                       child: ElevatedButton(
                         onPressed: _handleSave,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryColor,
+                          backgroundColor: primaryColor,
                           minimumSize: const Size(270, 50),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -285,17 +311,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         _addressController.text = profile["address"]?.toString() ?? '';
         _contactController.text = profile["contact"]?.toString() ?? '';
         _originalContact = profile["contact"]?.toString() ?? '';
-
-        // Set MFA type based on profile data
-        final mfaValue = profile["mfa"];
-        if (mfaValue == true || mfaValue == 'true' || mfaValue == 'email') {
-          _mfaType = 'email';
-        } else if (mfaValue == 'sms') {
-          _mfaType = 'sms';
-        } else {
-          _mfaType = 'disable';
-        }
-
         isLoading = false;
       });
     } catch (e) {
@@ -514,18 +529,35 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     }
   }
 
-  InputDecoration _inputDecoration(String label, {String? hint}) {
+  InputDecoration _inputDecoration(
+    String label, {
+    String? hint,
+    required Color cardColor,
+    required Color textColor,
+    required bool isDarkMode,
+  }) {
+    final borderColor = isDarkMode
+        ? Colors.white.withOpacity(0.1)
+        : Colors.grey[300]!;
+    final focusedBorderColor = isDarkMode ? Colors.white70 : Colors.black;
+
     return InputDecoration(
       labelText: label,
+      labelStyle: GoogleFonts.inter(
+        color: isDarkMode ? Colors.white70 : Colors.grey[600],
+      ),
       hintText: hint,
+      hintStyle: GoogleFonts.inter(
+        color: isDarkMode ? Colors.white30 : Colors.grey[400],
+      ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: cardColor,
       enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
+        borderSide: BorderSide(color: borderColor, width: 2),
         borderRadius: BorderRadius.circular(8),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.black, width: 2),
+        borderSide: BorderSide(color: focusedBorderColor, width: 2),
         borderRadius: BorderRadius.circular(8),
       ),
     );
