@@ -136,7 +136,7 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: _secondaryBackground,
         body: SafeArea(
           child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(), 
+            physics: const BouncingScrollPhysics(),
             child: Column(
               mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,

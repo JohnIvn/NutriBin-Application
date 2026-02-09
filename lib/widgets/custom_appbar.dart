@@ -11,12 +11,25 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: AppBar(
         backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
+        elevation: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          spacing: 8,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Back button
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () {
+                Navigator.of(context).pop(); 
+              },
+            ),
+
+            const SizedBox(width: 8), 
+            // Logo
             Image.asset('assets/images/Logo (Img).png', height: 48),
+
+            const SizedBox(width: 8), // spacing between logo and text
+            // App name
             Text(
               'NutriBin',
               textAlign: TextAlign.left,
@@ -29,7 +42,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
         centerTitle: false,
-        elevation: 0,
       ),
     );
   }

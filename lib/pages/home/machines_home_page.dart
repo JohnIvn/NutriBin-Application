@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:nutribin_application/pages/home/register_machine_page.dart';
 
 class MachineSelectionPage extends StatelessWidget {
   const MachineSelectionPage({super.key});
@@ -12,28 +13,9 @@ class MachineSelectionPage extends StatelessWidget {
 
     // Template/fake machines
     final List<Map<String, String>> machines = [
-      {
-        'id': 'NB-001',
-        'name': 'Kitchen NutriBin',
-        'location': 'Building A, Floor 2',
-      },
-      {
-        'id': 'NB-002',
-        'name': 'Cafeteria Bin',
-        'location': 'Main Building, Ground Floor',
-      },
-      {
-        'id': 'NB-003',
-        'name': 'Office NutriBin',
-        'location': 'Building B, Floor 3',
-      },
-      {
-        'id': 'NB-004',
-        'name': 'Lab Composter',
-        'location': 'Research Wing, Floor 1',
-      },
-      {'id': 'NB-005', 'name': 'Garden Bin', 'location': 'Outdoor Area'},
-      {'id': 'NB-006', 'name': 'Warehouse Unit', 'location': 'Storage Area'},
+      {'id': 'NB-001', 'name': 'Kitchen NutriBin'},
+      {'id': 'NB-002', 'name': 'Cafeteria Bin'},
+      {'id': 'NB-003', 'name': 'Office NutriBin'},
     ];
 
     return Scaffold(
@@ -86,25 +68,29 @@ class MachineSelectionPage extends StatelessWidget {
                   ),
                 ).animate().fadeIn(duration: 300.ms, delay: 100.ms),
                 const SizedBox(height: 24),
-                GridView.builder(
+                ListView.builder(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.85,
-                  ),
-                  itemCount: machines.length,
+                  physics:
+                      const NeverScrollableScrollPhysics(), // if inside SingleChildScrollView
+                  itemCount: machines.length + 1,
                   itemBuilder: (context, index) {
+                    if (index == machines.length) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildAddMachineCard(context, primaryColor),
+                      );
+                    }
+
                     final machine = machines[index];
-                    return _buildMachineCard(
-                      context: context,
-                      machineId: machine['id']!,
-                      machineName: machine['name']!,
-                      location: machine['location']!,
-                      primaryColor: primaryColor,
-                      index: index,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildMachineCard(
+                        context: context,
+                        machineId: machine['id']!,
+                        machineName: machine['name']!,
+                        primaryColor: primaryColor,
+                        index: index,
+                      ),
                     );
                   },
                 ),
@@ -121,7 +107,6 @@ class MachineSelectionPage extends StatelessWidget {
     required BuildContext context,
     required String machineId,
     required String machineName,
-    required String location,
     required Color primaryColor,
     required int index,
   }) {
@@ -139,86 +124,56 @@ class MachineSelectionPage extends StatelessWidget {
           ),
           child: InkWell(
             onTap: () {
-              // Navigate to HomePage when tapped
-              Navigator.pushNamed(context, '/machines');
+              Navigator.pushNamed(context, '/home');
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Icon
+                  // Icon on the left
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.restore_from_trash,
-                      size: 32,
+                      size: 26,
                       color: primaryColor,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  // Machine Info
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        machineName,
-                        style: GoogleFonts.interTight(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF57636C),
+                  const SizedBox(width: 12),
+                  // Name & ID in a Column
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          machineName,
+                          style: GoogleFonts.interTight(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF57636C),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        location,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: const Color(0xFF57636C),
+                        const SizedBox(height: 4),
+                        Text(
+                          machineId,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF57636C),
+                          ),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F4F8),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.tag,
-                              size: 12,
-                              color: const Color(0xFF57636C),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              machineId,
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF57636C),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -226,17 +181,47 @@ class MachineSelectionPage extends StatelessWidget {
           ),
         )
         .animate()
-        .fadeIn(
-          curve: Curves.easeInOut,
-          duration: 300.ms,
-          delay: (index * 50).ms,
+        .fadeIn(duration: 300.ms, delay: (index * 50).ms)
+        .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1));
+  }
+
+  Widget _buildAddMachineCard(BuildContext context, Color primaryColor) {
+    return InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const RegisterMachinePage(),
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16), // same padding as machine cards
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: primaryColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.add_circle_outline, size: 40, color: primaryColor),
+                const SizedBox(width: 12),
+                Text(
+                  'Register Machine',
+                  style: GoogleFonts.interTight(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
         )
-        .scale(
-          curve: Curves.easeInOut,
-          begin: const Offset(0.9, 0.9),
-          end: const Offset(1.0, 1.0),
-          duration: 300.ms,
-          delay: (index * 50).ms,
-        );
+        .animate()
+        .fadeIn(duration: 300.ms)
+        .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1));
   }
 }
