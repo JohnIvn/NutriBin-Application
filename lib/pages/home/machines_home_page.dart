@@ -14,19 +14,20 @@ class MachineSelectionPage extends StatelessWidget {
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final cardColor = Theme.of(context).cardTheme.color!;
     final textColor = Theme.of(context).colorScheme.onSurface;
-    final subTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    // --- FIX: VISIBILITY COLORS ---
-    // In Dark Mode, primaryColor is too dark. We use Tertiary (Sage Green) for highlights.
-    final highlightColor = isDarkMode ? Theme.of(context).colorScheme.tertiary : primaryColor;
+    // --- VISIBILITY COLORS ---
+    final highlightColor = isDarkMode
+        ? Theme.of(context).colorScheme.tertiary
+        : primaryColor;
 
     // --- APP BAR COLORS ---
-    final appBarBg = isDarkMode ? backgroundColor : primaryColor;
-    // Both backgrounds are dark (Dark Green or Dark Grey), so text must always be White
-    const appBarTitleColor = Colors.white; 
+    final appBarBg = isDarkMode ? cardColor : primaryColor;
+    const appBarTitleColor = Colors.white;
     const appBarSubtitleColor = Colors.white70;
-    
+
     // Template/fake machines
     final List<Map<String, String>> machines = [
       {'id': 'NB-001', 'name': 'Kitchen NutriBin'},
@@ -42,15 +43,14 @@ class MachineSelectionPage extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: 70,
-        
+
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        
-        // --- FIX: REMOVED WHITE BORDER LINE ---
+
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(
-            color: Colors.transparent, // Completely removed visible border
-            height: 1.0
+            color: Colors.transparent,
+            height: 1.0,
           ),
         ),
 
@@ -68,7 +68,7 @@ class MachineSelectionPage extends StatelessWidget {
                   Text(
                     'NutriBin',
                     style: GoogleFonts.interTight(
-                      color: appBarTitleColor, // Fixed to White
+                      color: appBarTitleColor,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       height: 1.0,
@@ -78,7 +78,7 @@ class MachineSelectionPage extends StatelessWidget {
                   Text(
                     'Machine Manager',
                     style: GoogleFonts.inter(
-                      color: appBarSubtitleColor, // Fixed to White70
+                      color: appBarSubtitleColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.5,
@@ -90,7 +90,7 @@ class MachineSelectionPage extends StatelessWidget {
           ),
         ),
       ),
-      
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -111,7 +111,10 @@ class MachineSelectionPage extends StatelessWidget {
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: highlightColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
@@ -121,7 +124,7 @@ class MachineSelectionPage extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: highlightColor, // Uses Sage Green in Dark Mode
+                          color: highlightColor,
                         ),
                       ),
                     ),
@@ -138,7 +141,11 @@ class MachineSelectionPage extends StatelessWidget {
                   if (index == machines.length) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildAddMachineCard(context, highlightColor, isDarkMode),
+                      child: _buildAddMachineCard(
+                        context,
+                        highlightColor,
+                        isDarkMode,
+                      ),
                     );
                   }
 
@@ -149,7 +156,7 @@ class MachineSelectionPage extends StatelessWidget {
                       context: context,
                       machineId: machine['id']!,
                       machineName: machine['name']!,
-                      highlightColor: highlightColor, // Passing fixed color
+                      highlightColor: highlightColor,
                       cardColor: cardColor,
                       textColor: textColor,
                       subTextColor: subTextColor,
@@ -179,89 +186,99 @@ class MachineSelectionPage extends StatelessWidget {
     required bool isDarkMode,
   }) {
     return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        // Only show a very subtle border in dark mode for card definition
-        border: isDarkMode ? Border.all(color: Colors.white.withOpacity(0.05)) : null,
-        boxShadow: isDarkMode ? [] : [
-          const BoxShadow(
-            blurRadius: 4,
-            color: Color(0x1A000000),
-            offset: Offset(0, 2),
+          decoration: BoxDecoration(
+            color: cardColor,
+            border: isDarkMode
+                ? Border.all(color: Colors.white.withOpacity(0.05))
+                : null,
+            boxShadow: isDarkMode
+                ? []
+                : [
+                    const BoxShadow(
+                      blurRadius: 4,
+                      color: Color(0x1A000000),
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.pushNamed(context, '/home');
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: highlightColor.withOpacity(isDarkMode ? 0.2 : 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.restore_from_trash,
-                    size: 26,
-                    color: highlightColor, // FIX: Visible Sage Green in Dark Mode
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        machineName,
-                        style: GoogleFonts.interTight(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                Navigator.pushNamed(context, '/home');
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: highlightColor.withOpacity(
+                          isDarkMode ? 0.2 : 0.1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        machineId,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: subTextColor,
-                        ),
+                      child: Icon(
+                        Icons.restore_from_trash,
+                        size: 26,
+                        color:
+                            highlightColor,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            machineName,
+                            style: GoogleFonts.interTight(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            machineId,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: subTextColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: subTextColor.withOpacity(0.5),
+                      size: 24,
+                    ),
+                  ],
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: subTextColor.withOpacity(0.5),
-                  size: 24,
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    )
-    .animate()
-    .fadeIn(duration: 300.ms, delay: ((index * 50).clamp(0, 500)).ms)
-    .scale(begin: const Offset(0.98, 0.98), end: const Offset(1, 1));
+        )
+        .animate()
+        .fadeIn(duration: 300.ms, delay: ((index * 50).clamp(0, 500)).ms)
+        .scale(begin: const Offset(0.98, 0.98), end: const Offset(1, 1));
   }
 
-  Widget _buildAddMachineCard(BuildContext context, Color highlightColor, bool isDarkMode) {
+  Widget _buildAddMachineCard(
+    BuildContext context,
+    Color highlightColor,
+    bool isDarkMode,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: highlightColor.withOpacity(isDarkMode ? 0.05 : 0.04),
@@ -269,7 +286,7 @@ class MachineSelectionPage extends StatelessWidget {
         border: Border.all(
           color: highlightColor.withOpacity(0.3),
           width: 1,
-          style: BorderStyle.solid, 
+          style: BorderStyle.solid,
         ),
       ),
       child: Material(
@@ -279,7 +296,9 @@ class MachineSelectionPage extends StatelessWidget {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const RegisterMachinePage()),
+              MaterialPageRoute(
+                builder: (context) => const RegisterMachinePage(),
+              ),
             );
           },
           child: Padding(
@@ -287,14 +306,18 @@ class MachineSelectionPage extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add_circle_outline_rounded, size: 24, color: highlightColor), // FIX: Visible Sage Green
+                Icon(
+                  Icons.add_circle_outline_rounded,
+                  size: 24,
+                  color: highlightColor,
+                ),
                 const SizedBox(width: 12),
                 Text(
                   'Register New Machine',
                   style: GoogleFonts.interTight(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: highlightColor, // FIX: Visible Sage Green
+                    color: highlightColor,
                   ),
                 ),
               ],
@@ -302,8 +325,6 @@ class MachineSelectionPage extends StatelessWidget {
           ),
         ),
       ),
-    )
-    .animate()
-    .fadeIn(duration: 300.ms, delay: 200.ms);
+    ).animate().fadeIn(duration: 300.ms, delay: 200.ms);
   }
 }

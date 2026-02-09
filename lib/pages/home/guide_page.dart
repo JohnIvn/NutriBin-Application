@@ -13,12 +13,12 @@ class GuidePage extends StatelessWidget {
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final cardColor = Theme.of(context).cardTheme.color!;
     final textColor = Theme.of(context).colorScheme.onSurface;
-    final subTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    // --- APP BAR COLORS (FIXED) ---
-    final appBarBg = isDarkMode ? backgroundColor : primaryColor;
-    // Text is always White because both backgrounds are dark (Green or Dark Grey)
+    // --- APP BAR COLORS ---
+    final appBarBg = isDarkMode ? cardColor : primaryColor;
     const appBarTitleColor = Colors.white;
     const appBarSubtitleColor = Colors.white70;
 
@@ -30,17 +30,14 @@ class GuidePage extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: 70,
-        
+
         // Status Bar: Always Light (White icons)
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        
+
         // Bottom Border: REMOVED (Transparent)
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Container(
-            color: Colors.transparent,
-            height: 1.0,
-          ),
+          child: Container(color: Colors.transparent, height: 1.0),
         ),
 
         title: Padding(
@@ -57,7 +54,7 @@ class GuidePage extends StatelessWidget {
                   Text(
                     'NutriBin',
                     style: GoogleFonts.interTight(
-                      color: appBarTitleColor, // Fixed: White
+                      color: appBarTitleColor,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       height: 1.0,
@@ -67,7 +64,7 @@ class GuidePage extends StatelessWidget {
                   Text(
                     'User Guide',
                     style: GoogleFonts.inter(
-                      color: appBarSubtitleColor, // Fixed: White70
+                      color: appBarSubtitleColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.5,
@@ -80,7 +77,7 @@ class GuidePage extends StatelessWidget {
         ),
         centerTitle: false,
       ),
-      
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -96,17 +93,14 @@ class GuidePage extends StatelessWidget {
                   color: textColor,
                 ),
               ).animate().fadeIn(duration: 300.ms).moveY(begin: 20, end: 0),
-              
+
               const SizedBox(height: 8),
-              
+
               Text(
                 'Learn how to make the most of your NutriBin experience',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  color: subTextColor,
-                ),
+                style: GoogleFonts.inter(fontSize: 16, color: subTextColor),
               ).animate().fadeIn(duration: 300.ms, delay: 100.ms),
-              
+
               const SizedBox(height: 32),
 
               // Getting Started Section
@@ -114,7 +108,7 @@ class GuidePage extends StatelessWidget {
                 context: context,
                 title: 'Getting Started',
                 icon: Icons.rocket_launch_rounded,
-                color: Colors.blue, 
+                color: Colors.blue,
                 textColor: textColor,
                 cardColor: cardColor,
                 subTextColor: subTextColor,
@@ -122,12 +116,14 @@ class GuidePage extends StatelessWidget {
                 items: [
                   GuideItem(
                     title: 'Register Your Machine',
-                    description: 'Tap "Add Machine" on the home screen. Enter device ID, name, location, and notes.',
+                    description:
+                        'Tap "Add Machine" on the home screen. Enter device ID, name, location, and notes.',
                     icon: Icons.add_circle_outline_rounded,
                   ),
                   GuideItem(
                     title: 'Select a Machine',
-                    description: 'Tap any registered machine card to view its dashboard and start tracking waste.',
+                    description:
+                        'Tap any registered machine card to view its dashboard and start tracking waste.',
                     icon: Icons.touch_app_rounded,
                   ),
                 ],
@@ -139,7 +135,7 @@ class GuidePage extends StatelessWidget {
                 context: context,
                 title: 'Machine Management',
                 icon: Icons.settings_rounded,
-                color: Colors.green, 
+                color: Colors.green,
                 textColor: textColor,
                 cardColor: cardColor,
                 subTextColor: subTextColor,
@@ -147,12 +143,14 @@ class GuidePage extends StatelessWidget {
                 items: [
                   GuideItem(
                     title: 'View Machine Status',
-                    description: 'Monitor status: Online, Offline, or Maintenance directly from the card.',
+                    description:
+                        'Monitor status: Online, Offline, or Maintenance directly from the card.',
                     icon: Icons.info_outline_rounded,
                   ),
                   GuideItem(
                     title: 'Edit Details',
-                    description: 'Update name, location, or description via machine settings.',
+                    description:
+                        'Update name, location, or description via machine settings.',
                     icon: Icons.edit_rounded,
                   ),
                 ],
@@ -172,12 +170,14 @@ class GuidePage extends StatelessWidget {
                 items: [
                   GuideItem(
                     title: 'Statistics Overview',
-                    description: 'View real-time stats: total waste, compost ready, and weekly trends.',
+                    description:
+                        'View real-time stats: total waste, compost ready, and weekly trends.',
                     icon: Icons.bar_chart_rounded,
                   ),
                   GuideItem(
                     title: 'Add Waste Entry',
-                    description: 'Record deposits with type, weight, and time for accurate tracking.',
+                    description:
+                        'Record deposits with type, weight, and time for accurate tracking.',
                     icon: Icons.add_box_outlined,
                   ),
                 ],
@@ -197,12 +197,14 @@ class GuidePage extends StatelessWidget {
                 items: [
                   GuideItem(
                     title: 'Machine Offline',
-                    description: 'Check power and Wi-Fi. Restart device if necessary.',
+                    description:
+                        'Check power and Wi-Fi. Restart device if necessary.',
                     icon: Icons.wifi_off_rounded,
                   ),
                   GuideItem(
                     title: 'Syncing Issues',
-                    description: 'Ensure stable internet. Pull down to refresh data.',
+                    description:
+                        'Ensure stable internet. Pull down to refresh data.',
                     icon: Icons.sync_problem_rounded,
                   ),
                 ],
@@ -239,49 +241,57 @@ class GuidePage extends StatelessWidget {
       children: [
         // Section Header
         Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(isDarkMode ? 0.2 : 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              title,
-              style: GoogleFonts.interTight(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
-            ),
-          ],
-        )
-        .animate()
-        .fadeIn(duration: 300.ms, delay: delay.ms)
-        .moveX(begin: -10, end: 0, delay: delay.ms),
-        
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(isDarkMode ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: GoogleFonts.interTight(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            )
+            .animate()
+            .fadeIn(duration: 300.ms, delay: delay.ms)
+            .moveX(begin: -10, end: 0, delay: delay.ms),
+
         const SizedBox(height: 16),
-        
+
         // Cards
         ...items.asMap().entries.map((entry) {
           final index = entry.key;
           final item = entry.value;
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _buildGuideCard(
-              item: item,
-              accentColor: color,
-              cardColor: cardColor,
-              textColor: textColor,
-              subTextColor: subTextColor,
-              isDarkMode: isDarkMode,
-            )
-            .animate()
-            .fadeIn(duration: 300.ms, delay: (delay + 100 + (index * 50)).ms)
-            .moveY(begin: 10, end: 0, delay: (delay + 100 + (index * 50)).ms),
+            child:
+                _buildGuideCard(
+                      item: item,
+                      accentColor: color,
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      isDarkMode: isDarkMode,
+                    )
+                    .animate()
+                    .fadeIn(
+                      duration: 300.ms,
+                      delay: (delay + 100 + (index * 50)).ms,
+                    )
+                    .moveY(
+                      begin: 10,
+                      end: 0,
+                      delay: (delay + 100 + (index * 50)).ms,
+                    ),
           );
         }).toList(),
         const SizedBox(height: 24),
@@ -301,15 +311,19 @@ class GuidePage extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         // Dark Mode: Subtle white border, no shadow
-        border: isDarkMode ? Border.all(color: Colors.white.withOpacity(0.05)) : null,
+        border: isDarkMode
+            ? Border.all(color: Colors.white.withOpacity(0.05))
+            : null,
         // Light Mode: Subtle shadow, no border
-        boxShadow: isDarkMode ? [] : [
-          const BoxShadow(
-            blurRadius: 4,
-            color: Color(0x1A000000),
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDarkMode
+            ? []
+            : [
+                const BoxShadow(
+                  blurRadius: 4,
+                  color: Color(0x1A000000),
+                  offset: Offset(0, 2),
+                ),
+              ],
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
@@ -356,95 +370,97 @@ class GuidePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHelpCard(BuildContext context, Color primaryColor, Color textColor, bool isDarkMode) {
+  Widget _buildHelpCard(
+    BuildContext context,
+    Color primaryColor,
+    Color textColor,
+    bool isDarkMode,
+  ) {
     return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            primaryColor,
-            primaryColor.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 8,
-            color: primaryColor.withOpacity(0.3),
-            offset: const Offset(0, 4),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [primaryColor, primaryColor.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 8,
+                color: primaryColor.withOpacity(0.3),
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.support_agent_rounded,
-                size: 32,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Need More Help?',
-              style: GoogleFonts.interTight(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Contact our support team for personalized assistance',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.9),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Support contact - Coming Soon')),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: primaryColor,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.support_agent_rounded,
+                    size: 32,
+                    color: Colors.white,
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 16),
+                Text(
+                  'Need More Help?',
+                  style: GoogleFonts.interTight(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
-                elevation: 0,
-              ),
-              icon: const Icon(Icons.email_outlined),
-              label: Text(
-                'Contact Support',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: 8),
+                Text(
+                  'Contact our support team for personalized assistance',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Support contact - Coming Soon'),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: primaryColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.email_outlined),
+                  label: Text(
+                    'Contact Support',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    )
-    .animate()
-    .fadeIn(duration: 400.ms, delay: 600.ms)
-    .scale(begin: const Offset(0.95, 0.95), delay: 600.ms);
+          ),
+        )
+        .animate()
+        .fadeIn(duration: 400.ms, delay: 600.ms)
+        .scale(begin: const Offset(0.95, 0.95), delay: 600.ms);
   }
 }
 

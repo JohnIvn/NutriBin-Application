@@ -184,13 +184,13 @@ class _AccountPageState extends State<AccountPage> {
                   title: 'Reset Tutorial (Debug)',
                   onTap: _resetTutorial,
                   cardColor: cardColor,
-                  textColor: Colors.orange, // Distinct color
+                  textColor: Colors.orange,
                   isDarkMode: isDarkMode,
                 ),
 
                 const SizedBox(height: 24),
                 
-                // LOGOUT BUTTON (Distinct Style)
+                // LOGOUT BUTTON
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: InkWell(
@@ -359,7 +359,7 @@ class _AccountPageState extends State<AccountPage> {
           boxShadow: isDarkMode ? [] : [
             const BoxShadow(
               blurRadius: 2,
-              color: Color(0x0D000000), // Very subtle shadow
+              color: Color(0x0D000000),
               offset: Offset(0, 1),
             ),
           ],
