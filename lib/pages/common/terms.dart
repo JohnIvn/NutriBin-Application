@@ -25,13 +25,11 @@ class _TermsOfServiceWidgetState extends State<TermsOfServiceWidget>
   void initState() {
     super.initState();
 
-    // Initialize animation controller
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
-    // Text animation
     _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -44,7 +42,7 @@ class _TermsOfServiceWidgetState extends State<TermsOfServiceWidget>
           begin: const Offset(
             0.0,
             30.0,
-          ), // Reduced slide distance for smoother feel
+          ),
           end: Offset.zero,
         ).animate(
           CurvedAnimation(
@@ -63,7 +61,7 @@ class _TermsOfServiceWidgetState extends State<TermsOfServiceWidget>
 
     _listSlideAnimation =
         Tween<Offset>(
-          begin: const Offset(0.0, 30.0), // Reduced slide distance
+          begin: const Offset(0.0, 30.0),
           end: Offset.zero,
         ).animate(
           CurvedAnimation(
@@ -126,7 +124,6 @@ class _TermsOfServiceWidgetState extends State<TermsOfServiceWidget>
             ),
           ),
           centerTitle: false,
-          // Remove visible border in dark mode
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1.0),
             child: Container(color: Colors.transparent, height: 1.0),
@@ -147,7 +144,7 @@ class _TermsOfServiceWidgetState extends State<TermsOfServiceWidget>
                       child: Image.asset(
                         'assets/images/Logo (Img).png',
                         width: 40,
-                        height: 64, // Adjusted aspect ratio slightly
+                        height: 64,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -198,7 +195,7 @@ class _TermsOfServiceWidgetState extends State<TermsOfServiceWidget>
 
                 const SizedBox(height: 16),
 
-                // Introduction Text (Animated)
+                // Introduction Text
                 AnimatedBuilder(
                   animation: _animationController,
                   builder: (context, child) {
@@ -222,7 +219,7 @@ class _TermsOfServiceWidgetState extends State<TermsOfServiceWidget>
 
                 const SizedBox(height: 24),
 
-                // Terms List (Animated)
+                // Terms List
                 AnimatedBuilder(
                   animation: _animationController,
                   builder: (context, child) {
