@@ -3,6 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:nutribin_application/pages/auth/forgot_password.dart';
 import 'package:nutribin_application/pages/auth/otp_contacts.dart';
 import 'package:nutribin_application/pages/auth/reset_password.dart';
+import 'package:nutribin_application/pages/home/machine_page.dart';
+import 'package:nutribin_application/pages/home/machines_home_page.dart';
 import 'package:nutribin_application/pages/home/mfa_settings.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/pages/common/about.dart';
@@ -103,6 +105,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const SignUpPage(),
 
         // Auth Routes
+        '/machines': (context) => const MachinesHomePage(),
         '/home': (context) => const HomePage(),
         '/dashboard': (context) => const DashboardPage(),
         '/profile': (context) => const ProfileWidget(),

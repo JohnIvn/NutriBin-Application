@@ -99,7 +99,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           ),
         );
 
-        Navigator.pushNamed(context, '/home');
+        Navigator.pushNamed(context, '/machines');
       }
     } catch (e) {
       if (mounted) {

@@ -274,7 +274,7 @@ class _SignUpPageState extends State<SignUpPage>
         const SnackBar(content: Text("Account created successfully!")),
       );
 
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/machines');
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -357,7 +357,7 @@ class _SignUpPageState extends State<SignUpPage>
         );
 
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/home');
+          Navigator.pushReplacementNamed(context, '/machines');
         }
         return;
       }
@@ -377,7 +377,7 @@ class _SignUpPageState extends State<SignUpPage>
       );
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/machines');
       }
     } catch (e) {
       _showError(e.toString());
@@ -1015,7 +1015,7 @@ class _SignUpPageState extends State<SignUpPage>
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
     if (isLoggedIn && mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/machines');
     }
   }
 
@@ -1090,7 +1090,7 @@ class _SignUpPageState extends State<SignUpPage>
           );
         }
 
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/machines');
       }
     } catch (e) {
       if (mounted) {

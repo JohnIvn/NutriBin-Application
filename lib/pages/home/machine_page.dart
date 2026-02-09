@@ -1,35 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:nutribin_application/models/machine.dart';
 import 'package:nutribin_application/pages/home/account.dart';
-import 'package:nutribin_application/pages/home/dashboard.dart';
-import 'package:nutribin_application/pages/home/fertilizer.dart';
-import 'package:nutribin_application/pages/home/notification_page.dart';
-import 'package:nutribin_application/pages/home/nutribin_page.dart';
-import 'package:nutribin_application/widgets/custom_appbar.dart';
-import 'package:nutribin_application/widgets/custom_navbar.dart';
+import 'package:nutribin_application/pages/home/guide_page.dart';
+import 'package:nutribin_application/pages/home/machines_home_page.dart';
+import 'package:nutribin_application/widgets/machines_navbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class MachinesHomePage extends StatefulWidget {
+  const MachinesHomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<MachinesHomePage> createState() => _MachinesHomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _MachinesHomePageState extends State<MachinesHomePage> {
   int _currentIndex = 0;
   bool _isLoading = true;
   bool _isAuthenticated = false;
-  Machine? _selectedMachine;
 
-  final List<Widget> _pages = const [
-    DashboardPage(),
-    FertilizerPage(),
-    NutriBinPage(),
-    NotificationPage(),
-    AccountPage(),
-  ];
-
+  @override
   void initState() {
     super.initState();
     _checkSession();
@@ -110,6 +98,22 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Widget _getCurrentPage() {
+    switch (_currentIndex) {
+      case 0:
+        // Home - show machine selection cards
+        return const MachineSelectionPage();
+      case 1:
+        // Guide page
+        return const GuidePage();
+      case 2:
+        // Account page
+        return const AccountPage();
+      default:
+        return const MachineSelectionPage();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -121,9 +125,8 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Scaffold(
-      appBar: CustomAppBar(),
-      body: _pages[_currentIndex],
-      bottomNavigationBar: CustomNavBar(
+      body: _getCurrentPage(),
+      bottomNavigationBar: MachinesNavBar(
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
