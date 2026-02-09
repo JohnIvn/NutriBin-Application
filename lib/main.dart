@@ -4,7 +4,6 @@ import 'package:nutribin_application/pages/auth/forgot_password.dart';
 import 'package:nutribin_application/pages/auth/otp_contacts.dart';
 import 'package:nutribin_application/pages/auth/reset_password.dart';
 import 'package:nutribin_application/pages/home/machine_page.dart';
-import 'package:nutribin_application/pages/home/machines_home_page.dart';
 import 'package:nutribin_application/pages/home/mfa_settings.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/pages/common/about.dart';
@@ -54,14 +53,36 @@ final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   primaryColor: lightPrimary,
   scaffoldBackgroundColor: lightPrimaryBackground,
+  cardTheme: CardThemeData(
+    color: lightSecondaryBackground,
+    elevation: 0,
+    margin: EdgeInsets.zero,
+  ),
+  appBarTheme: AppBarTheme(
+    backgroundColor: lightPrimaryBackground,
+    foregroundColor: lightPrimaryText,
+    elevation: 0,
+  ),
+  textTheme: TextTheme(
+    bodyMedium: TextStyle(color: lightPrimaryText),
+    bodySmall: TextStyle(color: lightSecondaryText),
+    titleLarge: TextStyle(color: lightPrimaryText),
+  ),
   colorScheme: ColorScheme.light(
     primary: lightPrimary,
     secondary: lightSecondary,
     tertiary: lightTertiary,
-    surface: lightAlternate,
-    onPrimary: lightPrimaryText,
-    onSecondary: lightPrimaryText,
-    onSurface: lightSecondaryText,
+    surface: lightSecondaryBackground,
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
+    onSurface: lightPrimaryText,
+  ),
+  bottomNavigationBarTheme: BottomNavigationBarThemeData(
+    backgroundColor: lightSecondaryBackground, // White
+    selectedItemColor: lightPrimary, // Green
+    unselectedItemColor: lightSecondaryText, // Greyish Green
+    showUnselectedLabels: true,
+    type: BottomNavigationBarType.fixed,
   ),
 );
 
@@ -70,14 +91,36 @@ final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
   primaryColor: darkPrimary,
   scaffoldBackgroundColor: darkPrimaryBackground,
+  cardTheme: CardThemeData(
+    color: darkSecondaryBackground,
+    elevation: 0,
+    margin: EdgeInsets.zero,
+  ),
+  appBarTheme: AppBarTheme(
+    backgroundColor: darkPrimaryBackground,
+    foregroundColor: darkPrimaryText,
+    elevation: 0,
+  ),
+  textTheme: TextTheme(
+    bodyMedium: TextStyle(color: darkPrimaryText),
+    bodySmall: TextStyle(color: darkSecondaryText),
+    titleLarge: TextStyle(color: darkPrimaryText),
+  ),
   colorScheme: ColorScheme.dark(
     primary: darkPrimary,
     secondary: darkSecondary,
     tertiary: darkTertiary,
-    surface: darkAlternate,
+    surface: darkSecondaryBackground,
     onPrimary: darkPrimaryText,
     onSecondary: darkPrimaryText,
-    onSurface: darkSecondaryText,
+    onSurface: darkPrimaryText,
+  ),
+  bottomNavigationBarTheme: BottomNavigationBarThemeData(
+    backgroundColor: darkSecondaryBackground, // Dark Grey
+    selectedItemColor: darkTertiary, // Lighter Green for visibility on dark
+    unselectedItemColor: darkSecondaryText, // Light Grey
+    showUnselectedLabels: true,
+    type: BottomNavigationBarType.fixed,
   ),
 );
 

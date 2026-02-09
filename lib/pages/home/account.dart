@@ -13,50 +13,13 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  String userName = "";
-  String userEmail = "";
-
-  Color get _primaryColor => Theme.of(context).primaryColor;
-  Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
-  Color get _secondaryText => const Color(0xFF57636C);
+  String userName = "User";
+  String userEmail = "user@example.com";
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
-  }
-
-  String _getInitials() {
-    final parts = userName.trim().split(RegExp(r'\s+'));
-
-    String initials = '';
-    if (parts.isNotEmpty && parts[0].isNotEmpty) {
-      initials += parts[0][0].toUpperCase();
-    }
-    if (parts.length > 1 && parts[1].isNotEmpty) {
-      initials += parts[1][0].toUpperCase();
-    }
-
-    return initials.isEmpty ? '?' : initials;
-  }
-
-  Color _getAvatarColor() {
-    final name = userName.replaceAll(' ', '');
-    if (name.isEmpty) return _primaryColor;
-
-    final colors = [
-      const Color(0xFF4285F4), // Blue
-      const Color(0xFFEA4335), // Red
-      const Color(0xFFFBBC04), // Yellow
-      const Color(0xFF34A853), // Green
-      const Color(0xFFFF6D00), // Orange
-      const Color(0xFF9C27B0), // Purple
-      const Color(0xFF00BCD4), // Cyan
-      const Color(0xFFE91E63), // Pink
-    ];
-
-    final index = name.codeUnitAt(0) % colors.length;
-    return colors[index];
   }
 
   Future<void> _loadUserProfile() async {
@@ -66,20 +29,51 @@ class _AccountPageState extends State<AccountPage> {
       email: true,
     );
 
-    setState(() {
-      userName = "${user["firstName"] ?? ""} ${user["lastName"] ?? ""}".trim();
+    if (mounted) {
+      setState(() {
+        final first = user["firstName"] as String? ?? "";
+        final last = user["lastName"] as String? ?? "";
+        userName = "$first $last".trim();
+        if (userName.isEmpty) userName = "NutriBin User";
+        
+        userEmail = user["email"] as String? ?? "";
+      });
+    }
+  }
 
-      userEmail = user["email"] as String? ?? "";
-    });
+  String _getInitials() {
+    if (userName.isEmpty) return "?";
+    final parts = userName.trim().split(RegExp(r'\s+'));
+    String initials = '';
+    if (parts.isNotEmpty && parts[0].isNotEmpty) initials += parts[0][0];
+    if (parts.length > 1 && parts[1].isNotEmpty) initials += parts[1][0];
+    return initials.toUpperCase();
+  }
+
+  Color _getAvatarColor(bool isDarkMode) {
+    if (userName.isEmpty) return Theme.of(context).primaryColor;
+    
+    // pallette
+    final colors = [
+      const Color(0xFF4285F4), // Blue
+      const Color(0xFFEA4335), // Red
+      const Color(0xFFFBBC04), // Yellow (Darker)
+      const Color(0xFF34A853), // Green
+      const Color(0xFFFF6D00), // Orange
+      const Color(0xFF9C27B0), // Purple
+      const Color(0xFF00BCD4), // Cyan
+      const Color(0xFFE91E63), // Pink
+    ];
+
+    final index = userName.codeUnitAt(0) % colors.length;
+    return colors[index];
   }
 
   Future<void> logOut() async {
     try {
       await PreferenceUtility.clearSession();
-
       if (!mounted) return;
-
-      Navigator.pushReplacementNamed(context, '/');
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -89,93 +83,146 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   void _handleLogout() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Log Out'),
-        content: const Text('Are you sure you want to log out?'),
+        backgroundColor: Theme.of(context).cardTheme.color,
+        title: Text(
+          'Log Out', 
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+        ),
+        content: Text(
+          'Are you sure you want to log out?',
+          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               logOut();
             },
-            child: const Text('Log Out'),
+            child: const Text('Log Out', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
 
-  // DEBUG ONLY - Remove in production
+  // DEBUG ONLY
   Future<void> _resetTutorial() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('navbar_tutorial_seen');
-
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tutorial reset! It will show on next app restart.'),
-      ),
+      const SnackBar(content: Text('Tutorial reset! Restart app to see it.')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // --- DYNAMIC THEME VALUES ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final cardColor = Theme.of(context).cardTheme.color!;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: _secondaryBackground,
+        backgroundColor: backgroundColor,
         body: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
-              mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildProfileHeader(),
-                _buildSectionTitle('Account'),
+                _buildProfileHeader(cardColor, textColor, subTextColor, isDarkMode),
+                
+                const SizedBox(height: 16),
+                
+                _buildSectionTitle('Account', subTextColor),
                 _buildMenuItem(
-                  icon: Icons.notifications_none,
-                  title: 'Profile',
-                  onTap: () {
-                    Navigator.pushNamed(context, '/profile');
-                  },
+                  icon: Icons.person_outline_rounded,
+                  title: 'Profile Settings',
+                  onTap: () => Navigator.pushNamed(context, '/profile'),
+                  cardColor: cardColor,
+                  textColor: textColor,
+                  isDarkMode: isDarkMode,
                 ),
-                _buildSectionTitle('General'),
+                
+                _buildSectionTitle('General', subTextColor),
                 _buildMenuItem(
-                  icon: Icons.phone,
+                  icon: Icons.headset_mic_outlined, // More modern icon
                   title: 'Support',
-                  onTap: () {
-                    Navigator.pushNamed(context, '/support');
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/support'),
+                  cardColor: cardColor,
+                  textColor: textColor,
+                  isDarkMode: isDarkMode,
                 ),
                 _buildMenuItem(
-                  icon: Icons.privacy_tip_rounded,
+                  icon: Icons.policy_outlined,
                   title: 'Terms of Service',
-                  onTap: () {
-                    Navigator.pushNamed(context, '/termsOfService');
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/termsOfService'),
+                  cardColor: cardColor,
+                  textColor: textColor,
+                  isDarkMode: isDarkMode,
                 ),
-                // DEBUG ONLY - Remove in production
+                
+                // DEBUG ITEM
                 _buildMenuItem(
-                  icon: Icons.replay,
+                  icon: Icons.restart_alt_rounded,
                   title: 'Reset Tutorial (Debug)',
                   onTap: _resetTutorial,
+                  cardColor: cardColor,
+                  textColor: Colors.orange, // Distinct color
+                  isDarkMode: isDarkMode,
                 ),
-                _buildMenuItem(
-                  icon: Icons.exit_to_app,
-                  title: 'Log Out',
-                  onTap: _handleLogout,
+
+                const SizedBox(height: 24),
+                
+                // LOGOUT BUTTON (Distinct Style)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: InkWell(
+                    onTap: _handleLogout,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: isDarkMode 
+                            ? Colors.red.withOpacity(0.1) 
+                            : Colors.red.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.red.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Log Out',
+                          style: GoogleFonts.inter(
+                            color: Colors.red,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -184,92 +231,111 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildProfileHeader() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 1),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: const [
-            BoxShadow(
-              blurRadius: 3,
-              color: Color(0x33000000),
-              offset: Offset(0, 1),
+  Widget _buildProfileHeader(Color cardColor, Color textColor, Color subTextColor, bool isDarkMode) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardColor,
+        // Bottom border for separation in Dark Mode
+        border: isDarkMode 
+            ? Border(bottom: BorderSide(color: Colors.white10)) 
+            : null,
+        boxShadow: isDarkMode ? [] : [
+          const BoxShadow(
+            blurRadius: 4,
+            color: Color(0x1A000000),
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Row(
+          children: [
+            // Avatar
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _getAvatarColor(isDarkMode),
+                boxShadow: [
+                  BoxShadow(
+                    color: _getAvatarColor(isDarkMode).withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  _getInitials(),
+                  style: GoogleFonts.interTight(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              _buildLetterAvatar(),
-              Padding(
-                padding: const EdgeInsets.only(left: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      userName,
-                      style: GoogleFonts.interTight(
-                        color: _secondaryText,
-                        fontSize: 22,
+            const SizedBox(width: 20),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userName,
+                    style: GoogleFonts.interTight(
+                      color: textColor,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    userEmail,
+                    style: GoogleFonts.inter(
+                      color: subTextColor,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  // "Edit Profile" hint (optional polish)
+                  InkWell(
+                    onTap: () => Navigator.pushNamed(context, '/profile'),
+                    child: Text(
+                      'Edit Profile',
+                      style: GoogleFonts.inter(
+                        color: Theme.of(context).primaryColor,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        userEmail,
-                        style: GoogleFonts.inter(
-                          color: _secondaryText,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildLetterAvatar() {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: _getAvatarColor(),
-      ),
-      child: Center(
-        child: Text(
-          _getInitials(),
-          style: GoogleFonts.inter(
-            fontSize: 30,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, Color textColor) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Text(
-        title,
+        title.toUpperCase(),
         style: GoogleFonts.inter(
-          color: _secondaryText,
-          fontSize: 14,
+          color: textColor,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
+          letterSpacing: 1.0,
         ),
       ),
     );
@@ -279,45 +345,49 @@ class _AccountPageState extends State<AccountPage> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    required Color cardColor,
+    required Color textColor,
+    required bool isDarkMode,
   }) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: const [
-              BoxShadow(
-                blurRadius: 5,
-                color: Color(0x3416202A),
-                offset: Offset(0, 2),
-              ),
-            ],
-            borderRadius: BorderRadius.circular(12),
-          ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: isDarkMode ? Border.all(color: Colors.white10) : null,
+          boxShadow: isDarkMode ? [] : [
+            const BoxShadow(
+              blurRadius: 2,
+              color: Color(0x0D000000), // Very subtle shadow
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
-              mainAxisSize: MainAxisSize.max,
               children: [
-                Icon(icon, color: _secondaryText, size: 24),
+                Icon(icon, color: textColor.withOpacity(0.7), size: 22),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 12),
-                    child: Text(
-                      title,
-                      style: GoogleFonts.inter(
-                        color: _secondaryText,
-                        fontSize: 16,
-                      ),
+                  child: Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      color: textColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios, color: _secondaryText, size: 18),
+                Icon(
+                  Icons.chevron_right_rounded, 
+                  color: textColor.withOpacity(0.3), 
+                  size: 20
+                ),
               ],
             ),
           ),

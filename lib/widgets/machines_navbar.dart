@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class MachinesNavBar extends StatefulWidget {
   final int currentIndex;
@@ -29,11 +28,9 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
 
   Future<void> _checkAndShowTutorial() async {
     final prefs = await SharedPreferences.getInstance();
-    final hasSeenTutorial =
-        prefs.getBool('machines_navbar_tutorial_seen') ?? false;
+    final hasSeenTutorial = prefs.getBool('machines_navbar_tutorial_seen') ?? false;
 
     if (!hasSeenTutorial && mounted) {
-      // Wait for the widget to be built
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showTutorial();
       });
@@ -63,7 +60,6 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
     await prefs.setBool('machines_navbar_tutorial_seen', true);
   }
 
-  // Method to manually show tutorial (call this from your settings or guide page)
   void showTutorialManually() {
     _showTutorial();
   }
@@ -93,7 +89,7 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      "View and manage all your registered NutriBin machines. Select a machine to see its dashboard.",
+                      "View and manage all your registered NutriBin machines.",
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                     const SizedBox(height: 15),
@@ -101,17 +97,9 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
                       onPressed: () {
                         controller.next();
                       },
-                      icon: const Icon(
-                        Icons.arrow_forward,
-                        color: Colors.white,
-                      ),
-                      label: const Text(
-                        'Next',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white),
-                      ),
+                      icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                      label: const Text('Next', style: TextStyle(color: Colors.white)),
+                      style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white)),
                     ),
                   ],
                 ),
@@ -143,7 +131,7 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
                     ),
                     SizedBox(height: 10),
                     Text(
-                      "Access comprehensive guides, tips, and tutorials to make the most of your NutriBin experience.",
+                      "Access comprehensive guides, tips, and tutorials.",
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ],
@@ -197,24 +185,55 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: widget.currentIndex,
-      onTap: widget.onTap,
-      type: BottomNavigationBarType.fixed,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined, key: _navKeys[0]),
-          label: 'Home',
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    // --- navbar colors---
+    final navBarBg = isDarkMode ? Theme.of(context).cardTheme.color : Theme.of(context).primaryColor;
+    
+    // Icons
+    final selectedItemColor = isDarkMode ? Theme.of(context).primaryColor : Colors.white;
+    final unselectedItemColor = isDarkMode ? Colors.grey : Colors.white60;
+    
+    const borderColor = Colors.transparent;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: navBarBg, 
+        border: const Border(
+          top: BorderSide(
+            color: borderColor, 
+            width: 1.0,
+          ),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu_book_outlined, key: _navKeys[1]),
-          label: 'Guide',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline, key: _navKeys[2]),
-          label: 'Account',
-        ),
-      ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: widget.currentIndex,
+        onTap: widget.onTap,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        
+        selectedItemColor: selectedItemColor,
+        unselectedItemColor: unselectedItemColor,
+        
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined, key: _navKeys[0]),
+            activeIcon: Icon(Icons.home, key: ValueKey('home_active')),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book_outlined, key: _navKeys[1]),
+            activeIcon: Icon(Icons.menu_book),
+            label: 'Guide',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline, key: _navKeys[2]),
+            activeIcon: Icon(Icons.person),
+            label: 'Account',
+          ),
+        ],
+      ),
     );
   }
 }
