@@ -17,7 +17,7 @@ class CustomNavBar extends StatefulWidget {
 }
 
 class _CustomNavBarState extends State<CustomNavBar> {
-  final List<GlobalKey> _navKeys = List.generate(5, (_) => GlobalKey());
+  final List<GlobalKey> _navKeys = List.generate(4, (_) => GlobalKey());
   TutorialCoachMark? _tutorialCoachMark;
 
   @override
@@ -59,7 +59,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('navbar_tutorial_seen', true);
   }
-  
+
   void showTutorialManually() {
     _showTutorial();
   }
@@ -214,39 +214,6 @@ class _CustomNavBarState extends State<CustomNavBar> {
           ),
         ],
       ),
-      TargetFocus(
-        identify: "account_key",
-        keyTarget: _navKeys[4],
-        contents: [
-          TargetContent(
-            align: ContentAlign.top,
-            builder: (context, controller) {
-              return Container(
-                padding: const EdgeInsets.all(20),
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Account",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      "Manage your profile and app settings",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
     ];
   }
 
@@ -278,10 +245,6 @@ class _CustomNavBarState extends State<CustomNavBar> {
         BottomNavigationBarItem(
           icon: Icon(Icons.notifications_outlined, key: _navKeys[3]),
           label: 'Notifs',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline, key: _navKeys[4]),
-          label: 'Account',
         ),
       ],
     );

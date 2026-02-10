@@ -46,7 +46,9 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
             child: Text(
               'OK',
               style: GoogleFonts.inter(
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Theme.of(context).primaryColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
