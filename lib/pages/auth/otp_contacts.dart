@@ -91,9 +91,9 @@ class _ContactsVerificationState extends State<ContactsVerification> {
   IconData _getIcon() {
     switch (_verificationType) {
       case OtpVerificationType.contact:
-        return Icons.phone_android;
+        return Icons.phone_android_rounded;
       case OtpVerificationType.passwordReset:
-        return Icons.lock_reset;
+        return Icons.lock_reset_rounded;
       default:
         return Icons.email_outlined;
     }
@@ -111,14 +111,7 @@ class _ContactsVerificationState extends State<ContactsVerification> {
   }
 
   String _getDescription() {
-    switch (_verificationType) {
-      case OtpVerificationType.contact:
-        return 'We have sent a 6-digit verification code to';
-      case OtpVerificationType.passwordReset:
-        return 'We have sent a 6-digit verification code to';
-      default:
-        return 'We have sent a 6-digit verification code to';
-    }
+    return 'We have sent a 6-digit verification code to';
   }
 
   String _getMaskedRecipient() {
@@ -188,12 +181,10 @@ class _ContactsVerificationState extends State<ContactsVerification> {
 
       if (mounted) {
         if (result['ok'] == true) {
-          // Update userId and expected code from new response
           setState(() {
             _userId = result['userId'] ?? _userId;
           });
 
-          // Clear all OTP input fields
           for (final controller in _otpControllers) {
             controller.clear();
           }
@@ -201,9 +192,10 @@ class _ContactsVerificationState extends State<ContactsVerification> {
 
           _startCooldown(60);
 
-          final message = _verificationType == OtpVerificationType.contact
-              ? 'Verification code sent to your phone'
-              : 'Verification code sent to your email';
+          final message =
+              _verificationType == OtpVerificationType.contact
+                  ? 'Verification code sent to your phone'
+                  : 'Verification code sent to your email';
 
           ScaffoldMessenger.of(
             context,
@@ -229,19 +221,35 @@ class _ContactsVerificationState extends State<ContactsVerification> {
     }
   }
 
-  Color get _primaryColor => Theme.of(context).primaryColor;
-
   @override
   Widget build(BuildContext context) {
+    // --- DYNAMIC COLORS ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor =
+        isDarkMode ? Colors.grey[400] : const Color(0xFF57636C);
+
+    // Highlight Color: Lighter Green in Dark Mode for visibility
+    final highlightColor = isDarkMode ? const Color(0xFF8FAE8F) : primaryColor;
+
+    // Input Field Colors
+    final inputFillColor =
+        isDarkMode ? Theme.of(context).cardTheme.color : Colors.white;
+    final inputBorderColor =
+        isDarkMode ? Colors.white12 : const Color(0xFFE0E3E7);
+    final inputTextColor = isDarkMode ? Colors.white : const Color(0xFF101213);
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: backgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: _primaryColor),
+            icon: Icon(Icons.arrow_back_rounded, color: textColor),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -255,15 +263,15 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Icon
+                    // Icon Bubble
                     Container(
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: _primaryColor.withOpacity(0.1),
+                        color: highlightColor.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(_getIcon(), size: 50, color: _primaryColor),
+                      child: Icon(_getIcon(), size: 50, color: highlightColor),
                     ),
                     const SizedBox(height: 32),
 
@@ -273,7 +281,7 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                       style: GoogleFonts.interTight(
                         fontSize: 28,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF101213),
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -284,7 +292,7 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: const Color(0xFF57636C),
+                        color: subTextColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -294,7 +302,7 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: _primaryColor,
+                        color: highlightColor,
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -320,33 +328,51 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                                   textAlign: TextAlign.center,
                                   keyboardType: TextInputType.number,
                                   maxLength: 1,
+                                  cursorColor: highlightColor,
                                   style: GoogleFonts.inter(
                                     fontSize: boxWidth * 0.45,
                                     fontWeight: FontWeight.w600,
+                                    color: inputTextColor,
                                   ),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,
                                   ],
                                   decoration: InputDecoration(
                                     counterText: '',
+                                    filled: true,
+                                    fillColor: inputFillColor,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                        color: Color(0xFFE0E3E7),
+                                      borderSide: BorderSide(
+                                        color: inputBorderColor,
                                         width: 2,
                                       ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
-                                        color: _primaryColor,
+                                        color: highlightColor,
                                         width: 2,
                                       ),
                                     ),
                                   ),
+                                  // --- UPDATED LOGIC HERE ---
                                   onChanged: (value) {
-                                    if (value.isNotEmpty && index < 5) {
-                                      _otpFocusNodes[index + 1].requestFocus();
+                                    if (value.isNotEmpty) {
+                                      // Logic for Moving Forward
+                                      if (index < 5) {
+                                        _otpFocusNodes[index +
+                                            1].requestFocus();
+                                      } else {
+                                        // Unfocus if it's the last box
+                                        _otpFocusNodes[index].unfocus();
+                                      }
+                                    } else {
+                                      // Logic for Moving Backward (Delete)
+                                      if (index > 0) {
+                                        _otpFocusNodes[index -
+                                            1].requestFocus();
+                                      }
                                     }
                                   },
                                 ),
@@ -366,7 +392,10 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                         onPressed: _isLoading ? null : _handleVerifyOtp,
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 52),
-                          backgroundColor: _primaryColor,
+                          backgroundColor: primaryColor,
+                          disabledBackgroundColor: primaryColor.withOpacity(
+                            0.5,
+                          ),
                           elevation: 3,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(40),
@@ -403,13 +432,14 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                           'Didn\'t receive the code? ',
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            color: const Color(0xFF57636C),
+                            color: subTextColor,
                           ),
                         ),
                         TextButton(
-                          onPressed: (_cooldownSeconds > 0 || _isLoading)
-                              ? null
-                              : _handleResendOtp,
+                          onPressed:
+                              (_cooldownSeconds > 0 || _isLoading)
+                                  ? null
+                                  : _handleResendOtp,
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: const Size(0, 0),
@@ -422,9 +452,10 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: _cooldownSeconds > 0
-                                  ? const Color(0xFF57636C)
-                                  : _primaryColor,
+                              color:
+                                  _cooldownSeconds > 0
+                                      ? subTextColor
+                                      : highlightColor,
                             ),
                           ),
                         ),
