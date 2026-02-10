@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:nutribin_application/models/user.dart';
-import 'package:nutribin_application/services/account_service.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,8 +17,6 @@ class MfaSettingsPage extends StatefulWidget {
 
 class _MfaSettingsPageState extends State<MfaSettingsPage> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
-
-  Color get _primaryColor => Theme.of(context).primaryColor;
 
   String _mfaType = 'disable';
   bool _isMfaLoading = false;
@@ -44,36 +41,58 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // --- DYNAMIC COLORS ---
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final cardColor = Theme.of(context).cardTheme.color!;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // --- HIGHLIGHT COLOR FIX ---
+    final highlightColor = isDarkMode ? const Color(0xFF8FAE8F) : primaryColor;
+
+    // AppBar Colors
+    final appBarBg = isDarkMode ? backgroundColor : primaryColor;
+    const appBarContentColor = Colors.white;
+
+    // Info Box Colors (Adaptive Blue)
+    final infoBoxBg = isDarkMode ? Colors.blue.withOpacity(0.15) : Colors.blue[50];
+    final infoBoxBorder = isDarkMode ? Colors.blue.withOpacity(0.3) : Colors.blue[200]!;
+    final infoBoxText = isDarkMode ? Colors.blue[100] : Colors.blue[900];
+    final infoBoxIcon = isDarkMode ? Colors.blue[200] : Colors.blue[700];
+
     return Scaffold(
       key: scaffoldKey,
-      backgroundColor: Colors.grey[50],
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: _primaryColor,
+        backgroundColor: appBarBg,
         automaticallyImplyLeading: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: Colors.white,
-            size: 25,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: const Icon(Icons.arrow_back_rounded, color: appBarContentColor),
+          onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Two-Factor Authentication',
           style: GoogleFonts.interTight(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: appBarContentColor,
           ),
         ),
         centerTitle: false,
-        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: Colors.transparent, height: 1.0),
+        ),
       ),
       body: SafeArea(
         child: _isInitialLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(child: CircularProgressIndicator(color: highlightColor))
             : _errorMessage != null
             ? Center(
                 child: Padding(
@@ -86,14 +105,15 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           fontSize: 14,
-                          color: Colors.red,
+                          color: Theme.of(context).colorScheme.error,
                         ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchMfaSettings,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryColor,
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
                         ),
                         child: const Text('Retry'),
                       ),
@@ -102,190 +122,198 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
                 ),
               )
             : SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header Section
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Secure Your Account',
-                              style: GoogleFonts.interTight(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[800],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Two-factor authentication adds an extra layer of security to your account by requiring a verification code in addition to your password.',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // MFA Options Container
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.grey[300]!,
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.security,
-                                  color: _primaryColor,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Authentication Method',
-                                    style: GoogleFonts.interTight(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey[800],
-                                    ),
-                                  ),
-                                ),
-                                if (_isMfaLoading)
-                                  const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Radio buttons for MFA options
-                            _buildMfaRadioOption(
-                              value: 'disable',
-                              title: 'Disabled',
-                              subtitle: 'No two-factor authentication',
-                              icon: Icons.cancel_outlined,
-                            ),
-                            const SizedBox(height: 12),
-                            _buildMfaRadioOption(
-                              value: 'email',
-                              title: 'Email Verification',
-                              subtitle: 'Send code to your email address',
-                              icon: Icons.email_outlined,
-                            ),
-                            const SizedBox(height: 12),
-                            _buildMfaRadioOption(
-                              value: 'sms',
-                              title: 'SMS Verification',
-                              subtitle: 'Send code to your phone number',
-                              icon: Icons.sms_outlined,
-                            ),
-
-                            if (_mfaType != 'disable')
-                              Padding(
-                                padding: const EdgeInsets.only(top: 16),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: _primaryColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.check_circle,
-                                        color: _primaryColor,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'Your account is protected with ${_mfaType.toUpperCase()} 2FA',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 12,
-                                            color: _primaryColor,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-
-                      // Info Section
-                      Padding(
-                        padding: const EdgeInsets.only(top: 24),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.blue[200]!,
-                              width: 1,
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Section
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Secure Your Account',
+                            style: GoogleFonts.interTight(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
                             ),
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          const SizedBox(height: 8),
+                          Text(
+                            'Add an extra layer of security by requiring a verification code in addition to your password.',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: subTextColor,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // MFA Options Container
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isDarkMode 
+                            ? Border.all(color: Colors.white.withOpacity(0.05)) 
+                            : Border.all(color: Colors.grey[300]!),
+                        boxShadow: isDarkMode ? [] : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Icon(
-                                Icons.info_outline,
-                                color: Colors.blue[700],
-                                size: 20,
-                              ),
+                              Icon(Icons.security, color: highlightColor, size: 24),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'When enabled, you\'ll need to enter a verification code each time you sign in to your account.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    color: Colors.blue[900],
-                                    height: 1.4,
+                                  'Authentication Method',
+                                  style: GoogleFonts.interTight(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: textColor,
                                   ),
                                 ),
                               ),
+                              if (_isMfaLoading)
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: highlightColor,
+                                  ),
+                                ),
                             ],
                           ),
+                          const SizedBox(height: 20),
+
+                          // Radio buttons
+                          _buildMfaRadioOption(
+                            value: 'disable',
+                            title: 'Disabled',
+                            subtitle: 'No two-factor authentication',
+                            icon: Icons.cancel_outlined,
+                            textColor: textColor,
+                            subTextColor: subTextColor,
+                            highlightColor: highlightColor,
+                            isDarkMode: isDarkMode,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildMfaRadioOption(
+                            value: 'email',
+                            title: 'Email Verification',
+                            subtitle: 'Send code to your email address',
+                            icon: Icons.email_outlined,
+                            textColor: textColor,
+                            subTextColor: subTextColor,
+                            highlightColor: highlightColor,
+                            isDarkMode: isDarkMode,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildMfaRadioOption(
+                            value: 'sms',
+                            title: 'SMS Verification',
+                            subtitle: 'Send code to your phone number',
+                            icon: Icons.sms_outlined,
+                            textColor: textColor,
+                            subTextColor: subTextColor,
+                            highlightColor: highlightColor,
+                            isDarkMode: isDarkMode,
+                          ),
+
+                          // Active Status Indicator
+                          if (_mfaType != 'disable')
+                            Padding(
+                              padding: const EdgeInsets.only(top: 20),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: highlightColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: highlightColor.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      color: highlightColor,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'Protected with ${_mfaType.toUpperCase()} 2FA',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13,
+                                          color: highlightColor,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Info Section
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: infoBoxBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: infoBoxBorder),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              color: infoBoxIcon,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'When enabled, you\'ll need to enter a verification code each time you sign in to your account.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: infoBoxText,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
       ),
     );
   }
 
+  // ... (Fetch logic remains unchanged)
   Future<void> _fetchMfaSettings() async {
     try {
       setState(() {
@@ -306,7 +334,6 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
 
       setState(() {
         final mfaValue = response["data"]?.toString() ?? 'N/A';
-
         if (mfaValue == 'N/A' || mfaValue == 'false') {
           _mfaType = 'disable';
         } else if (mfaValue == 'email') {
@@ -316,12 +343,9 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
         } else {
           _mfaType = 'disable';
         }
-
-        print("🔍 Fetched MFA type: $mfaValue -> Mapped to: $_mfaType");
         _isInitialLoading = false;
       });
     } catch (e) {
-      print("Error fetching MFA: $e");
       if (!mounted) return;
       setState(() {
         _isInitialLoading = false;
@@ -331,9 +355,7 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
   }
 
   Future<void> _handleMfaToggle(String type) async {
-    setState(() {
-      _isMfaLoading = true;
-    });
+    setState(() => _isMfaLoading = true);
 
     try {
       final result = await AuthUtility.toggleMfa(type: type);
@@ -346,33 +368,23 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
         });
 
         final mfaTypeFromResponse = result["data"]?.toString() ?? 'N/A';
-
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('mfa', mfaTypeFromResponse);
 
         if (!mounted) return;
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              type == 'disable'
-                  ? 'Two-factor authentication disabled'
-                  : 'Two-factor authentication enabled via ${type.toUpperCase()}',
-            ),
-            backgroundColor: const Color.fromARGB(255, 0, 134, 4),
+            content: Text(type == 'disable' ? '2FA Disabled' : '2FA Enabled via ${type.toUpperCase()}'),
+            backgroundColor: const Color(0xFF34A853), // Success Green
           ),
         );
       } else {
-        setState(() {
-          _isMfaLoading = false;
-        });
+        setState(() => _isMfaLoading = false);
         _showError(result["message"] ?? 'Failed to update MFA settings');
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _isMfaLoading = false;
-      });
+      setState(() => _isMfaLoading = false);
       _showError('Failed to update MFA settings: $e');
     }
   }
@@ -388,89 +400,80 @@ class _MfaSettingsPageState extends State<MfaSettingsPage> {
     required String title,
     required String subtitle,
     required IconData icon,
+    required Color textColor,
+    required Color subTextColor,
+    required Color highlightColor,
+    required bool isDarkMode,
   }) {
     final isSelected = _mfaType == value;
-
-    // 👉 Disable SMS if phone not verified
     final bool isDisabled = value == 'sms' && !_isPhoneVerified;
 
+    // --- COLOR LOGIC ---
+    // Border: Highlight if selected, otherwise subtle grey/white
+    final borderColor = isSelected 
+        ? highlightColor 
+        : (isDarkMode ? Colors.white10 : Colors.grey[300]!);
+    
+    // Ucin Highlight if selected, dimmed if disabled, normal grey if unselected
+    final iconColor = isSelected 
+        ? highlightColor 
+        : (isDisabled ? subTextColor.withOpacity(0.3) : subTextColor);
+
+    // Text White/Black if active, dimmed if disabled
+    final titleColor = isDisabled ? subTextColor.withOpacity(0.5) : textColor;
+    final subtitleColor = isDisabled ? subTextColor.withOpacity(0.3) : subTextColor;
+
     return InkWell(
-      onTap: (_isMfaLoading || isDisabled)
-          ? null
-          : () => _handleMfaToggle(value),
+      onTap: (_isMfaLoading || isDisabled) ? null : () => _handleMfaToggle(value),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? _primaryColor.withOpacity(0.05)
-              : Colors.transparent,
+          color: isSelected ? highlightColor.withOpacity(0.05) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected
-                ? _primaryColor
-                : isDisabled
-                ? Colors.grey[300]!
-                : Colors.grey[300]!,
-            width: isSelected ? 2 : 1,
+            color: borderColor,
+            width: isSelected ? 1.5 : 1,
           ),
         ),
-        child: Opacity(
-          // 👈 visually dim if disabled
-          opacity: isDisabled ? 0.5 : 1,
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: isSelected
-                    ? _primaryColor
-                    : isDisabled
-                    ? Colors.grey[400]
-                    : Colors.grey[600],
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? _primaryColor
-                            : isDisabled
-                            ? Colors.grey[400]
-                            : Colors.grey[800],
-                      ),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: titleColor,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: isDisabled ? Colors.grey[400] : Colors.grey[600],
-                      ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: subtitleColor,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Radio<String>(
-                value: value,
-                groupValue: _mfaType,
-                activeColor: _primaryColor,
-                onChanged: (_isMfaLoading || isDisabled)
-                    ? null
-                    : (String? newValue) {
-                        if (newValue != null) {
-                          _handleMfaToggle(newValue);
-                        }
-                      },
-              ),
-            ],
-          ),
+            ),
+            Radio<String>(
+              value: value,
+              groupValue: _mfaType,
+              activeColor: highlightColor,
+              onChanged: (_isMfaLoading || isDisabled)
+                  ? null
+                  : (String? newValue) {
+                      if (newValue != null) _handleMfaToggle(newValue);
+                    },
+            ),
+          ],
         ),
       ),
     );
