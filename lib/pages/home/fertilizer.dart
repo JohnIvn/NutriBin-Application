@@ -16,7 +16,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
   Color get _secondaryText => const Color(0xFF57636C);
 
-  // Sample data for charts
+  // Sample data
   final List<Map<String, dynamic>> _weeklyData = [
     {
       'day': 'Mon',
@@ -89,6 +89,21 @@ class _FertilizerPageState extends State<FertilizerPage> {
   }
 
   Widget _fertilizerStatusCard() {
+    // --- DYNAMIC COLORS ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardColor =
+        Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final accentColor = const Color(0xFF00796B);
+    final chipBgColor = isDarkMode
+        ? accentColor.withOpacity(0.1)
+        : const Color(0xFFE0F7FA);
+    final shadowColor = isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : const Color(0x33000000);
+
     final List<String> fruits = [
       'Tomato',
       'Cucumber',
@@ -101,12 +116,12 @@ class _FertilizerPageState extends State<FertilizerPage> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: const [
+          color: cardColor,
+          boxShadow: [
             BoxShadow(
               blurRadius: 2,
-              color: Color(0x33000000),
-              offset: Offset(0, 2),
+              color: shadowColor,
+              offset: const Offset(0, 2),
             ),
           ],
           borderRadius: BorderRadius.circular(8),
@@ -121,7 +136,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
                 child: Text(
                   'Fertilizer Status',
                   style: GoogleFonts.interTight(
-                    color: const Color(0xFF57636C),
+                    color: textColor,
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
                   ),
@@ -131,13 +146,13 @@ class _FertilizerPageState extends State<FertilizerPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Row(
-                  children: const [
-                    Icon(Icons.check_circle, color: Colors.green, size: 20),
-                    SizedBox(width: 8),
+                  children: [
+                    Icon(Icons.check_circle, color: accentColor, size: 20),
+                    const SizedBox(width: 8),
                     Text(
                       'Ready for Use',
                       style: TextStyle(
-                        color: Colors.green,
+                        color: accentColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -145,54 +160,54 @@ class _FertilizerPageState extends State<FertilizerPage> {
                 ),
               ),
 
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Text(
                   'This balanced NPK fertilizer (10:10:8) provides equal support '
                   'for leaf development, root strength, and fruit production.',
                   style: TextStyle(
-                    color: Color(0xFF57636C),
+                    color: subTextColor,
                     fontSize: 14,
                     height: 1.4,
                   ),
                 ),
               ),
 
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
                 child: Text(
                   'How to Use',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
-                    color: Color(0xFF2F3E46),
+                    color: textColor,
                   ),
                 ),
               ),
 
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Text(
                   '• Apply during early growth and flowering stages.\n'
                   '• Dilute according to recommended dosage.\n'
                   '• Water soil before application to prevent root burn.\n'
                   '• Reapply every 10–14 days for best results.',
                   style: TextStyle(
-                    color: Color(0xFF57636C),
+                    color: subTextColor,
                     fontSize: 14,
                     height: 1.5,
                   ),
                 ),
               ),
 
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
                 child: Text(
                   'Recommended Crops',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
-                    color: Color(0xFF2F3E46),
+                    color: textColor,
                   ),
                 ),
               ),
@@ -210,13 +225,13 @@ class _FertilizerPageState extends State<FertilizerPage> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE0F7FA),
+                            color: chipBgColor,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
                             fruit,
-                            style: const TextStyle(
-                              color: Color(0xFF00796B),
+                            style: TextStyle(
+                              color: accentColor,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -378,16 +393,36 @@ class _FertilizerPageState extends State<FertilizerPage> {
   }
 
   Widget _buildNPKMonitoring() {
+    // --- DYNAMIC COLORS ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardColor =
+        Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final shadowColor = isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.1);
+    final infoBgColor = isDarkMode
+        ? Colors.blue.shade900.withOpacity(0.2)
+        : Colors.blue.shade50;
+    final infoBorderColor = isDarkMode
+        ? Colors.blue.shade400.withOpacity(0.3)
+        : Colors.blue.shade200;
+    final infoTextColor = isDarkMode
+        ? Colors.blue.shade200
+        : Colors.blue.shade900;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: shadowColor,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -400,7 +435,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.science, color: _primaryColor, size: 28),
+                  Icon(Icons.science, color: textColor, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -409,17 +444,14 @@ class _FertilizerPageState extends State<FertilizerPage> {
                         Text(
                           'NPK Nutrient Levels',
                           style: TextStyle(
-                            color: _secondaryText,
+                            color: textColor,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
                           'Real-time nutrient monitoring',
-                          style: TextStyle(
-                            color: _secondaryText.withOpacity(0.7),
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: subTextColor, fontSize: 14),
                         ),
                       ],
                     ),
@@ -439,25 +471,18 @@ class _FertilizerPageState extends State<FertilizerPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: infoBgColor,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
+                  border: Border.all(color: infoBorderColor),
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.blue.shade700,
-                      size: 20,
-                    ),
+                    Icon(Icons.info_outline, color: infoTextColor, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Optimal NPK ratio: 3:1:2 - Current levels are balanced',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blue.shade900,
-                        ),
+                        style: TextStyle(fontSize: 12, color: infoTextColor),
                       ),
                     ),
                   ],
@@ -471,6 +496,11 @@ class _FertilizerPageState extends State<FertilizerPage> {
   }
 
   Widget _buildNPKGauge(String label, double value, Color color) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+
     return Column(
       children: [
         Stack(
@@ -481,7 +511,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
               height: 90,
               child: CircularProgressIndicator(
                 value: value / 100,
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: bgColor,
                 valueColor: AlwaysStoppedAnimation<Color>(color),
                 strokeWidth: 10,
               ),
@@ -498,7 +528,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
                 ),
                 Text(
                   'ppm',
-                  style: TextStyle(fontSize: 11, color: _secondaryText),
+                  style: TextStyle(fontSize: 11, color: subTextColor),
                 ),
               ],
             ),
@@ -510,7 +540,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: _secondaryText,
+            color: subTextColor,
           ),
         ),
       ],

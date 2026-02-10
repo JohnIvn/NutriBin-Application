@@ -13,7 +13,13 @@ class _NutriBinPageState extends State<NutriBinPage> {
   // Color scheme
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
-  Color get _secondaryText => const Color(0xFF57636C);
+  Color get _cardColor =>
+      Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor;
+  Color get _textColor => Theme.of(context).colorScheme.onSurface;
+  Color get _secondaryText =>
+      Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
+  Color get _iconColor => _isDarkMode ? Colors.white : _primaryColor;
 
   // Sample data for charts
   final List<Map<String, dynamic>> _weeklyData = [
@@ -91,16 +97,19 @@ class _NutriBinPageState extends State<NutriBinPage> {
   }
 
   Widget _buildStatusOverview() {
+    final shadowColor = _isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.1);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: shadowColor,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -117,7 +126,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                   Text(
                     'Production Status',
                     style: TextStyle(
-                      color: _secondaryText,
+                      color: _textColor,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
@@ -235,16 +244,19 @@ class _NutriBinPageState extends State<NutriBinPage> {
   }
 
   Widget _buildNutriBinCondition() {
+    final shadowColor = _isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.1);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: shadowColor,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -257,7 +269,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.wb_sunny, color: _primaryColor, size: 28),
+                  Icon(Icons.wb_sunny, color: _iconColor, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -266,7 +278,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                         Text(
                           'NutriBin Condition',
                           style: TextStyle(
-                            color: _secondaryText,
+                            color: _textColor,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -395,16 +407,19 @@ class _NutriBinPageState extends State<NutriBinPage> {
   }
 
   Widget _buildGasDetection() {
+    final shadowColor = _isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.1);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: shadowColor,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -420,7 +435,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.air, color: _primaryColor, size: 28),
+                      Icon(Icons.air, color: _iconColor, size: 28),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,7 +443,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                           Text(
                             'Gas Detection',
                             style: TextStyle(
-                              color: _secondaryText,
+                              color: _textColor,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
@@ -562,16 +577,19 @@ class _NutriBinPageState extends State<NutriBinPage> {
   }
 
   Widget _buildCapacityTracking() {
+    final shadowColor = _isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.1);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: shadowColor,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -584,7 +602,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.storage, color: _primaryColor, size: 28),
+                  Icon(Icons.storage, color: _iconColor, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -593,7 +611,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                         Text(
                           'Capacity & Storage',
                           style: TextStyle(
-                            color: _secondaryText,
+                            color: _textColor,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -706,16 +724,19 @@ class _NutriBinPageState extends State<NutriBinPage> {
   }
 
   Widget _buildAlertStatus() {
+    final shadowColor = _isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.1);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: shadowColor,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -728,7 +749,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.settings, color: _primaryColor, size: 28),
+                  Icon(Icons.settings, color: _iconColor, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -737,7 +758,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                         Text(
                           'NutriBin Machine Status',
                           style: TextStyle(
-                            color: _secondaryText,
+                            color: _textColor,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
