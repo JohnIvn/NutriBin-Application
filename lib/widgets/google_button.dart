@@ -8,13 +8,25 @@ class GoogleSignInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+
+    final dividerColor = isDark ? Colors.grey[700] : Colors.grey[300];
+    final textColor = isDark
+        ? const Color(0xFFB5C1B8)
+        : const Color(0xFF57636C);
+    final borderColor = isDark
+        ? const Color(0xFF2F3532)
+        : const Color(0xFFE0E3E7);
+    final labelColor = isDark ? Colors.white : const Color(0xFF101213);
+
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
           child: Row(
             children: [
-              Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+              Expanded(child: Divider(color: dividerColor, thickness: 1)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
@@ -22,11 +34,11 @@ class GoogleSignInButton extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF57636C),
+                    color: textColor,
                   ),
                 ),
               ),
-              Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+              Expanded(child: Divider(color: dividerColor, thickness: 1)),
             ],
           ),
         ),
@@ -37,13 +49,13 @@ class GoogleSignInButton extends StatelessWidget {
             onPressed: onPressed,
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(230, 52),
-              side: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
+              side: BorderSide(color: borderColor, width: 2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(40),
               ),
             ),
             icon: Image.asset(
-              'assets/images/google_logo.png',
+              'assets/images/google.png',
               height: 24,
               width: 24,
             ),
@@ -52,7 +64,7 @@ class GoogleSignInButton extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF101213),
+                color: labelColor,
               ),
             ),
           ),

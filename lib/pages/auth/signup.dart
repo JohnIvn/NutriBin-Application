@@ -68,6 +68,24 @@ class _SignUpPageState extends State<SignUpPage>
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
 
+  // Theme-aware color getters for dark mode support
+  Color get _surfaceColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF1C2420)
+      : Colors.white;
+
+  Color get _primaryTextColor => Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : const Color(0xFF101213);
+
+  Color get _secondaryTextColor =>
+      Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFB5C1B8)
+      : const Color(0xFF57636C);
+
+  Color get _inputBorderColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF2F3532)
+      : const Color(0xFFE0E3E7);
+
   @override
   void initState() {
     super.initState();
@@ -415,7 +433,7 @@ class _SignUpPageState extends State<SignUpPage>
       },
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: Colors.white,
+        backgroundColor: _secondaryBackground,
         resizeToAvoidBottomInset: true,
         body: SafeArea(
           child: Container(
@@ -428,7 +446,7 @@ class _SignUpPageState extends State<SignUpPage>
                   child: Container(
                     width: 100,
                     height: double.infinity,
-                    decoration: const BoxDecoration(color: Colors.white),
+                    decoration: BoxDecoration(color: _surfaceColor),
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
@@ -436,9 +454,7 @@ class _SignUpPageState extends State<SignUpPage>
                           child: Container(
                             width: double.infinity,
                             constraints: const BoxConstraints(maxWidth: 602),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                            ),
+                            decoration: BoxDecoration(color: _surfaceColor),
                             child: Column(
                               children: [
                                 Container(
@@ -447,21 +463,19 @@ class _SignUpPageState extends State<SignUpPage>
                                   ),
                                   child: TabBar(
                                     isScrollable: false,
-                                    labelColor: const Color(0xFF101213),
-                                    unselectedLabelColor: const Color(
-                                      0xFF57636C,
-                                    ),
+                                    labelColor: _primaryTextColor,
+                                    unselectedLabelColor: _secondaryTextColor,
                                     labelPadding: const EdgeInsets.symmetric(
                                       horizontal: 16,
                                       vertical: 12,
                                     ),
-                                    labelStyle: const TextStyle(
-                                      color: Color(0xFF101213),
+                                    labelStyle: TextStyle(
+                                      color: _primaryTextColor,
                                       fontSize: 28,
                                       fontWeight: FontWeight.w600,
                                     ),
-                                    unselectedLabelStyle: const TextStyle(
-                                      color: Color(0xFF101213),
+                                    unselectedLabelStyle: TextStyle(
+                                      color: _primaryTextColor,
                                       fontSize: 28,
                                       fontWeight: FontWeight.normal,
                                     ),
@@ -497,9 +511,9 @@ class _SignUpPageState extends State<SignUpPage>
                     child: Container(
                       width: 100,
                       height: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        image: DecorationImage(
+                      decoration: BoxDecoration(
+                        color: _surfaceColor,
+                        image: const DecorationImage(
                           fit: BoxFit.cover,
                           image: CachedNetworkImageProvider(
                             'https://images.unsplash.com/photo-1508385082359-f38ae991e8f2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1374&q=80',
@@ -528,8 +542,8 @@ class _SignUpPageState extends State<SignUpPage>
             padding: const EdgeInsets.only(bottom: 24, top: 12),
             child: Text(
               'Let\'s get started by filling out the form below.',
-              style: const TextStyle(
-                color: Color(0xFF57636C),
+              style: TextStyle(
+                color: _secondaryTextColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -562,7 +576,7 @@ class _SignUpPageState extends State<SignUpPage>
                 _signInPasswordVisible
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
-                color: const Color(0xFF57636C),
+                color: _secondaryTextColor,
                 size: 24,
               ),
             ),
@@ -579,10 +593,10 @@ class _SignUpPageState extends State<SignUpPage>
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 backgroundColor: Colors.transparent,
               ),
-              child: const Text(
+              child: Text(
                 'Forgot Password?',
                 style: TextStyle(
-                  color: Color(0xFF101213),
+                  color: _primaryTextColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -633,8 +647,8 @@ class _SignUpPageState extends State<SignUpPage>
             padding: const EdgeInsets.only(bottom: 24, top: 12),
             child: Text(
               'Let\'s get started by filling out the form below.',
-              style: const TextStyle(
-                color: Color(0xFF57636C),
+              style: TextStyle(
+                color: _secondaryTextColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -704,7 +718,7 @@ class _SignUpPageState extends State<SignUpPage>
                 _signUpPasswordVisible
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
-                color: const Color(0xFF57636C),
+                color: _secondaryTextColor,
                 size: 24,
               ),
             ),
@@ -727,7 +741,7 @@ class _SignUpPageState extends State<SignUpPage>
                 _signUpPasswordVisible
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
-                color: const Color(0xFF57636C),
+                color: _secondaryTextColor,
                 size: 24,
               ),
             ),
@@ -757,15 +771,15 @@ class _SignUpPageState extends State<SignUpPage>
                       }
                     },
                     activeColor: _primaryColor,
-                    checkColor: Colors.white,
+                    checkColor: _primaryTextColor,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: RichText(
                     text: TextSpan(
-                      style: const TextStyle(
-                        color: Color(0xFF57636C),
+                      style: TextStyle(
+                        color: _secondaryTextColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -836,12 +850,12 @@ class _SignUpPageState extends State<SignUpPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Password must contain:',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF57636C),
+              color: _secondaryTextColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -873,7 +887,7 @@ class _SignUpPageState extends State<SignUpPage>
             text,
             style: TextStyle(
               fontSize: 12,
-              color: isMet ? Colors.green : const Color(0xFF57636C),
+              color: isMet ? Colors.green : _secondaryTextColor,
               fontWeight: isMet ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
@@ -907,21 +921,21 @@ class _SignUpPageState extends State<SignUpPage>
         inputFormatters: inputFormatters,
         onChanged: onChanged,
         cursorColor: const Color(0xFF4B39EF),
-        style: const TextStyle(
-          color: Color(0xFF101213),
+        style: TextStyle(
+          color: _primaryTextColor,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
-            color: Color(0xFF57636C),
+          labelStyle: TextStyle(
+            color: _secondaryTextColor,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
           errorText: errorText,
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
+            borderSide: BorderSide(color: _inputBorderColor, width: 2),
             borderRadius: BorderRadius.circular(40),
           ),
           focusedBorder: OutlineInputBorder(
@@ -937,7 +951,7 @@ class _SignUpPageState extends State<SignUpPage>
             borderRadius: BorderRadius.circular(40),
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: _surfaceColor,
           contentPadding: const EdgeInsets.all(24),
           suffixIcon: suffixIcon,
         ),
@@ -959,20 +973,20 @@ class _SignUpPageState extends State<SignUpPage>
         readOnly: true,
         onTap: onTap,
         cursorColor: const Color(0xFF4B39EF),
-        style: const TextStyle(
-          color: Color(0xFF101213),
+        style: TextStyle(
+          color: _primaryTextColor,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
-            color: Color(0xFF57636C),
+          labelStyle: TextStyle(
+            color: _secondaryTextColor,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Color(0xFFE0E3E7), width: 2),
+            borderSide: BorderSide(color: _inputBorderColor, width: 2),
             borderRadius: BorderRadius.circular(40),
           ),
           focusedBorder: OutlineInputBorder(
@@ -980,11 +994,11 @@ class _SignUpPageState extends State<SignUpPage>
             borderRadius: BorderRadius.circular(40),
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: _surfaceColor,
           contentPadding: const EdgeInsets.all(24),
-          suffixIcon: const Icon(
+          suffixIcon: Icon(
             Icons.location_on_outlined,
-            color: Color(0xFF57636C),
+            color: _secondaryTextColor,
           ),
         ),
       ),
