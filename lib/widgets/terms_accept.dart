@@ -24,7 +24,19 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
   // Color scheme
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
-  Color get _secondaryText => const Color(0xFF57636C);
+  Color get _surfaceColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF1C2420)
+      : Colors.white;
+  Color get _secondaryText => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFB5C1B8)
+      : const Color(0xFF57636C);
+  Color get _primaryText => Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : const Color(0xFF101213);
+  Color get _borderColor => Theme.of(context).brightness == Brightness.dark
+      ? Colors.white.withOpacity(0.05)
+      : Colors.grey[300]!;
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
   @override
   void initState() {
@@ -97,7 +109,7 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
         key: scaffoldKey,
         backgroundColor: _secondaryBackground,
         appBar: AppBar(
-          backgroundColor: _primaryColor,
+          backgroundColor: _isDarkMode ? _secondaryBackground : _primaryColor,
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: const Icon(Icons.close, size: 24),
@@ -143,12 +155,9 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                           width: double.infinity,
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: _surfaceColor,
                             border: Border(
-                              bottom: BorderSide(
-                                color: Colors.grey[300]!,
-                                width: 1,
-                              ),
+                              bottom: BorderSide(color: _borderColor, width: 1),
                             ),
                           ),
                           child: Column(
@@ -177,14 +186,14 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                                           style: GoogleFonts.interTight(
                                             fontSize: 28,
                                             fontWeight: FontWeight.w600,
-                                            color: _secondaryText,
+                                            color: _primaryText,
                                           ),
                                         ),
                                         Text(
                                           'Excess Food Composting and Fertilizer Monitoring System',
                                           style: GoogleFonts.inter(
                                             fontSize: 12,
-                                            color: _secondaryText,
+                                            color: _primaryText,
                                           ),
                                         ),
                                       ],
@@ -207,7 +216,9 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: _primaryColor,
+                                    color: _isDarkMode
+                                        ? const Color(0xFF8FAE8F)
+                                        : _primaryColor,
                                   ),
                                 ),
                               ),
@@ -288,7 +299,7 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
               // Bottom action buttons
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _surfaceColor,
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
@@ -334,7 +345,9 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size(0, 50),
                                 side: BorderSide(
-                                  color: _secondaryText,
+                                  color: _isDarkMode
+                                      ? _primaryText
+                                      : _secondaryText,
                                   width: 2,
                                 ),
                                 shape: RoundedRectangleBorder(
@@ -346,7 +359,9 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: _secondaryText,
+                                  color: _isDarkMode
+                                      ? _primaryText
+                                      : _secondaryText,
                                 ),
                               ),
                             ),
@@ -361,7 +376,9 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                               style: ElevatedButton.styleFrom(
                                 minimumSize: const Size(0, 50),
                                 backgroundColor: _primaryColor,
-                                disabledBackgroundColor: Colors.grey[300],
+                                disabledBackgroundColor: _isDarkMode
+                                    ? Colors.grey[700]
+                                    : Colors.grey[300],
                                 elevation: _hasScrolledToBottom ? 3 : 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(25),
@@ -374,7 +391,9 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                                   fontWeight: FontWeight.w600,
                                   color: _hasScrolledToBottom
                                       ? Colors.white
-                                      : Colors.grey[500],
+                                      : (_isDarkMode
+                                            ? Colors.grey[600]
+                                            : Colors.grey[500]),
                                 ),
                               ),
                             ),
@@ -402,16 +421,18 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _surfaceColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: _borderColor, width: 1),
+          boxShadow: _isDarkMode
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -446,7 +467,7 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: _secondaryText,
+                        color: _primaryText,
                       ),
                     ),
                   ),
@@ -458,7 +479,7 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   height: 1.6,
-                  color: _secondaryText,
+                  color: _primaryText,
                 ),
               ),
             ],

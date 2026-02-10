@@ -86,6 +86,10 @@ class _SignUpPageState extends State<SignUpPage>
       ? const Color(0xFF2F3532)
       : const Color(0xFFE0E3E7);
 
+  Color get _linkColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF8FAE8F)
+      : _primaryColor;
+
   @override
   void initState() {
     super.initState();
@@ -788,7 +792,7 @@ class _SignUpPageState extends State<SignUpPage>
                         TextSpan(
                           text: 'Terms of Service',
                           style: TextStyle(
-                            color: _primaryColor,
+                            color: _linkColor,
                             decoration: TextDecoration.underline,
                           ),
                           recognizer: TapGestureRecognizer()
