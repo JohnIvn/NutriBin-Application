@@ -31,7 +31,6 @@ class _CustomNavBarState extends State<CustomNavBar> {
     final hasSeenTutorial = prefs.getBool('navbar_tutorial_seen') ?? false;
 
     if (!hasSeenTutorial && mounted) {
-      // Wait for the widget to be built
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showTutorial();
       });
@@ -60,8 +59,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('navbar_tutorial_seen', true);
   }
-
-  // Method to manually show tutorial (call this from your settings or guide page)
+  
   void showTutorialManually() {
     _showTutorial();
   }

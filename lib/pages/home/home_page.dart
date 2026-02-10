@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   bool _isLoading = true;
   bool _isAuthenticated = false;
-  Machine? _selectedMachine;
+  String? _machineName;
 
   final List<Widget> _pages = const [
     DashboardPage(),
@@ -33,6 +33,14 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _checkSession();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      if (arguments is String) {
+        setState(() {
+          _machineName = arguments;
+        });
+      }
+    });
   }
 
   Future<void> _checkSession() async {
@@ -121,7 +129,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Scaffold(
-      appBar: CustomAppBar(),
+      appBar: CustomAppBar(machineNameOverride: _machineName),
       body: _pages[_currentIndex],
       bottomNavigationBar: CustomNavBar(
         currentIndex: _currentIndex,

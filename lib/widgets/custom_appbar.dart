@@ -4,9 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
+  final String? machineNameOverride;
 
-  // Added showBackButton parameter for flexibility (defaults to true)
-  const CustomAppBar({super.key, this.showBackButton = true});
+  const CustomAppBar({
+    super.key,
+    this.showBackButton = true,
+    this.machineNameOverride,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,17 +31,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       toolbarHeight: kToolbarHeight,
-      
+
       // Status Bar
       systemOverlayStyle: SystemUiOverlayStyle.light,
 
       // Bottom Border
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.0),
-        child: Container(
-          color: Colors.transparent,
-          height: 1.0,
-        ),
+        child: Container(color: Colors.transparent, height: 1.0),
       ),
 
       title: Row(
@@ -59,29 +60,44 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           else
             const SizedBox(width: 8),
 
-          const SizedBox(width: 12), 
+          const SizedBox(width: 12),
 
-          // Logo
-          Image.asset(
-            'assets/images/Logo (Img).png', 
-            height: 40,
-          ),
+          // Display machine name
+          if (machineNameOverride != null && machineNameOverride!.isNotEmpty)
+            Text(
+              machineNameOverride!,
+              style: GoogleFonts.interTight(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: contentColor,
+              ),
+            )
+          else
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Logo
+                  Image.asset('assets/images/Logo (Img).png', height: 40),
 
-          const SizedBox(width: 12), 
-          
-          // App name
-          Text(
-            'NutriBin',
-            style: GoogleFonts.interTight(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: contentColor,
+                  const SizedBox(width: 12),
+
+                  // App name
+                  Text(
+                    'NutriBin',
+                    style: GoogleFonts.interTight(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: contentColor,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
       centerTitle: false,
-      titleSpacing: 16, // Standard spacing
+      titleSpacing: 16,
     );
   }
 

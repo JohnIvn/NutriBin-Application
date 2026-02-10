@@ -28,7 +28,7 @@ class MachineSelectionPage extends StatelessWidget {
     const appBarTitleColor = Colors.white;
     const appBarSubtitleColor = Colors.white70;
 
-    // Template/fake machines
+    // machines
     final List<Map<String, String>> machines = [
       {'id': 'NB-001', 'name': 'Kitchen NutriBin'},
       {'id': 'NB-002', 'name': 'Cafeteria Bin'},
@@ -48,10 +48,7 @@ class MachineSelectionPage extends StatelessWidget {
 
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Container(
-            color: Colors.transparent,
-            height: 1.0,
-          ),
+          child: Container(color: Colors.transparent, height: 1.0),
         ),
 
         title: Padding(
@@ -206,7 +203,7 @@ class MachineSelectionPage extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                Navigator.pushNamed(context, '/home');
+                Navigator.pushNamed(context, '/home', arguments: machineName);
               },
               borderRadius: BorderRadius.circular(12),
               child: Padding(
@@ -226,8 +223,7 @@ class MachineSelectionPage extends StatelessWidget {
                       child: Icon(
                         Icons.restore_from_trash,
                         size: 26,
-                        color:
-                            highlightColor,
+                        color: highlightColor,
                       ),
                     ),
                     const SizedBox(width: 16),
