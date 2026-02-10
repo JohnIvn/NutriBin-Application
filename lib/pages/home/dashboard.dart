@@ -17,7 +17,6 @@ class _DashboardPageState extends State<DashboardPage>
   int? _expandedMachineReportIndex;
 
   Color get _primaryColor => Theme.of(context).colorScheme.primary;
-  Color get _tertiaryColor => Theme.of(context).colorScheme.tertiary;
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
 
   final List<Map<String, dynamic>> _fertilizerData = [
@@ -77,17 +76,35 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _fertilizerStatusCard() {
+    // --- DYNAMIC COLORS ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardColor =
+        Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final dividerColor = isDarkMode
+        ? Colors.white.withOpacity(0.1)
+        : const Color(0xFFE0E3E7);
+    final accentColor = const Color(0xFF00796B);
+    final expandedBgColor = isDarkMode
+        ? accentColor.withOpacity(0.1)
+        : const Color(0xFFF1F8F6);
+    final shadowColor = isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : const Color(0x33000000);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: const [
+          color: cardColor,
+          boxShadow: [
             BoxShadow(
               blurRadius: 2,
-              color: Color(0x33000000),
-              offset: Offset(0, 2),
+              color: shadowColor,
+              offset: const Offset(0, 2),
             ),
           ],
           borderRadius: BorderRadius.circular(8),
@@ -107,7 +124,7 @@ class _DashboardPageState extends State<DashboardPage>
                     Text(
                       'Fertilizer Status',
                       style: GoogleFonts.interTight(
-                        color: const Color(0xFF57636C),
+                        color: textColor,
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
                       ),
@@ -118,13 +135,13 @@ class _DashboardPageState extends State<DashboardPage>
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Row(
-                  children: const [
-                    Icon(Icons.check_circle, color: Colors.green, size: 20),
-                    SizedBox(width: 8),
+                  children: [
+                    Icon(Icons.check_circle, color: accentColor, size: 20),
+                    const SizedBox(width: 8),
                     Text(
                       'Ready',
                       style: TextStyle(
-                        color: Colors.green,
+                        color: accentColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -135,11 +152,8 @@ class _DashboardPageState extends State<DashboardPage>
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _fertilizerData.length,
-                separatorBuilder: (context, index) => const Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Color(0xFFE0E3E7),
-                ),
+                separatorBuilder: (context, index) =>
+                    Divider(height: 1, thickness: 1, color: dividerColor),
                 itemBuilder: (context, index) {
                   final fertilizer = _fertilizerData[index];
                   final isExpanded = _expandedFertilizerIndex == index;
@@ -147,9 +161,7 @@ class _DashboardPageState extends State<DashboardPage>
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
-                      color: isExpanded
-                          ? const Color(0xFFF1F8F6)
-                          : Colors.white,
+                      color: isExpanded ? expandedBgColor : cardColor,
                     ),
                     child: InkWell(
                       onTap: () {
@@ -169,7 +181,7 @@ class _DashboardPageState extends State<DashboardPage>
                                   child: Text(
                                     fertilizer['title']!,
                                     style: GoogleFonts.inter(
-                                      color: const Color(0xFF57636C),
+                                      color: textColor,
                                       fontSize: 14,
                                       fontWeight: isExpanded
                                           ? FontWeight.w600
@@ -181,7 +193,7 @@ class _DashboardPageState extends State<DashboardPage>
                                   isExpanded
                                       ? Icons.keyboard_arrow_up
                                       : Icons.keyboard_arrow_down,
-                                  color: const Color(0xFF57636C),
+                                  color: subTextColor,
                                   size: 20,
                                 ),
                               ],
@@ -189,8 +201,8 @@ class _DashboardPageState extends State<DashboardPage>
                             const SizedBox(height: 8),
                             Text(
                               fertilizer['description']!,
-                              style: const TextStyle(
-                                color: Color(0xFF57636C),
+                              style: TextStyle(
+                                color: subTextColor,
                                 fontSize: 14,
                               ),
                             ),
@@ -206,13 +218,13 @@ class _DashboardPageState extends State<DashboardPage>
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFE0F7FA),
+                                        color: accentColor.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
                                       child: Text(
                                         fruit,
-                                        style: const TextStyle(
-                                          color: Color(0xFF00796B),
+                                        style: TextStyle(
+                                          color: accentColor,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -228,19 +240,17 @@ class _DashboardPageState extends State<DashboardPage>
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: cardColor,
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
-                                      color: const Color(
-                                        0xFF00796B,
-                                      ).withOpacity(0.3),
+                                      color: accentColor.withOpacity(0.3),
                                       width: 1,
                                     ),
                                   ),
                                   child: Text(
                                     fertilizer['details']!,
                                     style: GoogleFonts.inter(
-                                      color: const Color(0xFF57636C),
+                                      color: textColor,
                                       fontSize: 13,
                                       height: 1.5,
                                     ),
@@ -267,18 +277,35 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildMachineReportsCard() {
+    // --- DYNAMIC COLORS ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardColor =
+        Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final dividerColor = isDarkMode
+        ? Colors.white.withOpacity(0.1)
+        : const Color(0xFFE0E3E7);
+    final expandedBgColor = isDarkMode
+        ? _primaryColor.withOpacity(0.1)
+        : const Color(0xFFF5F5F5);
+    final shadowColor = isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : const Color(0x33000000);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child:
           Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: const [
+                  color: cardColor,
+                  boxShadow: [
                     BoxShadow(
                       blurRadius: 3,
-                      color: Color(0x33000000),
-                      offset: Offset(0, 1),
+                      color: shadowColor,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                   borderRadius: BorderRadius.circular(8),
@@ -293,7 +320,7 @@ class _DashboardPageState extends State<DashboardPage>
                           Text(
                             'Machine Reports',
                             style: GoogleFonts.interTight(
-                              color: _tertiaryColor,
+                              color: textColor,
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
                             ),
@@ -301,7 +328,7 @@ class _DashboardPageState extends State<DashboardPage>
                           Text(
                             'Recent reports from the sensors',
                             style: GoogleFonts.inter(
-                              color: const Color(0xFF57636C),
+                              color: subTextColor,
                               fontSize: 14,
                             ),
                           ),
@@ -314,10 +341,10 @@ class _DashboardPageState extends State<DashboardPage>
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _machineReports.length,
-                        separatorBuilder: (context, index) => const Divider(
+                        separatorBuilder: (context, index) => Divider(
                           height: 1,
                           thickness: 1,
-                          color: Color(0xFFE0E3E7),
+                          color: dividerColor,
                         ),
                         itemBuilder: (context, index) {
                           final report = _machineReports[index];
@@ -327,9 +354,7 @@ class _DashboardPageState extends State<DashboardPage>
                           return AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
-                              color: isExpanded
-                                  ? const Color(0xFFF5F5F5)
-                                  : Colors.white,
+                              color: isExpanded ? expandedBgColor : cardColor,
                             ),
                             child: InkWell(
                               onTap: () {
@@ -381,9 +406,7 @@ class _DashboardPageState extends State<DashboardPage>
                                                 Text(
                                                   report['title']!,
                                                   style: GoogleFonts.inter(
-                                                    color: const Color(
-                                                      0xFF57636C,
-                                                    ),
+                                                    color: textColor,
                                                     fontSize: 12,
                                                     fontWeight: isExpanded
                                                         ? FontWeight.w600
@@ -395,9 +418,7 @@ class _DashboardPageState extends State<DashboardPage>
                                                       ? Icons.keyboard_arrow_up
                                                       : Icons
                                                             .keyboard_arrow_down,
-                                                  color: const Color(
-                                                    0xFF57636C,
-                                                  ),
+                                                  color: subTextColor,
                                                   size: 20,
                                                 ),
                                               ],
@@ -409,9 +430,7 @@ class _DashboardPageState extends State<DashboardPage>
                                               child: Text(
                                                 report['description']!,
                                                 style: GoogleFonts.inter(
-                                                  color: const Color(
-                                                    0xFF57636C,
-                                                  ),
+                                                  color: subTextColor,
                                                   fontSize: 14,
                                                 ),
                                               ),
@@ -425,9 +444,7 @@ class _DashboardPageState extends State<DashboardPage>
                                                   Text(
                                                     report['timeLabel']!,
                                                     style: GoogleFonts.inter(
-                                                      color: const Color(
-                                                        0xFF57636C,
-                                                      ),
+                                                      color: subTextColor,
                                                       fontSize: 14,
                                                     ),
                                                   ),
@@ -435,9 +452,7 @@ class _DashboardPageState extends State<DashboardPage>
                                                   Text(
                                                     report['time']!,
                                                     style: GoogleFonts.inter(
-                                                      color: const Color(
-                                                        0xFF57636C,
-                                                      ),
+                                                      color: textColor,
                                                       fontSize: 14,
                                                       fontWeight:
                                                           FontWeight.w500,
@@ -458,7 +473,7 @@ class _DashboardPageState extends State<DashboardPage>
                                                     12,
                                                   ),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.white,
+                                                    color: cardColor,
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           6,
@@ -472,9 +487,7 @@ class _DashboardPageState extends State<DashboardPage>
                                                   child: Text(
                                                     report['details']!,
                                                     style: GoogleFonts.inter(
-                                                      color: const Color(
-                                                        0xFF57636C,
-                                                      ),
+                                                      color: textColor,
                                                       fontSize: 13,
                                                       height: 1.5,
                                                     ),

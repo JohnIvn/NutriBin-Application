@@ -58,17 +58,39 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
 
   @override
   Widget build(BuildContext context) {
+    // --- DYNAMIC COLORS ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardColor =
+        Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final dividerColor = isDarkMode
+        ? Colors.white.withOpacity(0.1)
+        : const Color(0xFFE0E3E7);
+    final errorColor = const Color(0xFFF44336);
+    final warningColor = const Color(0xFFFF9800);
+    final expandedBgColor = isDarkMode
+        ? errorColor.withOpacity(0.1)
+        : const Color(0xFFFFEBEE);
+    final tipBgColor = isDarkMode
+        ? warningColor.withOpacity(0.1)
+        : const Color(0xFFFFF3E0);
+    final shadowColor = isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : const Color(0x33000000);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: const [
+          color: cardColor,
+          boxShadow: [
             BoxShadow(
               blurRadius: 3,
-              color: Color(0x33000000),
-              offset: Offset(0, 1),
+              color: shadowColor,
+              offset: const Offset(0, 1),
             ),
           ],
           borderRadius: BorderRadius.circular(8),
@@ -85,16 +107,16 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                     children: [
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.warning_amber_rounded,
-                            color: Color(0xFFF44336),
+                            color: errorColor,
                             size: 24,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Machine Error Report',
                             style: GoogleFonts.interTight(
-                              color: const Color(0xFF57636C),
+                              color: textColor,
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
                             ),
@@ -105,7 +127,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                       Text(
                         'Critical issues requiring attention',
                         style: GoogleFonts.inter(
-                          color: const Color(0xFF57636C),
+                          color: subTextColor,
                           fontSize: 14,
                         ),
                       ),
@@ -120,11 +142,8 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _errors.length,
-                separatorBuilder: (context, index) => const Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Color(0xFFE0E3E7),
-                ),
+                separatorBuilder: (context, index) =>
+                    Divider(height: 1, thickness: 1, color: dividerColor),
                 itemBuilder: (context, index) {
                   final error = _errors[index];
                   final isExpanded = _expandedIndex == index;
@@ -132,9 +151,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
-                      color: isExpanded
-                          ? const Color(0xFFFFEBEE)
-                          : Colors.white,
+                      color: isExpanded ? expandedBgColor : cardColor,
                     ),
                     child: InkWell(
                       onTap: () {
@@ -155,7 +172,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                 width: 4,
                                 height: isExpanded ? 230 : 76,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF44336),
+                                  color: errorColor,
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
@@ -179,7 +196,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                           child: Text(
                                             error['title']!,
                                             style: GoogleFonts.inter(
-                                              color: const Color(0xFF57636C),
+                                              color: textColor,
                                               fontSize: 14,
                                               fontWeight: isExpanded
                                                   ? FontWeight.w600
@@ -191,7 +208,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                           isExpanded
                                               ? Icons.keyboard_arrow_up
                                               : Icons.keyboard_arrow_down,
-                                          color: const Color(0xFF57636C),
+                                          color: subTextColor,
                                           size: 20,
                                         ),
                                       ],
@@ -200,16 +217,16 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                       padding: const EdgeInsets.only(top: 8),
                                       child: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.access_time,
                                             size: 14,
-                                            color: Color(0xFF57636C),
+                                            color: subTextColor,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
                                             error['timestamp']!,
                                             style: GoogleFonts.inter(
-                                              color: const Color(0xFF57636C),
+                                              color: subTextColor,
                                               fontSize: 12,
                                             ),
                                           ),
@@ -227,22 +244,20 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                             Container(
                                               padding: const EdgeInsets.all(12),
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
+                                                color: cardColor,
                                                 borderRadius:
                                                     BorderRadius.circular(6),
                                                 border: Border.all(
-                                                  color: const Color(
-                                                    0xFFF44336,
-                                                  ).withOpacity(0.3),
+                                                  color: errorColor.withOpacity(
+                                                    0.3,
+                                                  ),
                                                   width: 1,
                                                 ),
                                               ),
                                               child: Text(
                                                 error['details']!,
                                                 style: GoogleFonts.inter(
-                                                  color: const Color(
-                                                    0xFF57636C,
-                                                  ),
+                                                  color: textColor,
                                                   fontSize: 13,
                                                   height: 1.5,
                                                 ),
@@ -253,13 +268,12 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                             Container(
                                               padding: const EdgeInsets.all(12),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFFFFF3E0),
+                                                color: tipBgColor,
                                                 borderRadius:
                                                     BorderRadius.circular(6),
                                                 border: Border.all(
-                                                  color: const Color(
-                                                    0xFFFF9800,
-                                                  ).withOpacity(0.3),
+                                                  color: warningColor
+                                                      .withOpacity(0.3),
                                                   width: 1,
                                                 ),
                                               ),
@@ -267,9 +281,9 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  const Icon(
+                                                  Icon(
                                                     Icons.lightbulb_outline,
-                                                    color: Color(0xFFFF9800),
+                                                    color: warningColor,
                                                     size: 18,
                                                   ),
                                                   const SizedBox(width: 8),
@@ -284,9 +298,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                           style:
                                                               GoogleFonts.inter(
                                                                 color:
-                                                                    const Color(
-                                                                      0xFFFF9800,
-                                                                    ),
+                                                                    warningColor,
                                                                 fontSize: 12,
                                                                 fontWeight:
                                                                     FontWeight
@@ -301,9 +313,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                           style:
                                                               GoogleFonts.inter(
                                                                 color:
-                                                                    const Color(
-                                                                      0xFF57636C,
-                                                                    ),
+                                                                    textColor,
                                                                 fontSize: 12,
                                                                 height: 1.4,
                                                               ),
@@ -335,9 +345,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                   ),
                                                 ),
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(
-                                                    0xFFF44336,
-                                                  ),
+                                                  backgroundColor: errorColor,
                                                   foregroundColor: Colors.white,
                                                   padding:
                                                       const EdgeInsets.symmetric(
