@@ -14,12 +14,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _emailFocus = FocusNode();
   bool _isLoading = false;
   String? _type;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args =
-          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       setState(() {
         _type = args?['type'] ?? '';
       });
@@ -37,49 +37,39 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email address')),
-      );
+      _showError('Please enter your email address');
       return;
     }
 
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid email address')),
-      );
+      _showError('Please enter a valid email address');
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      final verifyResult = await AuthUtility.sendEmailVerification(
-        email: _emailController.text.trim(),
-      );
+      final verifyResult = await AuthUtility.sendEmailVerification(email: email);
 
       if (!mounted) return;
 
       if (verifyResult["ok"] != true) {
-        _showError(
-          verifyResult['message'] ?? 'Failed to send verification code',
-        );
+        _showError(verifyResult['message'] ?? 'Failed to send verification code');
         return;
       }
 
       final otpResult = await Navigator.pushNamed(
         context,
         '/verify-contacts',
-        arguments: {'recipient': _emailController.text.trim(), 'type': 'email'},
+        arguments: {'recipient': email, 'type': 'email'},
       );
+
+      if (otpResult == null) return; // User went back
 
       final verificationResult = otpResult as Map<String, dynamic>;
 
       if (verificationResult["ok"] != true) {
-        _showError(
-          verificationResult["message"] ??
-              verificationResult["error"] ??
-              "OTP Verification Failed",
-        );
+        _showError(verificationResult["message"] ?? "OTP Verification Failed");
         return;
       }
 
@@ -95,13 +85,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       Navigator.pushNamed(
         context,
         '/reset-password',
-        arguments: {'email': _emailController.text.trim()},
+        arguments: {'email': email},
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+        _showError('Error: ${e.toString()}');
       }
     } finally {
       if (mounted) {
@@ -110,19 +98,37 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     }
   }
 
-  Color get _primaryColor => Theme.of(context).primaryColor;
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // --- DYNAMIC COLORS ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor = isDarkMode ? Colors.grey[400] : const Color(0xFF57636C);
+    
+    // --- HIGHLIGHT COLOR FIX ---
+    final highlightColor = isDarkMode ? const Color(0xFF8FAE8F) : primaryColor;
+
+    // Input Fields
+    final inputFillColor = isDarkMode ? Theme.of(context).cardTheme.color : Colors.white;
+    final inputBorderColor = isDarkMode ? Colors.white12 : const Color(0xFFE0E3E7);
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: backgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: _primaryColor),
+            icon: Icon(Icons.arrow_back_rounded, color: textColor),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -136,31 +142,29 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Icon
+                    // Icon Bubble
                     Container(
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: _primaryColor.withOpacity(0.1),
+                        color: highlightColor.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.lock_reset,
+                        Icons.lock_reset_rounded,
                         size: 50,
-                        color: _primaryColor,
+                        color: highlightColor,
                       ),
                     ),
                     const SizedBox(height: 32),
 
                     // Title
                     Text(
-                      _type == "change"
-                          ? "Change Password"
-                          : "Forgot Password?",
+                      _type == "change" ? "Change Password" : "Forgot Password?",
                       style: GoogleFonts.interTight(
                         fontSize: 28,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF101213),
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -171,7 +175,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: const Color(0xFF57636C),
+                        color: subTextColor,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -182,33 +187,33 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       focusNode: _emailFocus,
                       keyboardType: TextInputType.emailAddress,
                       autofillHints: const [AutofillHints.email],
-                      cursorColor: const Color(0xFF4B39EF),
+                      cursorColor: highlightColor,
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF101213),
+                        color: textColor,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Email Address',
                         labelStyle: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF57636C),
+                          color: subTextColor,
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.email_outlined,
-                          color: Color(0xFF57636C),
+                          color: subTextColor,
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE0E3E7),
+                          borderSide: BorderSide(
+                            color: inputBorderColor,
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(40),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                            color: _primaryColor,
+                            color: highlightColor,
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(40),
@@ -228,7 +233,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           borderRadius: BorderRadius.circular(40),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: inputFillColor,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 20,
@@ -237,13 +242,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     const SizedBox(height: 32),
 
+                    // Action Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleSendCode,
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 52),
-                          backgroundColor: _primaryColor,
+                          backgroundColor: primaryColor,
+                          disabledBackgroundColor: primaryColor.withOpacity(0.5),
                           elevation: 3,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(40),
@@ -255,9 +262,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
                             : Text(
@@ -272,6 +277,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     const SizedBox(height: 24),
 
+                    // Back to Login Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -279,7 +285,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           'Remember your password? ',
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            color: const Color(0xFF57636C),
+                            color: subTextColor,
                           ),
                         ),
                         TextButton(
@@ -294,7 +300,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: _primaryColor,
+                              color: highlightColor,
                             ),
                           ),
                         ),
@@ -307,12 +313,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 }
