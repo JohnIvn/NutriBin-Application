@@ -28,7 +28,8 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
 
   Future<void> _checkAndShowTutorial() async {
     final prefs = await SharedPreferences.getInstance();
-    final hasSeenTutorial = prefs.getBool('machines_navbar_tutorial_seen') ?? false;
+    final hasSeenTutorial =
+        prefs.getBool('machines_navbar_tutorial_seen') ?? false;
 
     if (!hasSeenTutorial && mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -97,9 +98,17 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
                       onPressed: () {
                         controller.next();
                       },
-                      icon: const Icon(Icons.arrow_forward, color: Colors.white),
-                      label: const Text('Next', style: TextStyle(color: Colors.white)),
-                      style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white)),
+                      icon: const Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Next',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -186,25 +195,22 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     // --- navbar colors---
-    final navBarBg = isDarkMode ? Theme.of(context).cardTheme.color : Theme.of(context).primaryColor;
-    
-    // Icons
-    final selectedItemColor = isDarkMode ? Theme.of(context).primaryColor : Colors.white;
+    final navBarBg = isDarkMode
+        ? Theme.of(context).cardTheme.color
+        : Theme.of(context).primaryColor;
+
+    // Icons - matching custom_appbar.dart contentColor
+    const selectedItemColor = Colors.white;
     final unselectedItemColor = isDarkMode ? Colors.grey : Colors.white60;
-    
+
     const borderColor = Colors.transparent;
 
     return Container(
       decoration: BoxDecoration(
-        color: navBarBg, 
-        border: const Border(
-          top: BorderSide(
-            color: borderColor, 
-            width: 1.0,
-          ),
-        ),
+        color: navBarBg,
+        border: const Border(top: BorderSide(color: borderColor, width: 1.0)),
       ),
       child: BottomNavigationBar(
         currentIndex: widget.currentIndex,
@@ -212,10 +218,10 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        
+
         selectedItemColor: selectedItemColor,
         unselectedItemColor: unselectedItemColor,
-        
+
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined, key: _navKeys[0]),
