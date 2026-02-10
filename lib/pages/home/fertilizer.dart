@@ -497,7 +497,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
 
   Widget _buildNPKGauge(String label, double value, Color color) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200;
+    final bgColor = isDarkMode ? Colors.white : Colors.grey.shade100;
     final subTextColor =
         Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
 
