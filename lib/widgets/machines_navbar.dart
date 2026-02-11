@@ -212,33 +212,40 @@ class _MachinesNavBarState extends State<MachinesNavBar> {
         color: navBarBg,
         border: const Border(top: BorderSide(color: borderColor, width: 1.0)),
       ),
-      child: BottomNavigationBar(
-        currentIndex: widget.currentIndex,
-        onTap: widget.onTap,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          splashFactory: NoSplash.splashFactory,
+          highlightColor: Colors.transparent,
+          splashColor: Colors.transparent,
+        ),
+        child: BottomNavigationBar(
+          currentIndex: widget.currentIndex,
+          onTap: widget.onTap,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
 
-        selectedItemColor: selectedItemColor,
-        unselectedItemColor: unselectedItemColor,
+          selectedItemColor: selectedItemColor,
+          unselectedItemColor: unselectedItemColor,
 
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, key: _navKeys[0]),
-            activeIcon: Icon(Icons.home, key: ValueKey('home_active')),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_outlined, key: _navKeys[1]),
-            activeIcon: Icon(Icons.menu_book),
-            label: 'Guide',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline, key: _navKeys[2]),
-            activeIcon: Icon(Icons.person),
-            label: 'Account',
-          ),
-        ],
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined, key: _navKeys[0]),
+              activeIcon: Icon(Icons.home, key: ValueKey('home_active')),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.menu_book_outlined, key: _navKeys[1]),
+              activeIcon: Icon(Icons.menu_book),
+              label: 'Guide',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline, key: _navKeys[2]),
+              activeIcon: Icon(Icons.person),
+              label: 'Account',
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/services/machine_service.dart';
 
 class RegisterMachinePage extends StatefulWidget {
   const RegisterMachinePage({super.key});
@@ -15,6 +16,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
   final _machineIdController = TextEditingController();
   final _wifiNameController = TextEditingController();
   final _wifiPasswordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -88,67 +90,64 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
               ),
               const SizedBox(height: 24),
 
-              // QR SECTION
-              _buildSectionCard(
-                context: context,
-                title: 'Scan QR Code',
-                subtitle:
-                    'Quickly register by scanning the QR code found on your NutriBin machine.',
-                icon: Icons.qr_code_scanner_rounded,
-                cardColor: cardColor,
-                textColor: textColor,
-                subTextColor: subTextColor,
-                primaryColor: primaryColor,
-                isDarkMode: isDarkMode,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // To Do: implement scanner
-                    },
-                    icon: Icon(Icons.camera_alt_outlined, color: Colors.white),
-                    label: Text(
-                      'Scan QR Code',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(color: subTextColor.withOpacity(0.3)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'OR',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: subTextColor.withOpacity(0.7),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(color: subTextColor.withOpacity(0.3)),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
+              // QR SECTION Indev (Unfinished)
+              // _buildSectionCard(
+              //   context: context,
+              //   title: 'Scan QR Code',
+              //   subtitle:
+              //       'Quickly register by scanning the QR code found on your NutriBin machine.',
+              //   icon: Icons.qr_code_scanner_rounded,
+              //   cardColor: cardColor,
+              //   textColor: textColor,
+              //   subTextColor: subTextColor,
+              //   primaryColor: primaryColor,
+              //   isDarkMode: isDarkMode,
+              //   child: SizedBox(
+              //     width: double.infinity,
+              //     child: ElevatedButton.icon(
+              //       onPressed: () {
+              //         // To Do: implement scanner
+              //       },
+              //       icon: Icon(Icons.camera_alt_outlined, color: Colors.white),
+              //       label: Text(
+              //         'Scan QR Code',
+              //         style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              //       ),
+              //       style: ElevatedButton.styleFrom(
+              //         backgroundColor: primaryColor,
+              //         foregroundColor: Colors.white,
+              //         padding: const EdgeInsets.symmetric(vertical: 14),
+              //         shape: RoundedRectangleBorder(
+              //           borderRadius: BorderRadius.circular(10),
+              //         ),
+              //         elevation: 0,
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(height: 20),
+              // Row(
+              //   children: [
+              //     Expanded(
+              //       child: Divider(color: subTextColor.withOpacity(0.3)),
+              //     ),
+              //     Padding(
+              //       padding: const EdgeInsets.symmetric(horizontal: 16),
+              //       child: Text(
+              //         'OR',
+              //         style: GoogleFonts.inter(
+              //           fontSize: 12,
+              //           fontWeight: FontWeight.w600,
+              //           color: subTextColor.withOpacity(0.7),
+              //         ),
+              //       ),
+              //     ),
+              //     Expanded(
+              //       child: Divider(color: subTextColor.withOpacity(0.3)),
+              //     ),
+              //   ],
+              // ),
+              // const SizedBox(height: 20),
 
               // MANUAL SECTION
               _buildSectionCard(
@@ -164,18 +163,6 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                 isDarkMode: isDarkMode,
                 child: Column(
                   children: [
-                    _buildTextField(
-                      controller: _machineNameController,
-                      label: 'Machine Name',
-                      hint: 'e.g. Kitchen Bin',
-                      icon: Icons.label_outline_rounded,
-                      isDarkMode: isDarkMode,
-                      primaryColor: primaryColor,
-                      cardColor: isDarkMode ? Colors.black12 : Colors.grey[50]!,
-                      textColor: textColor,
-                    ),
-                    const SizedBox(height: 16),
-
                     _buildTextField(
                       controller: _machineIdController,
                       label: 'Machine ID',
@@ -217,7 +204,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: _handleRegisterMachine,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
                           foregroundColor: Colors.white,
@@ -385,5 +372,44 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
         ),
       ],
     );
+  }
+
+  Future<void> _handleRegisterMachine() async {
+    final serialId = _machineIdController.text.trim();
+    // TODO Later
+    final wifiName = _wifiNameController.text.trim();
+    final wifiPassword = _wifiPasswordController.text.trim();
+
+    if (serialId.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Machine ID is required")));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final response = await MachineService.registerMachine(serialId: serialId);
+
+    setState(() => _isLoading = false);
+
+    if (response["ok"] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response["message"] ?? "Machine registered")),
+      );
+      await MachineService.fetchExistingMachines();
+      _machineIdController.clear();
+      _wifiNameController.clear();
+      _wifiPasswordController.clear();
+
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response["message"] ?? "Registration failed"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

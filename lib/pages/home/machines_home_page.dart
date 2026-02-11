@@ -338,13 +338,16 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const RegisterMachinePage(),
               ),
             );
+
+            setState(() {
+            });
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
