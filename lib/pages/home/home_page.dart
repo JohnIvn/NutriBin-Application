@@ -21,23 +21,27 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   bool _isAuthenticated = false;
   String? _machineName;
+  String? _machineId;
 
-  final List<Widget> _pages = const [
-    DashboardPage(),
-    FertilizerPage(),
-    NutriBinPage(),
-    NotificationPage(),
-    AccountPage(),
+  List<Widget> get _pages => [
+    DashboardPage(machineId: _machineId ?? ''),
+    FertilizerPage(machineId: _machineId ?? ''),
+    NutriBinPage(machineId: _machineId ?? ''),
+    const NotificationPage(),
+    const AccountPage(),
   ];
 
   void initState() {
     super.initState();
     _checkSession();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final arguments = ModalRoute.of(context)?.settings.arguments;
-      if (arguments is String) {
+      final arguments =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+      if (arguments != null) {
         setState(() {
-          _machineName = arguments;
+          _machineName = arguments["serialNumber"];
+          _machineId = arguments["machineId"].toString();
         });
       }
     });

@@ -367,12 +367,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
 
     // Contact validation
     if (contact.isNotEmpty) {
-      if (contact.startsWith('+')) {
-        if (contact.length != 13 || !RegExp(r'^\+\d+$').hasMatch(contact)) {
-          _showError('Contact must be +63 followed by 10 digits');
-          return false;
-        }
-      } else if (contact.startsWith('09')) {
+      if (contact.startsWith("09")) {
         if (contact.length != 11 || !RegExp(r'^\d+$').hasMatch(contact)) {
           _showError('Contact must be 09 followed by 9 digits');
           return false;

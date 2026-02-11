@@ -74,7 +74,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
             align: ContentAlign.top,
             builder: (context, controller) {
               return Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,30 +82,39 @@ class _CustomNavBarState extends State<CustomNavBar> {
                     const Text(
                       "Home",
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     const Text(
                       "Access your dashboard and main features here",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                      style: TextStyle(fontSize: 14, color: Colors.white),
                     ),
-                    const SizedBox(height: 15),
-                    OutlinedButton.icon(
+                    const SizedBox(height: 12),
+                    TextButton.icon(
                       onPressed: () {
                         controller.skip();
                         // TODO: Navigate to guide page
                         // Navigator.pushNamed(context, '/guide');
                       },
-                      icon: const Icon(Icons.menu_book, color: Colors.white),
+                      icon: const Icon(
+                        Icons.menu_book,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                       label: const Text(
                         'View Full Guide',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: Colors.white, fontSize: 13),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
                   ],
@@ -123,7 +132,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
             align: ContentAlign.top,
             builder: (context, controller) {
               return Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 child: const Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,15 +140,15 @@ class _CustomNavBarState extends State<CustomNavBar> {
                     Text(
                       "Fertilizers",
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 10),
+                    SizedBox(height: 8),
                     Text(
                       "Browse and manage your fertilizer inventory",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                      style: TextStyle(fontSize: 14, color: Colors.white),
                     ),
                   ],
                 ),
@@ -156,7 +165,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
             align: ContentAlign.top,
             builder: (context, controller) {
               return Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 child: const Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,15 +173,15 @@ class _CustomNavBarState extends State<CustomNavBar> {
                     Text(
                       "NutriBin",
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 10),
+                    SizedBox(height: 8),
                     Text(
                       "Track your composting and waste management",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                      style: TextStyle(fontSize: 14, color: Colors.white),
                     ),
                   ],
                 ),
@@ -189,7 +198,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
             align: ContentAlign.top,
             builder: (context, controller) {
               return Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 child: const Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,15 +206,15 @@ class _CustomNavBarState extends State<CustomNavBar> {
                     Text(
                       "Notifications",
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 10),
+                    SizedBox(height: 8),
                     Text(
                       "Stay updated with important alerts and reminders",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                      style: TextStyle(fontSize: 14, color: Colors.white),
                     ),
                   ],
                 ),

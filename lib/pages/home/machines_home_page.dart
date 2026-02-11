@@ -3,9 +3,58 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:nutribin_application/pages/home/register_machine_page.dart';
+import 'package:nutribin_application/services/machine_service.dart';
 
-class MachineSelectionPage extends StatelessWidget {
+class MachineSelectionPage extends StatefulWidget {
   const MachineSelectionPage({super.key});
+
+  @override
+  State<MachineSelectionPage> createState() => _MachineSelectionPageState();
+}
+
+class _MachineSelectionPageState extends State<MachineSelectionPage> {
+  List<Map<String, dynamic>> existingMachines = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchMachineIds();
+  }
+
+  void fetchMachineIds() async {
+    try {
+      final response = await MachineService.fetchExistingMachines();
+      print("RESPONSE: ${response.toString()}");
+
+      if (response['ok'] == true && response['data'] != null) {
+        print("EXISTING MACHIENS: ${response['data']}");
+        setState(() {
+          existingMachines = List<Map<String, dynamic>>.from(response['data']);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          existingMachines = [];
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      _showError(e.toString());
+      print("FETCH ERROR: $e");
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +77,6 @@ class MachineSelectionPage extends StatelessWidget {
     const appBarTitleColor = Colors.white;
     const appBarSubtitleColor = Colors.white70;
 
-    // machines
-    final List<Map<String, String>> machines = [
-      {'id': 'NB-001', 'name': 'Kitchen NutriBin'},
-      {'id': 'NB-002', 'name': 'Cafeteria Bin'},
-      {'id': 'NB-003', 'name': 'Office NutriBin'},
-    ];
-
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -43,14 +85,11 @@ class MachineSelectionPage extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: 70,
-
         systemOverlayStyle: SystemUiOverlayStyle.light,
-
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(color: Colors.transparent, height: 1.0),
         ),
-
         title: Padding(
           padding: const EdgeInsets.only(left: 4.0),
           child: Row(
@@ -87,94 +126,95 @@ class MachineSelectionPage extends StatelessWidget {
           ),
         ),
       ),
-
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20, top: 8),
-                child: Row(
+        child: isLoading
+            ? Center(child: CircularProgressIndicator(color: highlightColor))
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Your Machines',
-                      style: GoogleFonts.interTight(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: textColor,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20, top: 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Your Machines',
+                            style: GoogleFonts.interTight(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: highlightColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${existingMachines.length} Active',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: highlightColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+                    ).animate().fadeIn(duration: 300.ms),
+
+                    // Machine List
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: existingMachines.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == existingMachines.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildAddMachineCard(
+                              context,
+                              highlightColor,
+                              isDarkMode,
+                            ),
+                          );
+                        }
+
+                        final machine = existingMachines[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildMachineCard(
+                            context: context,
+                            serialNumber: machine['serial_number'] ?? 'Unknown',
+                            machineId: machine['machine_id'] ?? '',
+                            highlightColor: highlightColor,
+                            cardColor: cardColor,
+                            textColor: textColor,
+                            subTextColor: subTextColor,
+                            index: index,
+                            isDarkMode: isDarkMode,
+                          ),
+                        );
+                      },
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: highlightColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${machines.length} Active',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: highlightColor,
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 80),
                   ],
                 ),
-              ).animate().fadeIn(duration: 300.ms),
-
-              // Machine List
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: machines.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == machines.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildAddMachineCard(
-                        context,
-                        highlightColor,
-                        isDarkMode,
-                      ),
-                    );
-                  }
-
-                  final machine = machines[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildMachineCard(
-                      context: context,
-                      machineId: machine['id']!,
-                      machineName: machine['name']!,
-                      highlightColor: highlightColor,
-                      cardColor: cardColor,
-                      textColor: textColor,
-                      subTextColor: subTextColor,
-                      index: index,
-                      isDarkMode: isDarkMode,
-                    ),
-                  );
-                },
               ),
-              const SizedBox(height: 80),
-            ],
-          ),
-        ),
       ),
     );
   }
 
   Widget _buildMachineCard({
     required BuildContext context,
+    required String serialNumber,
     required String machineId,
-    required String machineName,
     required Color highlightColor,
     required Color cardColor,
     required Color textColor,
@@ -203,7 +243,14 @@ class MachineSelectionPage extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                Navigator.pushNamed(context, '/home', arguments: machineName);
+                Navigator.pushNamed(
+                  context,
+                  '/home',
+                  arguments: {
+                    "serialNumber": serialNumber,
+                    "machineId": machineId,
+                  },
+                );
               },
               borderRadius: BorderRadius.circular(12),
               child: Padding(
@@ -233,7 +280,7 @@ class MachineSelectionPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            machineName,
+                            serialNumber,
                             style: GoogleFonts.interTight(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -250,6 +297,8 @@ class MachineSelectionPage extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                               color: subTextColor,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),

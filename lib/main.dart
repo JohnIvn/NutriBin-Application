@@ -151,9 +151,9 @@ class MyApp extends StatelessWidget {
         // Auth Routes
         '/machines': (context) => const MachinesHomePage(),
         '/home': (context) => const HomePage(),
-        '/dashboard': (context) => const DashboardPage(),
+        // '/dashboard': (context) => const DashboardPage(),
         '/profile': (context) => const ProfileWidget(),
-        '/fertilizers': (context) => const FertilizerPage(),
+        // '/fertilizers': (context) => const FertilizerPage(),
         '/account': (context) => const AccountPage(),
         '/account-edit': (context) => const AccountEditWidget(),
         '/forgot-password': (context) => const ForgotPasswordPage(),

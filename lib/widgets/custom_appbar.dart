@@ -67,7 +67,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             Text(
               machineNameOverride!,
               style: GoogleFonts.interTight(
-                fontSize: 22,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: contentColor,
               ),

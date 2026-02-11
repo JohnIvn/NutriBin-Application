@@ -340,6 +340,7 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                       Row(
                         children: [
                           Expanded(
+                            flex: 2,
                             child: OutlinedButton(
                               onPressed: _handleDecline,
                               style: OutlinedButton.styleFrom(
@@ -356,6 +357,8 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                               ),
                               child: Text(
                                 'Decline',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -368,7 +371,7 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            flex: 2,
+                            flex: 3,
                             child: ElevatedButton(
                               onPressed: _hasScrolledToBottom
                                   ? _handleAccept
@@ -386,6 +389,8 @@ class _TermsAcceptancePageState extends State<TermsAcceptancePage>
                               ),
                               child: Text(
                                 'Accept Terms',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,

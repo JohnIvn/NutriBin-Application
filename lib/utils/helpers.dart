@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:ffi';
+
 import 'package:nutribin_application/services/google_auth_service.dart';
 import 'package:nutribin_application/utils/response_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,7 +17,6 @@ class PreferenceUtility {
     String token,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-
     await prefs.setBool('isLoggedIn', true);
     await prefs.setString('userId', userId);
     await prefs.setString('email', email);
@@ -44,6 +46,28 @@ class PreferenceUtility {
   static Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("userId");
+  }
+
+  static Future<void> saveMachineIds(
+    List<Map<String, dynamic>> machineData,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('machineIds', jsonEncode(machineData));
+  }
+
+  static Future<List<Map<String, dynamic>>> getMachineId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final machineJson = prefs.getString('machineIds');
+
+    if (machineJson == null || machineJson.isEmpty) {
+      return [];
+    }
+
+    final List<dynamic> decoded = jsonDecode(machineJson);
+
+    return decoded
+        .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   static Future<String?> getContact() async {
@@ -179,6 +203,16 @@ class ValidationUtility {
 
   static Map<String, dynamic> validateContact(String value) {
     final RegExp phContactRegex = RegExp(r'^(09\d{9}|\+639\d{9})$');
+    if (value.isNotEmpty) {
+      if (value.startsWith('09')) {
+        if (value.length != 11 || !RegExp(r'^\d+$').hasMatch(value)) {
+          return Error.errorResponse("Contact must be 11 digits");
+        }
+      } else {
+        return Error.errorResponse("Contact format must start with 09");
+      }
+      return {"ok": true, "message": "Valid contact"};
+    }
     if (!phContactRegex.hasMatch(value.trim())) {
       return Error.errorResponse("Please use PH format numbers (+63)");
     }
@@ -194,7 +228,6 @@ class ValidationUtility {
     }
 
     final parts = email.split('@');
-
     if (parts.length != 2) {
       return Error.errorResponse("Invalid email format");
     }
@@ -203,15 +236,24 @@ class ValidationUtility {
     final domainPart = parts[1].trim().toLowerCase();
 
     final RegExp localRegex = RegExp(r'^[a-zA-Z0-9._%+-]+$');
-
     if (!localRegex.hasMatch(localPart)) {
       return Error.errorResponse("Invalid email name");
     }
 
-    final RegExp domainRegex = RegExp(r'^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$');
+    const Set<String> validDomains = {
+      'gmail.com',
+      'yahoo.com',
+      'outlook.com',
+      'hotmail.com',
+      'icloud.com',
+      'proton.me',
+      'protonmail.com',
+      'live.com',
+      'aol.com',
+    };
 
-    if (!domainRegex.hasMatch(domainPart)) {
-      return Error.errorResponse("Invalid email domain");
+    if (!validDomains.contains(domainPart)) {
+      return Error.errorResponse("Unsupported email domain");
     }
 
     return {"ok": true, "message": "Valid email"};

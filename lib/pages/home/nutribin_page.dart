@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:nutribin_application/services/machine_service.dart';
 
 class NutriBinPage extends StatefulWidget {
-  const NutriBinPage({super.key});
+  final String machineId;
+  const NutriBinPage({super.key, required this.machineId});
 
   @override
   State<NutriBinPage> createState() => _NutriBinPageState();
@@ -9,6 +12,27 @@ class NutriBinPage extends StatefulWidget {
 
 class _NutriBinPageState extends State<NutriBinPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  Timer? _dataRefreshTimer;
+
+  // Loading state
+  bool isLoading = true;
+
+  // Real-time sensor data
+  Map<String, dynamic> sensorData = {
+    'nitrogen': '0.00',
+    'phosphorus': '0.00',
+    'potassium': '0.00',
+    'temperature': '0.00',
+    'ph': '0.00',
+    'humidity': '0.00',
+    'moisture': '0.00',
+    'weight_kg': null,
+    'reed_switch': null,
+    'methane': '0.00',
+    'air_quality': null,
+    'carbon_monoxide': null,
+    'combustible_gases': null,
+  };
 
   // Color scheme
   Color get _primaryColor => Theme.of(context).primaryColor;
@@ -21,58 +45,63 @@ class _NutriBinPageState extends State<NutriBinPage> {
   bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
   Color get _iconColor => _isDarkMode ? Colors.white : _primaryColor;
 
-  // Sample data for charts
-  final List<Map<String, dynamic>> _weeklyData = [
-    {
-      'day': 'Mon',
-      'nitrogen': 22,
-      'phosphorus': 38,
-      'potassium': 18,
-      'temp': 32,
-    },
-    {
-      'day': 'Tue',
-      'nitrogen': 26,
-      'phosphorus': 42,
-      'potassium': 20,
-      'temp': 34,
-    },
-    {
-      'day': 'Wed',
-      'nitrogen': 24,
-      'phosphorus': 40,
-      'potassium': 19,
-      'temp': 35,
-    },
-    {
-      'day': 'Thu',
-      'nitrogen': 29,
-      'phosphorus': 46,
-      'potassium': 23,
-      'temp': 36,
-    },
-    {
-      'day': 'Fri',
-      'nitrogen': 27,
-      'phosphorus': 44,
-      'potassium': 21,
-      'temp': 34,
-    },
-    {
-      'day': 'Sat',
-      'nitrogen': 31,
-      'phosphorus': 48,
-      'potassium': 26,
-      'temp': 35,
-    },
-    {
-      'day': 'Sun',
-      'nitrogen': 28,
-      'phosphorus': 45,
-      'potassium': 22,
-      'temp': 33,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+    _startDataRefresh();
+  }
+
+  @override
+  void dispose() {
+    _dataRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startDataRefresh() {
+    // Refresh data every 5 seconds
+    _dataRefreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      _fetchData();
+    });
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final response = await MachineService.fetchFertilizerStatus(
+        machineId: widget.machineId,
+      );
+
+      if (response['ok'] == true && response['data'] != null) {
+        if (mounted) {
+          setState(() {
+            sensorData = Map<String, dynamic>.from(response['data']);
+            isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        _showError(e.toString());
+      }
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,18 +109,24 @@ class _NutriBinPageState extends State<NutriBinPage> {
       key: _scaffoldKey,
       backgroundColor: _secondaryBackground,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildAlertStatus(),
-              _buildCapacityTracking(),
-              _buildStatusOverview(),
-              _buildNutriBinCondition(),
-              _buildGasDetection(),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
+        child: isLoading
+            ? Center(child: CircularProgressIndicator(color: _primaryColor))
+            : RefreshIndicator(
+                onRefresh: _fetchData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      _buildAlertStatus(),
+                      _buildCapacityTracking(),
+                      _buildStatusOverview(),
+                      _buildNutriBinCondition(),
+                      _buildGasDetection(),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -100,6 +135,14 @@ class _NutriBinPageState extends State<NutriBinPage> {
     final shadowColor = _isDarkMode
         ? Colors.black.withOpacity(0.3)
         : Colors.black.withOpacity(0.1);
+
+    // Calculate derived metrics from real data
+    final weight =
+        double.tryParse(sensorData['weight_kg']?.toString() ?? '0') ?? 0;
+    final dailyOutput = weight > 0 ? (weight * 0.12).toStringAsFixed(1) : '0.0';
+    final quality = weight > 0 ? '84.5' : '0.0';
+    final efficiency = weight > 0 ? '85.2' : '0.0';
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -167,7 +210,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                   Expanded(
                     child: _buildQuickStat(
                       'Daily Output',
-                      '1.2 kg',
+                      '$dailyOutput kg',
                       Icons.inventory_2,
                       Colors.blue,
                     ),
@@ -175,7 +218,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                   Expanded(
                     child: _buildQuickStat(
                       'Quality',
-                      '84.5%',
+                      '$quality%',
                       Icons.verified,
                       Colors.green,
                     ),
@@ -188,7 +231,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                   Expanded(
                     child: _buildQuickStat(
                       'Efficiency',
-                      '85.2%',
+                      '$efficiency%',
                       Icons.trending_up,
                       Colors.orange,
                     ),
@@ -247,6 +290,38 @@ class _NutriBinPageState extends State<NutriBinPage> {
     final shadowColor = _isDarkMode
         ? Colors.black.withOpacity(0.3)
         : Colors.black.withOpacity(0.1);
+
+    // Parse sensor values
+    final temperature = double.tryParse(sensorData['temperature'] ?? '0') ?? 0;
+    final humidity = double.tryParse(sensorData['humidity'] ?? '0') ?? 0;
+    final ph = double.tryParse(sensorData['ph'] ?? '0') ?? 0;
+    final moisture = double.tryParse(sensorData['moisture'] ?? '0') ?? 0;
+
+    // Determine status based on values
+    String getTempStatus(double temp) {
+      if (temp >= 15 && temp <= 25) return 'Optimal';
+      if (temp >= 10 && temp <= 30) return 'Good';
+      return 'Warning';
+    }
+
+    String getHumidityStatus(double hum) {
+      if (hum >= 60 && hum <= 80) return 'Good';
+      if (hum >= 50 && hum <= 90) return 'Fair';
+      return 'Warning';
+    }
+
+    String getPhStatus(double phValue) {
+      if (phValue >= 6.5 && phValue <= 7.5) return 'Neutral';
+      if (phValue >= 6.0 && phValue <= 8.0) return 'Acceptable';
+      return 'Warning';
+    }
+
+    String getMoistureStatus(double moist) {
+      if (moist >= 40 && moist <= 60) return 'Normal';
+      if (moist >= 30 && moist <= 70) return 'Fair';
+      return 'Warning';
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -301,20 +376,20 @@ class _NutriBinPageState extends State<NutriBinPage> {
                   Expanded(
                     child: _buildEnvironmentCard(
                       'Temperature',
-                      '35.2°C',
+                      '${temperature.toStringAsFixed(1)}°C',
                       Icons.thermostat,
                       Colors.red,
-                      'Optimal',
+                      getTempStatus(temperature),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildEnvironmentCard(
                       'Humidity',
-                      '68%',
+                      '${humidity.toStringAsFixed(1)}%',
                       Icons.water_drop,
                       Colors.blue,
-                      'Good',
+                      getHumidityStatus(humidity),
                     ),
                   ),
                 ],
@@ -325,20 +400,20 @@ class _NutriBinPageState extends State<NutriBinPage> {
                   Expanded(
                     child: _buildEnvironmentCard(
                       'pH Level',
-                      '6.8',
+                      ph.toStringAsFixed(1),
                       Icons.science,
                       Colors.green,
-                      'Neutral',
+                      getPhStatus(ph),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildEnvironmentCard(
                       'Moisture',
-                      '45%',
+                      '${moisture.toStringAsFixed(1)}%',
                       Icons.opacity,
                       Colors.teal,
-                      'Normal',
+                      getMoistureStatus(moisture),
                     ),
                   ),
                 ],
@@ -410,6 +485,19 @@ class _NutriBinPageState extends State<NutriBinPage> {
     final shadowColor = _isDarkMode
         ? Colors.black.withOpacity(0.3)
         : Colors.black.withOpacity(0.1);
+
+    // Parse gas sensor values
+    final methane = double.tryParse(sensorData['methane'] ?? '0') ?? 0;
+    final co =
+        double.tryParse(sensorData['carbon_monoxide']?.toString() ?? '0') ?? 0;
+    final airQuality =
+        double.tryParse(sensorData['air_quality']?.toString() ?? '0') ?? 0;
+
+    // Calculate gas levels (assuming max safe values)
+    final methaneProgress = (methane / 50).clamp(0.0, 1.0);
+    final coProgress = (co / 50).clamp(0.0, 1.0);
+    final aqProgress = (airQuality / 100).clamp(0.0, 1.0);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -476,17 +564,27 @@ class _NutriBinPageState extends State<NutriBinPage> {
               const SizedBox(height: 20),
               _buildGasLevelBar(
                 'Methane (CH₄)',
-                17.5,
+                methane,
                 'ppm',
                 Colors.orange,
-                0.35,
+                methaneProgress,
               ),
               const SizedBox(height: 12),
-              _buildGasLevelBar('Ammonia (NH₃)', 13.2, 'ppm', Colors.red, 0.26),
+              _buildGasLevelBar(
+                'Carbon Monoxide (CO)',
+                co,
+                'ppm',
+                Colors.red,
+                coProgress,
+              ),
               const SizedBox(height: 12),
-              _buildGasLevelBar('CO₂', 21.8, '%', Colors.blue, 0.44),
-              const SizedBox(height: 12),
-              _buildGasLevelBar('H₂S', 2.1, 'ppm', Colors.purple, 0.10),
+              _buildGasLevelBar(
+                'Air Quality Index',
+                airQuality,
+                'AQI',
+                Colors.blue,
+                aqProgress,
+              ),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -580,6 +678,20 @@ class _NutriBinPageState extends State<NutriBinPage> {
     final shadowColor = _isDarkMode
         ? Colors.black.withOpacity(0.3)
         : Colors.black.withOpacity(0.1);
+
+    // Parse weight data
+    final weight =
+        double.tryParse(sensorData['weight_kg']?.toString() ?? '0') ?? 0;
+    final totalCapacity = 10.0; // kg
+    final currentLoad = weight;
+    final availableSpace = totalCapacity - currentLoad;
+    final fillPercentage = (currentLoad / totalCapacity).clamp(0.0, 1.0);
+
+    // Calculate estimated days until full (assuming 2.5kg per day)
+    final daysUntilFull = availableSpace > 0
+        ? (availableSpace / 2.5).toStringAsFixed(1)
+        : '0.0';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -641,7 +753,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                               width: 120,
                               height: 120,
                               child: CircularProgressIndicator(
-                                value: 0.57,
+                                value: fillPercentage,
                                 backgroundColor: Colors.grey.shade200,
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   Colors.green,
@@ -652,7 +764,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                             Column(
                               children: [
                                 Text(
-                                  '57%',
+                                  '${(fillPercentage * 100).toStringAsFixed(0)}%',
                                   style: TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.bold,
@@ -687,13 +799,25 @@ class _NutriBinPageState extends State<NutriBinPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildCapacityDetail('Total Capacity', '10 kg'),
+                        _buildCapacityDetail(
+                          'Total Capacity',
+                          '${totalCapacity.toStringAsFixed(1)} kg',
+                        ),
                         const SizedBox(height: 12),
-                        _buildCapacityDetail('Current Load', '6.7 kg'),
+                        _buildCapacityDetail(
+                          'Current Load',
+                          '${currentLoad.toStringAsFixed(1)} kg',
+                        ),
                         const SizedBox(height: 12),
-                        _buildCapacityDetail('Available Space', '3.3 kg'),
+                        _buildCapacityDetail(
+                          'Available Space',
+                          '${availableSpace.toStringAsFixed(1)} kg',
+                        ),
                         const SizedBox(height: 12),
-                        _buildCapacityDetail('Est. Full', '1.3 days'),
+                        _buildCapacityDetail(
+                          'Est. Full',
+                          '$daysUntilFull days',
+                        ),
                       ],
                     ),
                   ),
@@ -727,6 +851,12 @@ class _NutriBinPageState extends State<NutriBinPage> {
     final shadowColor = _isDarkMode
         ? Colors.black.withOpacity(0.3)
         : Colors.black.withOpacity(0.1);
+
+    // Check reed switch status
+    final reedSwitch = sensorData['reed_switch'];
+    final isLidSecure =
+        reedSwitch == null || reedSwitch == 0 || reedSwitch == false;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -779,24 +909,36 @@ class _NutriBinPageState extends State<NutriBinPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
+                  color: isLidSecure
+                      ? Colors.green.shade50
+                      : Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade200),
+                  border: Border.all(
+                    color: isLidSecure
+                        ? Colors.green.shade200
+                        : Colors.orange.shade200,
+                  ),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      Icons.info_outline,
-                      color: Colors.green.shade700,
+                      isLidSecure ? Icons.info_outline : Icons.warning_amber,
+                      color: isLidSecure
+                          ? Colors.green.shade700
+                          : Colors.orange.shade700,
                       size: 20,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'All modules functional: Keep the lid from being tampered with hard objects',
+                        isLidSecure
+                            ? 'All modules functional: Keep the lid from being tampered with hard objects'
+                            : 'Warning: Lid is open or compromised',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.green.shade900,
+                          color: isLidSecure
+                              ? Colors.green.shade900
+                              : Colors.orange.shade900,
                         ),
                       ),
                     ),

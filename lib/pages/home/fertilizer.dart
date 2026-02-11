@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/services/machine_service.dart';
 
 class FertilizerPage extends StatefulWidget {
-  const FertilizerPage({super.key});
+  final String machineId;
+  const FertilizerPage({super.key, required this.machineId});
 
   @override
   State<FertilizerPage> createState() => _FertilizerPageState();
@@ -10,64 +13,90 @@ class FertilizerPage extends StatefulWidget {
 
 class _FertilizerPageState extends State<FertilizerPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  Timer? _dataRefreshTimer;
+
+  // Loading state
+  bool isLoading = true;
+
+  // Real-time sensor data
+  Map<String, dynamic> sensorData = {
+    'nitrogen': '0.00',
+    'phosphorus': '0.00',
+    'potassium': '0.00',
+    'temperature': '0.00',
+    'ph': '0.00',
+    'humidity': '0.00',
+    'moisture': '0.00',
+    'weight_kg': null,
+    'reed_switch': null,
+    'methane': '0.00',
+    'air_quality': null,
+    'carbon_monoxide': null,
+    'combustible_gases': null,
+  };
 
   // Color scheme
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
   Color get _secondaryText => const Color(0xFF57636C);
 
-  // Sample data
-  final List<Map<String, dynamic>> _weeklyData = [
-    {
-      'day': 'Mon',
-      'nitrogen': 22,
-      'phosphorus': 38,
-      'potassium': 18,
-      'temp': 32,
-    },
-    {
-      'day': 'Tue',
-      'nitrogen': 26,
-      'phosphorus': 42,
-      'potassium': 20,
-      'temp': 34,
-    },
-    {
-      'day': 'Wed',
-      'nitrogen': 24,
-      'phosphorus': 40,
-      'potassium': 19,
-      'temp': 35,
-    },
-    {
-      'day': 'Thu',
-      'nitrogen': 29,
-      'phosphorus': 46,
-      'potassium': 23,
-      'temp': 36,
-    },
-    {
-      'day': 'Fri',
-      'nitrogen': 27,
-      'phosphorus': 44,
-      'potassium': 21,
-      'temp': 34,
-    },
-    {
-      'day': 'Sat',
-      'nitrogen': 31,
-      'phosphorus': 48,
-      'potassium': 26,
-      'temp': 35,
-    },
-    {
-      'day': 'Sun',
-      'nitrogen': 28,
-      'phosphorus': 45,
-      'potassium': 22,
-      'temp': 33,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+    _startDataRefresh();
+  }
+
+  @override
+  void dispose() {
+    _dataRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startDataRefresh() {
+    // Refresh data every 5 seconds
+    _dataRefreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      _fetchData();
+    });
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final response = await MachineService.fetchFertilizerStatus(
+        machineId: widget.machineId,
+      );
+
+      if (response['ok'] == true && response['data'] != null) {
+        if (mounted) {
+          setState(() {
+            sensorData = Map<String, dynamic>.from(response['data']);
+            isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        _showError(e.toString());
+      }
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,15 +104,21 @@ class _FertilizerPageState extends State<FertilizerPage> {
       key: _scaffoldKey,
       backgroundColor: _secondaryBackground,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _fertilizerStatusCard(),
-              _buildNPKMonitoring(),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
+        child: isLoading
+            ? Center(child: CircularProgressIndicator(color: _primaryColor))
+            : RefreshIndicator(
+                onRefresh: _fetchData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      _fertilizerStatusCard(),
+                      _buildNPKMonitoring(),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -110,6 +145,41 @@ class _FertilizerPageState extends State<FertilizerPage> {
       'Bell Pepper',
       'Strawberry',
     ];
+
+    // --- NPK Values ---
+    final nitrogen = double.tryParse(sensorData['nitrogen'] ?? '0') ?? 0;
+    final phosphorus = double.tryParse(sensorData['phosphorus'] ?? '0') ?? 0;
+    final potassium = double.tryParse(sensorData['potassium'] ?? '0') ?? 0;
+
+    final nRatio = (nitrogen / 10).round();
+    final pRatio = (phosphorus / 10).round();
+    final kRatio = (potassium / 10).round();
+
+    // --- Determine status ---
+    bool isReady = nitrogen > 0 || phosphorus > 0 || potassium > 0;
+    String statusText = '';
+    String tipText = '';
+
+    if (!isReady) {
+      statusText = 'Insufficient compost';
+      tipText = 'Fertilizer levels are too low to provide support for crops.';
+    } else {
+      statusText = 'Ready for Use';
+      // Simple tips based on NPK ratio
+      if (nRatio > pRatio && nRatio > kRatio) {
+        tipText =
+            'High nitrogen content: promotes leaf growth. Ideal for leafy vegetables.';
+      } else if (pRatio > nRatio && pRatio > kRatio) {
+        tipText =
+            'High phosphorus content: promotes root development and flowering.';
+      } else if (kRatio > nRatio && kRatio > pRatio) {
+        tipText =
+            'High potassium content: enhances fruit quality and resistance.';
+      } else {
+        tipText =
+            'Balanced NPK ($nRatio:$pRatio:$kRatio) provides overall support for growth.';
+      }
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -147,10 +217,14 @@ class _FertilizerPageState extends State<FertilizerPage> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle, color: accentColor, size: 20),
+                    Icon(
+                      isReady ? Icons.check_circle : Icons.error,
+                      color: accentColor,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
-                      'Ready for Use',
+                      statusText,
                       style: TextStyle(
                         color: accentColor,
                         fontWeight: FontWeight.w600,
@@ -163,8 +237,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Text(
-                  'This balanced NPK fertilizer (10:10:8) provides equal support '
-                  'for leaf development, root strength, and fruit production.',
+                  tipText,
                   style: TextStyle(
                     color: subTextColor,
                     fontSize: 14,
@@ -248,150 +321,6 @@ class _FertilizerPageState extends State<FertilizerPage> {
     );
   }
 
-  Widget _buildStatusOverview() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Production Status',
-                    style: TextStyle(
-                      color: _secondaryText,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade100,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.circle,
-                          color: Colors.green.shade700,
-                          size: 10,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'ACTIVE',
-                          style: TextStyle(
-                            color: Colors.green.shade700,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildQuickStat(
-                      'Daily Output',
-                      '1.2 kg',
-                      Icons.inventory_2,
-                      Colors.blue,
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildQuickStat(
-                      'Quality',
-                      '84.5%',
-                      Icons.verified,
-                      Colors.green,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildQuickStat(
-                      'Efficiency',
-                      '85.2%',
-                      Icons.trending_up,
-                      Colors.orange,
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildQuickStat(
-                      'Batches',
-                      '2',
-                      Icons.layers,
-                      Colors.purple,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickStat(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      margin: const EdgeInsets.all(4),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: _secondaryText)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildNPKMonitoring() {
     // --- DYNAMIC COLORS ---
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -412,6 +341,11 @@ class _FertilizerPageState extends State<FertilizerPage> {
     final infoTextColor = isDarkMode
         ? Colors.blue.shade200
         : Colors.blue.shade900;
+
+    // Parse sensor values
+    final nitrogen = double.tryParse(sensorData['nitrogen'] ?? '0') ?? 0;
+    final phosphorus = double.tryParse(sensorData['phosphorus'] ?? '0') ?? 0;
+    final potassium = double.tryParse(sensorData['potassium'] ?? '0') ?? 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -462,9 +396,9 @@ class _FertilizerPageState extends State<FertilizerPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildNPKGauge('Nitrogen', 35.71, Colors.blue),
-                  _buildNPKGauge('Phosphorus', 35.71, Colors.orange),
-                  _buildNPKGauge('Potassium', 28.57, Colors.green),
+                  _buildNPKGauge('Nitrogen', nitrogen, Colors.blue),
+                  _buildNPKGauge('Phosphorus', phosphorus, Colors.orange),
+                  _buildNPKGauge('Potassium', potassium, Colors.green),
                 ],
               ),
               const SizedBox(height: 20),
@@ -497,9 +431,14 @@ class _FertilizerPageState extends State<FertilizerPage> {
 
   Widget _buildNPKGauge(String label, double value, Color color) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDarkMode ? Colors.white : Colors.grey.shade100;
+    final bgColor = isDarkMode
+        ? Colors.white.withOpacity(0.1)
+        : Colors.grey.shade100;
     final subTextColor =
         Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+
+    // Calculate percentage (assuming max value of 200 ppm)
+    final percentage = (value / 200).clamp(0.0, 1.0);
 
     return Column(
       children: [
@@ -510,7 +449,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
               width: 90,
               height: 90,
               child: CircularProgressIndicator(
-                value: value / 100,
+                value: percentage,
                 backgroundColor: bgColor,
                 valueColor: AlwaysStoppedAnimation<Color>(color),
                 strokeWidth: 10,
@@ -541,477 +480,6 @@ class _FertilizerPageState extends State<FertilizerPage> {
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: subTextColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNutriBinCondition() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.wb_sunny, color: _primaryColor, size: 28),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'NutriBin Condition',
-                          style: TextStyle(
-                            color: _secondaryText,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Temperature & humidity tracking',
-                          style: TextStyle(
-                            color: _secondaryText.withOpacity(0.7),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildEnvironmentCard(
-                      'Temperature',
-                      '35.2°C',
-                      Icons.thermostat,
-                      Colors.red,
-                      'Optimal',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildEnvironmentCard(
-                      'Humidity',
-                      '68%',
-                      Icons.water_drop,
-                      Colors.blue,
-                      'Good',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildEnvironmentCard(
-                      'pH Level',
-                      '6.8',
-                      Icons.science,
-                      Colors.green,
-                      'Neutral',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildEnvironmentCard(
-                      'Moisture',
-                      '45%',
-                      Icons.opacity,
-                      Colors.teal,
-                      'Normal',
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEnvironmentCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-    String status,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: _secondaryText,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              status,
-              style: TextStyle(
-                fontSize: 11,
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGasDetection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.air, color: _primaryColor, size: 28),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Gas Detection',
-                            style: TextStyle(
-                              color: _secondaryText,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Monitoring harmful gases',
-                            style: TextStyle(
-                              color: _secondaryText.withOpacity(0.7),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.check_circle,
-                      color: Colors.green.shade700,
-                      size: 24,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _buildGasLevelBar(
-                'Methane (CH₄)',
-                17.5,
-                'ppm',
-                Colors.orange,
-                0.35,
-              ),
-              const SizedBox(height: 12),
-              _buildGasLevelBar('Ammonia (NH₃)', 13.2, 'ppm', Colors.red, 0.26),
-              const SizedBox(height: 12),
-              _buildGasLevelBar('CO₂', 21.8, '%', Colors.blue, 0.44),
-              const SizedBox(height: 12),
-              _buildGasLevelBar('H₂S', 2.1, 'ppm', Colors.purple, 0.10),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.green.shade700,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'All gas levels within safe operating limits',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green.shade900,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGasLevelBar(
-    String name,
-    double value,
-    String unit,
-    Color color,
-    double progress,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              name,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: _secondaryText,
-              ),
-            ),
-            Text(
-              '${value.toStringAsFixed(1)} $unit',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 8,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: progress,
-            child: Container(
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCapacityTracking() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.storage, color: _primaryColor, size: 28),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Capacity & Storage',
-                          style: TextStyle(
-                            color: _secondaryText,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Current chamber utilization',
-                          style: TextStyle(
-                            color: _secondaryText.withOpacity(0.7),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            SizedBox(
-                              width: 120,
-                              height: 120,
-                              child: CircularProgressIndicator(
-                                value: 0.72,
-                                backgroundColor: Colors.grey.shade200,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.green,
-                                ),
-                                strokeWidth: 12,
-                              ),
-                            ),
-                            Column(
-                              children: [
-                                Text(
-                                  '72%',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                                Text(
-                                  'Filled',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: _secondaryText,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Main Chamber',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _secondaryText,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildCapacityDetail('Total Capacity', '100 kg'),
-                        const SizedBox(height: 12),
-                        _buildCapacityDetail('Current Load', '72 kg'),
-                        const SizedBox(height: 12),
-                        _buildCapacityDetail('Available Space', '28 kg'),
-                        const SizedBox(height: 12),
-                        _buildCapacityDetail('Est. Full', '2.3 days'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCapacityDetail(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(fontSize: 13, color: _secondaryText)),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: _secondaryText,
           ),
         ),
       ],
