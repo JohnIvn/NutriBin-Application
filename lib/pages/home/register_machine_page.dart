@@ -90,66 +90,6 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
               ),
               const SizedBox(height: 24),
 
-              // QR SECTION Indev (Unfinished)
-              // _buildSectionCard(
-              //   context: context,
-              //   title: 'Scan QR Code',
-              //   subtitle:
-              //       'Quickly register by scanning the QR code found on your NutriBin machine.',
-              //   icon: Icons.qr_code_scanner_rounded,
-              //   cardColor: cardColor,
-              //   textColor: textColor,
-              //   subTextColor: subTextColor,
-              //   primaryColor: primaryColor,
-              //   isDarkMode: isDarkMode,
-              //   child: SizedBox(
-              //     width: double.infinity,
-              //     child: ElevatedButton.icon(
-              //       onPressed: () {
-              //         // To Do: implement scanner
-              //       },
-              //       icon: Icon(Icons.camera_alt_outlined, color: Colors.white),
-              //       label: Text(
-              //         'Scan QR Code',
-              //         style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-              //       ),
-              //       style: ElevatedButton.styleFrom(
-              //         backgroundColor: primaryColor,
-              //         foregroundColor: Colors.white,
-              //         padding: const EdgeInsets.symmetric(vertical: 14),
-              //         shape: RoundedRectangleBorder(
-              //           borderRadius: BorderRadius.circular(10),
-              //         ),
-              //         elevation: 0,
-              //       ),
-              //     ),
-              //   ),
-              // ),
-              // const SizedBox(height: 20),
-              // Row(
-              //   children: [
-              //     Expanded(
-              //       child: Divider(color: subTextColor.withOpacity(0.3)),
-              //     ),
-              //     Padding(
-              //       padding: const EdgeInsets.symmetric(horizontal: 16),
-              //       child: Text(
-              //         'OR',
-              //         style: GoogleFonts.inter(
-              //           fontSize: 12,
-              //           fontWeight: FontWeight.w600,
-              //           color: subTextColor.withOpacity(0.7),
-              //         ),
-              //       ),
-              //     ),
-              //     Expanded(
-              //       child: Divider(color: subTextColor.withOpacity(0.3)),
-              //     ),
-              //   ],
-              // ),
-              // const SizedBox(height: 20),
-
-              // MANUAL SECTION
               _buildSectionCard(
                 context: context,
                 title: 'Manual Entry',
@@ -173,33 +113,6 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                       cardColor: isDarkMode ? Colors.black12 : Colors.grey[50]!,
                       textColor: textColor,
                     ),
-                    const SizedBox(height: 16),
-
-                    _buildTextField(
-                      controller: _wifiNameController,
-                      label: 'Wi-Fi Name (SSID)',
-                      hint: 'Your network name',
-                      icon: Icons.wifi_rounded,
-                      isDarkMode: isDarkMode,
-                      primaryColor: primaryColor,
-                      cardColor: isDarkMode ? Colors.black12 : Colors.grey[50]!,
-                      textColor: textColor,
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildTextField(
-                      controller: _wifiPasswordController,
-                      label: 'Wi-Fi Password',
-                      hint: 'Network password',
-                      icon: Icons.lock_outline_rounded,
-                      isObscure: true,
-                      isDarkMode: isDarkMode,
-                      primaryColor: primaryColor,
-                      cardColor: isDarkMode ? Colors.black12 : Colors.grey[50]!,
-                      textColor: textColor,
-                    ),
-
-                    const SizedBox(height: 24),
 
                     SizedBox(
                       width: double.infinity,
@@ -376,9 +289,6 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
 
   Future<void> _handleRegisterMachine() async {
     final serialId = _machineIdController.text.trim();
-    // TODO Later
-    final wifiName = _wifiNameController.text.trim();
-    final wifiPassword = _wifiPasswordController.text.trim();
 
     if (serialId.isEmpty) {
       ScaffoldMessenger.of(
