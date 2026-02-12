@@ -762,7 +762,11 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         final uploadResult = await ProfileUtility.uploadPfp(_newProfileImage!);
         if (uploadResult["ok"] != true) {
           if (!mounted) return;
-          _showError('Failed to upload profile picture');
+          _showError(
+            uploadResult["message"] ??
+                uploadResult["error"] ??
+                'Failed to upload profile picture',
+          );
           setState(() {
             isLoading = false;
           });

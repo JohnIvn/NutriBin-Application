@@ -384,24 +384,27 @@ class ProfileUtility {
   static Future<Map<String, dynamic>> uploadPfp(File image) async {
     try {
       final customerId = await PreferenceUtility.getUserId();
-
       if (customerId == null || customerId.isEmpty) {
         return Error.errorResponse("Customer ID not found, please sign in");
       }
 
       final url = Uri.parse("$restUser/settings/$customerId/photo");
 
-      final response = await http.post(
-        url,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
-        },
-        body: {"uploadedFile": image},
+      var request = http.MultipartRequest('POST', url);
+      request.headers['Authorization'] = 'Bearer $anonKey';
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'photo',
+          image.path,
+          contentType: http.MediaType('image', 'jpeg'),
+        ),
       );
 
-      final data = jsonDecode(response.body);
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
+      final data = jsonDecode(response.body);
       if (data["ok"] != true) {
         return Error.errorResponse(data["message"] ?? data["error"]);
       }
