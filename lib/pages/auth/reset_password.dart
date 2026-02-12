@@ -114,19 +114,31 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     }
   }
 
-  Color get _primaryColor => Theme.of(context).primaryColor;
-
   @override
   Widget build(BuildContext context) {
+    // --- DYNAMIC COLORS ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor = isDarkMode ? Colors.grey[400] : const Color(0xFF57636C);
+
+    // Highlight Color
+    final highlightColor = isDarkMode ? const Color(0xFF8FAE8F) : primaryColor;
+
+    // Input Field Colors
+    final inputFillColor = isDarkMode ? Theme.of(context).cardTheme.color : Colors.white;
+    final inputBorderColor = isDarkMode ? Colors.white12 : const Color(0xFFE0E3E7);
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: backgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: _primaryColor),
+            icon: Icon(Icons.arrow_back, color: textColor),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -145,13 +157,13 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: _primaryColor.withOpacity(0.1),
+                        color: highlightColor.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.lock_reset,
                         size: 50,
-                        color: _primaryColor,
+                        color: highlightColor,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -162,7 +174,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       style: GoogleFonts.interTight(
                         fontSize: 28,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF101213),
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -173,7 +185,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: const Color(0xFF57636C),
+                        color: subTextColor,
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -183,22 +195,22 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       controller: _newPasswordController,
                       focusNode: _newPasswordFocus,
                       obscureText: !_newPasswordVisible,
-                      cursorColor: const Color(0xFF4B39EF),
+                      cursorColor: highlightColor,
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF101213),
+                        color: textColor,
                       ),
                       decoration: InputDecoration(
                         labelText: 'New Password',
                         labelStyle: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF57636C),
+                          color: subTextColor,
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.lock_outline,
-                          color: Color(0xFF57636C),
+                          color: subTextColor,
                         ),
                         suffixIcon: InkWell(
                           onTap: () {
@@ -211,20 +223,20 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             _newPasswordVisible
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: const Color(0xFF57636C),
+                            color: subTextColor,
                             size: 24,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE0E3E7),
+                          borderSide: BorderSide(
+                            color: inputBorderColor,
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(40),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                            color: _primaryColor,
+                            color: highlightColor,
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(40),
@@ -244,7 +256,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           borderRadius: BorderRadius.circular(40),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: inputFillColor,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 20,
@@ -258,22 +270,22 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       controller: _confirmPasswordController,
                       focusNode: _confirmPasswordFocus,
                       obscureText: !_newPasswordVisible,
-                      cursorColor: const Color(0xFF4B39EF),
+                      cursorColor: highlightColor,
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF101213),
+                        color: textColor,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Confirm Password',
                         labelStyle: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF57636C),
+                          color: subTextColor,
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.lock_outline,
-                          color: Color(0xFF57636C),
+                          color: subTextColor,
                         ),
                         suffixIcon: InkWell(
                           onTap: () {
@@ -286,20 +298,20 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             _newPasswordVisible
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: const Color(0xFF57636C),
+                            color: subTextColor,
                             size: 24,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE0E3E7),
+                          borderSide: BorderSide(
+                            color: inputBorderColor,
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(40),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                            color: _primaryColor,
+                            color: highlightColor,
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(40),
@@ -319,7 +331,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           borderRadius: BorderRadius.circular(40),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: inputFillColor,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 20,
@@ -335,7 +347,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         '• Password must be at least 8 characters long',
                         style: GoogleFonts.inter(
                           fontSize: 12,
-                          color: const Color(0xFF57636C),
+                          color: subTextColor,
                         ),
                       ),
                     ),
@@ -348,7 +360,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         onPressed: _isLoading ? null : _handleResetPassword,
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 52),
-                          backgroundColor: _primaryColor,
+                          backgroundColor: primaryColor,
+                          disabledBackgroundColor: primaryColor.withOpacity(0.5),
                           elevation: 3,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(40),
