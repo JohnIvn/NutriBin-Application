@@ -73,51 +73,60 @@ class _CustomNavBarState extends State<CustomNavBar> {
           TargetContent(
             align: ContentAlign.top,
             builder: (context, controller) {
-              return Container(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Home",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Access your dashboard and main features here",
-                      style: TextStyle(fontSize: 14, color: Colors.white),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton.icon(
-                      onPressed: () {
-                        controller.skip();
-                        // TODO: Navigate to guide page
-                        // Navigator.pushNamed(context, '/guide');
-                      },
-                      icon: const Icon(
-                        Icons.menu_book,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      label: const Text(
-                        'View Full Guide',
-                        style: TextStyle(color: Colors.white, fontSize: 13),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.7,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Home",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Access your dashboard and main features here",
+                        style: TextStyle(fontSize: 14, color: Colors.white),
+                      ),
+                      const SizedBox(height: 12),
+
+                      /// ✅ Prevent button overflow
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton.icon(
+                          onPressed: () {
+                            controller.skip();
+                          },
+                          icon: const Icon(
+                            Icons.menu_book,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: const Text(
+                            'View Full Guide',
+                            overflow: TextOverflow.ellipsis, // ← extra safety
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                          style: TextButton.styleFrom(
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -234,28 +243,55 @@ class _CustomNavBarState extends State<CustomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: widget.currentIndex,
-      onTap: widget.onTap,
-      type: BottomNavigationBarType.fixed,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined, key: _navKeys[0]),
-          label: 'Home',
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    final navBarBg = isDarkMode
+        ? Theme.of(context).cardTheme.color
+        : Theme.of(context).primaryColor;
+
+    const selectedItemColor = Colors.white;
+    final unselectedItemColor = isDarkMode ? Colors.grey : Colors.white60;
+
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.transparent, width: 1)),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          splashFactory: NoSplash.splashFactory,
+          highlightColor: Colors.transparent,
+          splashColor: Colors.transparent,
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.agriculture_outlined, key: _navKeys[1]),
-          label: 'Fertilizers',
+        child: BottomNavigationBar(
+          currentIndex: widget.currentIndex,
+          onTap: widget.onTap,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: navBarBg,
+          elevation: 0,
+
+          selectedItemColor: selectedItemColor,
+          unselectedItemColor: unselectedItemColor,
+
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined, key: _navKeys[0]),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.agriculture_outlined, key: _navKeys[1]),
+              label: 'Fertilizers',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.restore_from_trash_outlined, key: _navKeys[2]),
+              label: 'NutriBin',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications_outlined, key: _navKeys[3]),
+              label: 'Notifications',
+            ),
+          ],
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.restore_from_trash_outlined, key: _navKeys[2]),
-          label: 'NutriBin',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.notifications_outlined, key: _navKeys[3]),
-          label: 'Notifs',
-        ),
-      ],
+      ),
     );
   }
 }

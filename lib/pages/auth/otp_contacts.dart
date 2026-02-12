@@ -20,6 +20,7 @@ class _ContactsVerificationState extends State<ContactsVerification> {
     (_) => TextEditingController(),
   );
   final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
+  final List<String> _previousValues = List.generate(6, (_) => '');
 
   bool _isLoading = false;
   String? _recipient;
@@ -31,6 +32,14 @@ class _ContactsVerificationState extends State<ContactsVerification> {
   @override
   void initState() {
     super.initState();
+
+    // Add listeners to track previous values for backspace detection
+    for (int i = 0; i < 6; i++) {
+      _otpControllers[i].addListener(() {
+        _handleOtpChange(i);
+      });
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -41,6 +50,39 @@ class _ContactsVerificationState extends State<ContactsVerification> {
         _verificationType = _parseVerificationType(typeString);
       });
     });
+  }
+
+  void _handleOtpChange(int index) {
+    final currentValue = _otpControllers[index].text;
+    final previousValue = _previousValues[index];
+
+    // User typed a new digit
+    if (currentValue.isNotEmpty && previousValue.isEmpty) {
+      _previousValues[index] = currentValue;
+      // Move to next field
+      if (index < 5) {
+        _otpFocusNodes[index + 1].requestFocus();
+      } else {
+        _otpFocusNodes[index].unfocus();
+      }
+    }
+    // User deleted (backspace on non-empty field)
+    else if (currentValue.isEmpty && previousValue.isNotEmpty) {
+      _previousValues[index] = '';
+      // Stay on current field - don't move back
+    }
+    // User replaced a digit
+    else if (currentValue.isNotEmpty &&
+        previousValue.isNotEmpty &&
+        currentValue != previousValue) {
+      _previousValues[index] = currentValue;
+      // Move to next field
+      if (index < 5) {
+        _otpFocusNodes[index + 1].requestFocus();
+      } else {
+        _otpFocusNodes[index].unfocus();
+      }
+    }
   }
 
   OtpVerificationType _parseVerificationType(String type) {
@@ -192,10 +234,9 @@ class _ContactsVerificationState extends State<ContactsVerification> {
 
           _startCooldown(60);
 
-          final message =
-              _verificationType == OtpVerificationType.contact
-                  ? 'Verification code sent to your phone'
-                  : 'Verification code sent to your email';
+          final message = _verificationType == OtpVerificationType.contact
+              ? 'Verification code sent to your phone'
+              : 'Verification code sent to your email';
 
           ScaffoldMessenger.of(
             context,
@@ -228,17 +269,20 @@ class _ContactsVerificationState extends State<ContactsVerification> {
     final primaryColor = Theme.of(context).primaryColor;
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final textColor = Theme.of(context).colorScheme.onSurface;
-    final subTextColor =
-        isDarkMode ? Colors.grey[400] : const Color(0xFF57636C);
+    final subTextColor = isDarkMode
+        ? Colors.grey[400]
+        : const Color(0xFF57636C);
 
     // Highlight Color: Lighter Green in Dark Mode for visibility
     final highlightColor = isDarkMode ? const Color(0xFF8FAE8F) : primaryColor;
 
     // Input Field Colors
-    final inputFillColor =
-        isDarkMode ? Theme.of(context).cardTheme.color : Colors.white;
-    final inputBorderColor =
-        isDarkMode ? Colors.white12 : const Color(0xFFE0E3E7);
+    final inputFillColor = isDarkMode
+        ? Theme.of(context).cardTheme.color
+        : Colors.white;
+    final inputBorderColor = isDarkMode
+        ? Colors.white12
+        : const Color(0xFFE0E3E7);
     final inputTextColor = isDarkMode ? Colors.white : const Color(0xFF101213);
 
     return GestureDetector(
@@ -356,24 +400,14 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                                       ),
                                     ),
                                   ),
-                                  // --- UPDATED LOGIC HERE ---
-                                  onChanged: (value) {
-                                    if (value.isNotEmpty) {
-                                      // Logic for Moving Forward
-                                      if (index < 5) {
-                                        _otpFocusNodes[index +
-                                            1].requestFocus();
-                                      } else {
-                                        // Unfocus if it's the last box
-                                        _otpFocusNodes[index].unfocus();
-                                      }
-                                    } else {
-                                      // Logic for Moving Backward (Delete)
-                                      if (index > 0) {
-                                        _otpFocusNodes[index -
-                                            1].requestFocus();
-                                      }
-                                    }
+                                  onTap: () {
+                                    // When tapping on a field, select all text for easy replacement
+                                    _otpControllers[index]
+                                        .selection = TextSelection(
+                                      baseOffset: 0,
+                                      extentOffset:
+                                          _otpControllers[index].text.length,
+                                    );
                                   },
                                 ),
                               ),
@@ -436,10 +470,9 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                           ),
                         ),
                         TextButton(
-                          onPressed:
-                              (_cooldownSeconds > 0 || _isLoading)
-                                  ? null
-                                  : _handleResendOtp,
+                          onPressed: (_cooldownSeconds > 0 || _isLoading)
+                              ? null
+                              : _handleResendOtp,
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: const Size(0, 0),
@@ -452,10 +485,9 @@ class _ContactsVerificationState extends State<ContactsVerification> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color:
-                                  _cooldownSeconds > 0
-                                      ? subTextColor
-                                      : highlightColor,
+                              color: _cooldownSeconds > 0
+                                  ? subTextColor
+                                  : highlightColor,
                             ),
                           ),
                         ),

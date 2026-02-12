@@ -257,6 +257,36 @@ class AccountUtility {
       return Error.errorResponse(e.toString());
     }
   }
+
+  static Future<Map<String, dynamic>> checkEmail({
+    required String email,
+  }) async {
+    try {
+      final url = Uri.parse("$restUser/user/check-email/$email");
+
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+      );
+
+      if (response.body.isEmpty) {
+        return Error.errorResponse("Empty response from server");
+      }
+
+      final data = jsonDecode(response.body);
+
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
+      }
+
+      return {"ok": true, "available": data["available"]};
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
 }
 
 class ProfileUtility {

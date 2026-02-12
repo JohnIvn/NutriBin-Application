@@ -220,14 +220,34 @@ class _SignUpPageState extends State<SignUpPage>
 
       setState(() => _isLoading = true);
 
+      final verifyEmail = await AccountUtility.checkEmail(
+        email: _signUpEmailController.text.trim(),
+      );
+
+      if (verifyEmail["ok"] != true) {
+        _showError(
+          verifyEmail["message"] ??
+              verifyEmail["error"] ??
+              "Server failed to validated email, please try again later",
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      if (verifyEmail["available"] != true) {
+        _showError("Email already exists, please use a different account");
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final verifyResult = await AuthUtility.sendEmailVerification(
         email: _signUpEmailController.text.trim(),
       );
 
       if (verifyResult["ok"] != true) {
-        throw Exception(
-          verifyResult["message"] ?? "Failed to send verification",
-        );
+        _showError(verifyResult["message"] ?? "Failed to send verification");
+        setState(() => _isLoading = false);
+        return;
       }
 
       setState(() => _isLoading = false);

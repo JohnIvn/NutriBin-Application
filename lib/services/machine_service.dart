@@ -112,4 +112,40 @@ class MachineService {
       return Error.errorResponse(e.toString());
     }
   }
+
+  static Future<Map<String, dynamic>> removeMachine({
+    required String machineId,
+  }) async {
+    try {
+      final userId = await PreferenceUtility.getUserId();
+
+      if (userId == null || userId.isEmpty) {
+        return Error.errorResponse("Customer ID Required");
+      }
+      final url = Uri.parse(
+        '$restUser/mobile/machine/delete/$userId/$machineId',
+      );
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["error"] ?? data["message"]);
+      }
+
+      return {
+        "ok": true,
+        "data": data["data"],
+        "message": data["message"] ?? "Successfully registered user",
+      };
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
 }

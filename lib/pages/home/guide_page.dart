@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GuidePage extends StatelessWidget {
   const GuidePage({super.key});
@@ -430,11 +431,7 @@ class GuidePage extends StatelessWidget {
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Support contact - Coming Soon'),
-                      ),
-                    );
+                    _openFaqs();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
@@ -461,6 +458,17 @@ class GuidePage extends StatelessWidget {
         .animate()
         .fadeIn(duration: 400.ms, delay: 600.ms)
         .scale(begin: const Offset(0.95, 0.95), delay: 600.ms);
+  }
+
+  Future<void> _openFaqs() async {
+    final Uri url = Uri.parse('https://nutribin.up.railway.app/login');
+
+    if (!await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication, // opens real browser
+    )) {
+      debugPrint('Could not launch $url');
+    }
   }
 }
 

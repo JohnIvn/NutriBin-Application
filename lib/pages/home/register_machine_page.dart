@@ -113,6 +113,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                       cardColor: isDarkMode ? Colors.black12 : Colors.grey[50]!,
                       textColor: textColor,
                     ),
+                    const SizedBox(height: 12),
 
                     SizedBox(
                       width: double.infinity,

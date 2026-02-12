@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactWidget extends StatefulWidget {
   const ContactWidget({super.key});
@@ -45,16 +46,17 @@ class _ContactWidgetState extends State<ContactWidget>
 
     _slideAnimations = List.generate(
       7,
-      (index) => Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: Interval(
-            index * 0.1,
-            (0.6 + index * 0.1).clamp(0.0, 1.0),
-            curve: Curves.easeInOut,
+      (index) =>
+          Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Interval(
+                index * 0.1,
+                (0.6 + index * 0.1).clamp(0.0, 1.0),
+                curve: Curves.easeInOut,
+              ),
+            ),
           ),
-        ),
-      ),
     );
 
     _animationController.forward();
@@ -86,7 +88,8 @@ class _ContactWidgetState extends State<ContactWidget>
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final cardColor = Theme.of(context).cardTheme.color!;
     final textColor = Theme.of(context).colorScheme.onSurface;
-    final subTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // --- APP BAR CONFIG ---
@@ -109,7 +112,7 @@ class _ContactWidgetState extends State<ContactWidget>
           elevation: 0,
           scrolledUnderElevation: 0,
           systemOverlayStyle: SystemUiOverlayStyle.light,
-          
+
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded, size: 24),
             color: appBarContentColor,
@@ -130,10 +133,7 @@ class _ContactWidgetState extends State<ContactWidget>
           centerTitle: false,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1.0),
-            child: Container(
-              color: Colors.transparent,
-              height: 1.0,
-            ),
+            child: Container(color: Colors.transparent, height: 1.0),
           ),
         ),
         body: SafeArea(
@@ -180,6 +180,7 @@ class _ContactWidgetState extends State<ContactWidget>
                             iconColor: highlightColor,
                             textColor: textColor,
                             isDarkMode: isDarkMode,
+                            onTap: () => _openFaqs(),
                           ),
                           const SizedBox(width: 12),
                           _buildOptionCard(
@@ -190,6 +191,7 @@ class _ContactWidgetState extends State<ContactWidget>
                             iconColor: highlightColor,
                             textColor: textColor,
                             isDarkMode: isDarkMode,
+                            onTap: () => _openFaqs(),
                           ),
                           const SizedBox(width: 12),
                           _buildOptionCard(
@@ -200,6 +202,7 @@ class _ContactWidgetState extends State<ContactWidget>
                             iconColor: highlightColor,
                             textColor: textColor,
                             isDarkMode: isDarkMode,
+                            onTap: () => _openFaqs(),
                           ),
                         ],
                       ),
@@ -223,7 +226,8 @@ class _ContactWidgetState extends State<ContactWidget>
                         index: 3,
                         child: _buildFAQCard(
                           question: 'What does the compost bin system do?',
-                          answer: 'The compost bin system helps convert organic waste like food scraps and garden waste into nutrient-rich compost, reducing landfill waste and creating a natural fertilizer for plants.',
+                          answer:
+                              'The compost bin system helps convert organic waste like food scraps and garden waste into nutrient-rich compost, reducing landfill waste and creating a natural fertilizer for plants.',
                           cardColor: cardColor,
                           textColor: textColor,
                           subTextColor: subTextColor,
@@ -236,8 +240,10 @@ class _ContactWidgetState extends State<ContactWidget>
                       _buildAnimatedContainer(
                         index: 4,
                         child: _buildFAQCard(
-                          question: 'What types of waste can be placed in the compost bin?',
-                          answer: 'You can place fruit and vegetable scraps, coffee grounds, eggshells, garden clippings, and other biodegradable organic materials. Avoid meat, dairy, and oily foods as they can attract pests.',
+                          question:
+                              'What types of waste can be placed in the compost bin?',
+                          answer:
+                              'You can place fruit and vegetable scraps, coffee grounds, eggshells, garden clippings, and other biodegradable organic materials. Avoid meat, dairy, and oily foods as they can attract pests.',
                           cardColor: cardColor,
                           textColor: textColor,
                           subTextColor: subTextColor,
@@ -250,8 +256,10 @@ class _ContactWidgetState extends State<ContactWidget>
                       _buildAnimatedContainer(
                         index: 5,
                         child: _buildFAQCard(
-                          question: 'How does the system monitor the composting process?',
-                          answer: 'The system uses sensors to monitor temperature, moisture, and aeration levels to ensure optimal composting conditions, providing notifications if adjustments are needed.',
+                          question:
+                              'How does the system monitor the composting process?',
+                          answer:
+                              'The system uses sensors to monitor temperature, moisture, and aeration levels to ensure optimal composting conditions, providing notifications if adjustments are needed.',
                           cardColor: cardColor,
                           textColor: textColor,
                           subTextColor: subTextColor,
@@ -264,15 +272,17 @@ class _ContactWidgetState extends State<ContactWidget>
                       _buildAnimatedContainer(
                         index: 6,
                         child: _buildFAQCard(
-                          question: 'Does the compost bin require regular maintenance?',
-                          answer: 'Yes, regular maintenance involves adding the right mix of green and brown materials, stirring or turning the compost, and checking sensor readings to maintain proper conditions for decomposition.',
+                          question:
+                              'Does the compost bin require regular maintenance?',
+                          answer:
+                              'Yes, regular maintenance involves adding the right mix of green and brown materials, stirring or turning the compost, and checking sensor readings to maintain proper conditions for decomposition.',
                           cardColor: cardColor,
                           textColor: textColor,
                           subTextColor: subTextColor,
                           isDarkMode: isDarkMode,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -293,48 +303,60 @@ class _ContactWidgetState extends State<ContactWidget>
     required Color iconColor,
     required Color textColor,
     required bool isDarkMode,
+    required VoidCallback onTap,
   }) {
     return Expanded(
       child: _buildAnimatedContainer(
         index: index,
-        child: Container(
-          height: 100,
-          decoration: BoxDecoration(
-            color: cardColor,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(12),
-            border: isDarkMode 
-                ? Border.all(color: Colors.white.withOpacity(0.05)) 
-                : Border.all(color: Colors.grey.withOpacity(0.2)),
-            boxShadow: isDarkMode ? [] : [
-              const BoxShadow(
-                blurRadius: 4,
-                color: Color(0x0D000000),
-                offset: Offset(0, 2),
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            child: Container(
+              height: 100,
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: isDarkMode
+                    ? Border.all(color: Colors.white.withOpacity(0.05))
+                    : Border.all(color: Colors.grey.withOpacity(0.2)),
+                boxShadow: isDarkMode
+                    ? []
+                    : [
+                        const BoxShadow(
+                          blurRadius: 4,
+                          color: Color(0x0D000000),
+                          offset: Offset(0, 2),
+                        ),
+                      ],
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: iconColor, size: 24),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: textColor,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: textColor,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -342,7 +364,7 @@ class _ContactWidgetState extends State<ContactWidget>
   }
 
   Widget _buildFAQCard({
-    required String question, 
+    required String question,
     required String answer,
     required Color cardColor,
     required Color textColor,
@@ -354,16 +376,18 @@ class _ContactWidgetState extends State<ContactWidget>
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: isDarkMode 
-            ? Border.all(color: Colors.white.withOpacity(0.05)) 
+        border: isDarkMode
+            ? Border.all(color: Colors.white.withOpacity(0.05))
             : Border.all(color: Colors.grey.withOpacity(0.2)),
-        boxShadow: isDarkMode ? [] : [
-          const BoxShadow(
-            blurRadius: 3,
-            color: Color(0x0D000000),
-            offset: Offset(0, 1),
-          ),
-        ],
+        boxShadow: isDarkMode
+            ? []
+            : [
+                const BoxShadow(
+                  blurRadius: 3,
+                  color: Color(0x0D000000),
+                  offset: Offset(0, 1),
+                ),
+              ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -382,7 +406,7 @@ class _ContactWidgetState extends State<ContactWidget>
             Text(
               answer,
               style: GoogleFonts.inter(
-                fontSize: 13, 
+                fontSize: 13,
                 color: subTextColor,
                 height: 1.5,
               ),
@@ -391,5 +415,16 @@ class _ContactWidgetState extends State<ContactWidget>
         ),
       ),
     );
+  }
+
+  Future<void> _openFaqs() async {
+    final Uri url = Uri.parse('https://nutribin.up.railway.app/login');
+
+    if (!await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication, // opens real browser
+    )) {
+      debugPrint('Could not launch $url');
+    }
   }
 }

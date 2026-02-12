@@ -22,7 +22,32 @@ class _MapPickerPageState extends State<MapPickerPage> {
   bool _isLoadingLocation = false;
   final TextEditingController _searchController = TextEditingController();
 
+  // Theme-aware color getters
   Color get _primaryColor => Theme.of(context).primaryColor;
+  Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
+
+  Color get _surfaceColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF1C2420)
+      : Colors.white;
+
+  Color get _primaryTextColor => Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : const Color(0xFF101213);
+
+  Color get _secondaryTextColor =>
+      Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFB5C1B8)
+      : const Color(0xFF57636C);
+
+  Color get _inputBorderColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF2F3532)
+      : const Color(0xFFE0E3E7);
+
+  Color get _linkColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF8FAE8F)
+      : _primaryColor;
+
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
   @override
   void initState() {
@@ -197,7 +222,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
       ),
       body: Stack(
         children: [
-          // Map
+          // Map - STAYS LIGHT MODE
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -216,7 +241,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
                     point: _selectedLocation,
                     width: 40,
                     height: 40,
-                    child: Icon(
+                    child: const Icon(
                       Icons.location_pin,
                       color: Colors.red,
                       size: 40,
@@ -227,41 +252,39 @@ class _MapPickerPageState extends State<MapPickerPage> {
             ],
           ),
 
-          // Search bar
+          // Search bar - THEME AWARE
           Positioned(
             top: 16,
             left: 16,
             right: 16,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: _surfaceColor,
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withOpacity(_isDarkMode ? 0.3 : 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
+                border: _isDarkMode
+                    ? Border.all(color: _inputBorderColor, width: 1)
+                    : null,
               ),
               child: TextField(
                 controller: _searchController,
+                style: TextStyle(color: _primaryTextColor),
                 decoration: InputDecoration(
                   hintText: 'Search location...',
-                  hintStyle: const TextStyle(
-                    color: Color(0xFF57636C),
+                  hintStyle: TextStyle(
+                    color: _secondaryTextColor,
                     fontSize: 14,
                   ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: Color(0xFF57636C),
-                  ),
+                  prefixIcon: Icon(Icons.search, color: _secondaryTextColor),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(
-                            Icons.clear,
-                            color: Color(0xFF57636C),
-                          ),
+                          icon: Icon(Icons.clear, color: _secondaryTextColor),
                           onPressed: () {
                             _searchController.clear();
                             setState(() {});
@@ -277,7 +300,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
                     vertical: 16,
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: _surfaceColor,
                 ),
                 onSubmitted: _searchLocation,
                 onChanged: (value) => setState(() {}),
@@ -285,25 +308,29 @@ class _MapPickerPageState extends State<MapPickerPage> {
             ),
           ),
 
-          // Current location button
+          // Current location button - THEME AWARE
           Positioned(
             right: 16,
             bottom: 180,
             child: FloatingActionButton(
               heroTag: 'current_location',
               onPressed: _getCurrentLocation,
-              backgroundColor: Colors.white,
+              backgroundColor: _surfaceColor,
+              elevation: _isDarkMode ? 4 : 2,
               child: _isLoadingLocation
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: _primaryColor,
+                      ),
                     )
                   : Icon(Icons.my_location, color: _primaryColor),
             ),
           ),
 
-          // Address display and confirm button
+          // Address display and confirm button - THEME AWARE
           Positioned(
             left: 16,
             right: 16,
@@ -311,37 +338,43 @@ class _MapPickerPageState extends State<MapPickerPage> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: _surfaceColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withOpacity(_isDarkMode ? 0.3 : 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, -2),
                   ),
                 ],
+                border: _isDarkMode
+                    ? Border.all(color: _inputBorderColor, width: 1)
+                    : null,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Selected Location',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF57636C),
+                      color: _secondaryTextColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 8),
                   _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           child: Center(
                             child: SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _primaryColor,
+                              ),
                             ),
                           ),
                         )
@@ -349,9 +382,9 @@ class _MapPickerPageState extends State<MapPickerPage> {
                           _selectedAddress.isEmpty
                               ? 'Tap on the map to select a location'
                               : _selectedAddress,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF101213),
+                            color: _primaryTextColor,
                             fontWeight: FontWeight.w600,
                           ),
                           maxLines: 2,
@@ -366,7 +399,9 @@ class _MapPickerPageState extends State<MapPickerPage> {
                           : _confirmLocation,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryColor,
-                        disabledBackgroundColor: Colors.grey[300],
+                        disabledBackgroundColor: _isDarkMode
+                            ? _inputBorderColor
+                            : Colors.grey[300],
                         minimumSize: const Size(double.infinity, 48),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
