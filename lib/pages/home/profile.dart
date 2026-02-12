@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/pages/home/mfa_settings.dart';
+import 'package:nutribin_application/services/account_service.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 
@@ -25,6 +26,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   String phoneNumber = '';
   String address = '';
   String mfaType = 'disable';
+  String? profileUrl;
 
   bool isLoading = true;
   String? errorMessage;
@@ -94,6 +96,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         email: true,
       );
 
+      final pfp = await ProfileUtility.fetchPfp();
+
       if (!mounted) return;
 
       setState(() {
@@ -102,6 +106,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         phoneNumber = profile["contact"]?.toString() ?? '';
         address = profile["address"]?.toString() ?? '';
         email = profile["email"]?.toString() ?? '';
+
+        // Set profile picture URL
+        if (pfp["ok"] == true && pfp["data"] != null) {
+          profileUrl = pfp["data"]["avatar"];
+        }
       });
       _fetchMfa();
     } catch (e) {
@@ -179,26 +188,69 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _getAvatarColor(isDarkMode),
-                    border: Border.all(color: Colors.white, width: 3),
+                    color: profileUrl != null && profileUrl!.isNotEmpty
+                        ? Colors.transparent
+                        : _getAvatarColor(isDarkMode),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
                         blurRadius: 10,
-                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
-                  child: Center(
-                    child: Text(
-                      _getInitials(),
-                      style: GoogleFonts.inter(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  child: profileUrl != null && profileUrl!.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            profileUrl!,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              // Fallback to initials if image fails to load
+                              return Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _getAvatarColor(isDarkMode),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    _getInitials(),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            _getInitials(),
+                            style: GoogleFonts.inter(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 16),
                 Text(

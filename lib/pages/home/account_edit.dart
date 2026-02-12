@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:nutribin_application/models/user.dart';
+import 'package:nutribin_application/services/account_service.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 import 'package:nutribin_application/widgets/map_picker.dart';
@@ -19,6 +22,7 @@ class AccountEditWidget extends StatefulWidget {
 
 class _AccountEditWidgetState extends State<AccountEditWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  final ImagePicker _imagePicker = ImagePicker();
 
   // Text controllers
   late TextEditingController _firstNameController;
@@ -35,6 +39,11 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
   bool isLoading = true;
   String? errorMessage;
   String? _originalContact;
+
+  // Profile picture state
+  String? profileUrl;
+  File? _newProfileImage;
+  bool _shouldDeleteProfilePic = false;
 
   @override
   void initState() {
@@ -70,6 +79,147 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     _contactFocusNode.dispose();
 
     super.dispose();
+  }
+
+  String _getInitials() {
+    String initials = '';
+    if (_firstNameController.text.isNotEmpty) {
+      initials += _firstNameController.text[0];
+    }
+    if (_lastNameController.text.isNotEmpty) {
+      initials += _lastNameController.text[0];
+    }
+    return initials.isEmpty ? '?' : initials.toUpperCase();
+  }
+
+  Color _getAvatarColor(bool isDarkMode) {
+    final name = '${_firstNameController.text}${_lastNameController.text}';
+    if (name.isEmpty) return Theme.of(context).primaryColor;
+
+    final colors = [
+      const Color(0xFF4285F4),
+      const Color(0xFFEA4335),
+      const Color(0xFFFBBC04),
+      const Color(0xFF34A853),
+      const Color(0xFFFF6D00),
+      const Color(0xFF9C27B0),
+      const Color(0xFF00BCD4),
+      const Color(0xFFE91E63),
+    ];
+    return colors[name.codeUnitAt(0) % colors.length];
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _newProfileImage = File(pickedFile.path);
+          _shouldDeleteProfilePic =
+              false; // Cancel deletion if new image is picked
+        });
+      }
+    } catch (e) {
+      _showError('Failed to pick image: $e');
+    }
+  }
+
+  void _deleteProfilePicture() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardTheme.color,
+        title: Text(
+          'Delete Profile Picture',
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+        ),
+        content: Text(
+          'Are you sure you want to delete your profile picture?',
+          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _shouldDeleteProfilePic = true;
+                _newProfileImage = null;
+                profileUrl = null;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProfilePictureOptions() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardTheme.color!;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.photo_library, color: textColor),
+                title: Text(
+                  'Choose from Gallery',
+                  style: GoogleFonts.inter(color: textColor),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage();
+                },
+              ),
+              if (profileUrl != null || _newProfileImage != null)
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: Text(
+                    'Delete Profile Picture',
+                    style: GoogleFonts.inter(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _deleteProfilePicture();
+                  },
+                ),
+              ListTile(
+                leading: Icon(Icons.cancel, color: textColor.withOpacity(0.6)),
+                title: Text(
+                  'Cancel',
+                  style: GoogleFonts.inter(color: textColor.withOpacity(0.6)),
+                ),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -127,8 +277,71 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
                   children: [
+                    const SizedBox(height: 24),
+
+                    // Profile Picture Section
+                    Center(
+                      child: Stack(
+                        children: [
+                          GestureDetector(
+                            onTap: _showProfilePictureOptions,
+                            child: Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    (_newProfileImage != null ||
+                                        (profileUrl != null &&
+                                            !_shouldDeleteProfilePic))
+                                    ? Colors.transparent
+                                    : _getAvatarColor(isDarkMode),
+                                border: Border.all(
+                                  color: primaryColor,
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: _buildProfileImage(isDarkMode),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _showProfilePictureOptions,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: primaryColor,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: backgroundColor,
+                                    width: 3,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                       child: Row(
                         children: [
                           Text(
@@ -220,7 +433,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
                                   style: GoogleFonts.inter(color: textColor),
                                   decoration: _inputDecoration(
                                     'Contact Number',
-                                    hint: '+63 912 345 6789',
+                                    hint: '09123456789',
                                     cardColor: cardColor,
                                     textColor: textColor,
                                     isDarkMode: isDarkMode,
@@ -290,6 +503,64 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     );
   }
 
+  Widget _buildProfileImage(bool isDarkMode) {
+    // Show new image if selected
+    if (_newProfileImage != null) {
+      return ClipOval(
+        child: Image.file(
+          _newProfileImage!,
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    // Show existing profile URL if available and not marked for deletion
+    if (profileUrl != null && !_shouldDeleteProfilePic) {
+      return ClipOval(
+        child: Image.network(
+          profileUrl!,
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildInitialsAvatar();
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                    : null,
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // Show initials as fallback
+    return _buildInitialsAvatar();
+  }
+
+  Widget _buildInitialsAvatar() {
+    return Center(
+      child: Text(
+        _getInitials(),
+        style: GoogleFonts.inter(
+          fontSize: 48,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
   Future<void> _fetchAccount() async {
     try {
       setState(() {
@@ -303,6 +574,8 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         email: true,
       );
 
+      final pfp = await ProfileUtility.fetchPfp();
+
       if (!mounted) return;
 
       setState(() {
@@ -311,6 +584,12 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         _addressController.text = profile["address"]?.toString() ?? '';
         _contactController.text = profile["contact"]?.toString() ?? '';
         _originalContact = profile["contact"]?.toString() ?? '';
+
+        // Set profile picture URL
+        if (pfp["ok"] == true && pfp["data"] != null) {
+          profileUrl = pfp["data"]["avatar"];
+        }
+
         isLoading = false;
       });
     } catch (e) {
@@ -373,7 +652,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
           return false;
         }
       } else {
-        _showError('Contact must start with +63 or 09');
+        _showError('Contact must start with 09');
         return false;
       }
     }
@@ -416,7 +695,7 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         final verificationResult = await Navigator.pushNamed(
           context,
           '/verify-contacts',
-          arguments: {'recipient': currentContact, 'type': 'contact'},
+          arguments: {'recipient': currentContact, 'type': 'sms'},
         );
 
         if (verificationResult == null) {
@@ -466,6 +745,32 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
     });
 
     try {
+      // Handle profile picture operations first
+      if (_shouldDeleteProfilePic) {
+        // Delete profile picture
+        final deleteResult = await ProfileUtility.deletePfp();
+        if (deleteResult["ok"] != true) {
+          if (!mounted) return;
+          _showError('Failed to delete profile picture');
+          setState(() {
+            isLoading = false;
+          });
+          return;
+        }
+      } else if (_newProfileImage != null) {
+        // Upload new profile picture
+        final uploadResult = await ProfileUtility.uploadPfp(_newProfileImage!);
+        if (uploadResult["ok"] != true) {
+          if (!mounted) return;
+          _showError('Failed to upload profile picture');
+          setState(() {
+            isLoading = false;
+          });
+          return;
+        }
+      }
+
+      // Update user information
       final result = await AuthUtility.updateUser(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
@@ -556,27 +861,5 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
         borderRadius: BorderRadius.circular(8),
       ),
     );
-  }
-
-  void autoPrefixPHContact(TextEditingController controller) {
-    final text = controller.text;
-
-    if (text.startsWith('09')) {
-      final newText = '+63${text.substring(1)}';
-      controller.value = TextEditingValue(
-        text: newText,
-        selection: TextSelection.collapsed(offset: newText.length),
-      );
-    }
-  }
-
-  String normalizePHContact(String value) {
-    final contact = value.trim();
-
-    if (contact.startsWith('09')) {
-      return '+63${contact.substring(1)}';
-    }
-
-    return contact;
   }
 }

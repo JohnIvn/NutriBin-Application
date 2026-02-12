@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:nutribin_application/utils/helpers.dart';
@@ -298,7 +299,7 @@ class ProfileUtility {
         return Error.errorResponse("Customer ID not found, please sign in");
       }
 
-      final url = Uri.parse("$restUser/user/$customerId");
+      final url = Uri.parse("$restUser/settings/$customerId");
 
       final responseSignin = await http.get(
         url,
@@ -310,78 +311,13 @@ class ProfileUtility {
 
       final data = jsonDecode(responseSignin.body);
 
+      print("FETCHED PROFILE DEBUG: $data");
+
       if (data["ok"] != true) {
         return Error.errorResponse(data["message"] ?? data["error"]);
       }
 
       return {"ok": true, "data": data["user"] ?? data["data"]};
-    } catch (e) {
-      return Error.errorResponse(e.toString());
-    }
-  }
-
-  static Future<Map<String, dynamic>> updateProfile({
-    String? firstname,
-    String? lastname,
-    String? address,
-    String? contact,
-  }) async {
-    try {
-      // Pre-API Validation
-      final isValidFirstname = ValidationUtility.validateName(
-        firstname.toString(),
-      );
-      final isValidLastname = ValidationUtility.validateName(
-        lastname.toString(),
-      );
-      final isValidContact = ValidationUtility.validateContact(
-        contact.toString(),
-      );
-
-      if (isValidFirstname["ok"] != true) {
-        return isValidFirstname;
-      }
-      if (isValidLastname["ok"] != true) {
-        return isValidLastname;
-      }
-      if (address.toString().isEmpty) {
-        return Error.errorResponse("Address must not be empty");
-      }
-      if (isValidContact["ok"] != true) {
-        return isValidFirstname;
-      }
-
-      // URL
-      final url = Uri.parse("$restUser/user/update");
-
-      // Body
-      final body = {firstname, lastname, contact, address};
-
-      // Response (Signin)
-      final responseSignin = await http.patch(
-        url,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
-        },
-        body: jsonEncode(body),
-      );
-
-      final data = jsonDecode(responseSignin.body);
-
-      // Error Handling
-      if (data["ok"] != true) {
-        throw Exception(data["message"]);
-      }
-
-      await updatePrefs(
-        firstname: firstname,
-        lastname: lastname,
-        contact: contact,
-        address: address,
-      );
-
-      return {"ok": true, "data": data["user"]};
     } catch (e) {
       return Error.errorResponse(e.toString());
     }
@@ -410,6 +346,101 @@ class ProfileUtility {
     }
     if (mfa != null) {
       await prefs.setBool('mfa', mfa);
+    }
+  }
+
+  static Future<Map<String, dynamic>> fetchPfp() async {
+    try {
+      final customerId = await PreferenceUtility.getUserId();
+
+      if (customerId == null || customerId.isEmpty) {
+        return Error.errorResponse("Customer ID not found, please sign in");
+      }
+
+      final url = Uri.parse("$restUser/settings/$customerId/photo");
+
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      print("FETCHED PICTURE DEBUG: $data");
+
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
+      }
+
+      return {"ok": true, "data": data["user"] ?? data["data"]};
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
+  static Future<Map<String, dynamic>> uploadPfp(File image) async {
+    try {
+      final customerId = await PreferenceUtility.getUserId();
+
+      if (customerId == null || customerId.isEmpty) {
+        return Error.errorResponse("Customer ID not found, please sign in");
+      }
+
+      final url = Uri.parse("$restUser/settings/$customerId/photo");
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+        body: {"uploadedFile": image},
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
+      }
+
+      return {"ok": true, "data": data["user"] ?? data["data"]};
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
+  static Future<Map<String, dynamic>> deletePfp() async {
+    try {
+      final customerId = await PreferenceUtility.getUserId();
+
+      if (customerId == null || customerId.isEmpty) {
+        return Error.errorResponse("Customer ID not found, please sign in");
+      }
+
+      final url = Uri.parse("$restUser/settings/$customerId/photo");
+
+      final response = await http.delete(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      print("FETCHED PICTURE DEBUG: $data");
+
+      if (data["ok"] != true) {
+        return Error.errorResponse(data["message"] ?? data["error"]);
+      }
+
+      return {"ok": true, "data": data["user"] ?? data["data"]};
+    } catch (e) {
+      return Error.errorResponse(e.toString());
     }
   }
 }

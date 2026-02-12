@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/services/account_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,6 +16,7 @@ class _AccountPageState extends State<AccountPage> {
 
   String userName = "User";
   String userEmail = "user@example.com";
+  String? profileUrl;
 
   @override
   void initState() {
@@ -29,8 +31,15 @@ class _AccountPageState extends State<AccountPage> {
       email: true,
     );
 
+    final profile = await ProfileUtility.fetchPfp();
+
+
     if (mounted) {
       setState(() {
+        if (profile["ok"] == true && profile["data"] != null) {
+          profileUrl = profile["data"]["avatar"];
+        }
+
         final first = user["firstName"] as String? ?? "";
         final last = user["lastName"] as String? ?? "";
         userName = "$first $last".trim();
@@ -270,25 +279,71 @@ class _AccountPageState extends State<AccountPage> {
               height: 70,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _getAvatarColor(isDarkMode),
+                color: profileUrl != null && profileUrl!.isNotEmpty
+                    ? Colors.transparent
+                    : _getAvatarColor(isDarkMode),
                 boxShadow: [
                   BoxShadow(
-                    color: _getAvatarColor(isDarkMode).withOpacity(0.4),
+                    color: profileUrl != null && profileUrl!.isNotEmpty
+                        ? Colors.black.withOpacity(0.2)
+                        : _getAvatarColor(isDarkMode).withOpacity(0.4),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Center(
-                child: Text(
-                  _getInitials(),
-                  style: GoogleFonts.interTight(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+              child: profileUrl != null && profileUrl!.isNotEmpty
+                  ? ClipOval(
+                      child: Image.network(
+                        profileUrl!,
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback to initials if image fails to load
+                          return Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _getAvatarColor(isDarkMode),
+                            ),
+                            child: Center(
+                              child: Text(
+                                _getInitials(),
+                                style: GoogleFonts.interTight(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                  : null,
+                              strokeWidth: 2,
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        _getInitials(),
+                        style: GoogleFonts.interTight(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
             ),
             const SizedBox(width: 20),
             // Info
