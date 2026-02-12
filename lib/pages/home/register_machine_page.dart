@@ -16,6 +16,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
   final _machineIdController = TextEditingController();
   final _wifiNameController = TextEditingController();
   final _wifiPasswordController = TextEditingController();
+  // ignore: unused_field
   bool _isLoading = false;
 
   @override

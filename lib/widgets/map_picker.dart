@@ -24,7 +24,6 @@ class _MapPickerPageState extends State<MapPickerPage> {
 
   // Theme-aware color getters
   Color get _primaryColor => Theme.of(context).primaryColor;
-  Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
 
   Color get _surfaceColor => Theme.of(context).brightness == Brightness.dark
       ? const Color(0xFF1C2420)
@@ -42,10 +41,6 @@ class _MapPickerPageState extends State<MapPickerPage> {
   Color get _inputBorderColor => Theme.of(context).brightness == Brightness.dark
       ? const Color(0xFF2F3532)
       : const Color(0xFFE0E3E7);
-
-  Color get _linkColor => Theme.of(context).brightness == Brightness.dark
-      ? const Color(0xFF8FAE8F)
-      : _primaryColor;
 
   bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 

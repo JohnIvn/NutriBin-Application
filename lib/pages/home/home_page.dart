@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nutribin_application/models/machine.dart';
 import 'package:nutribin_application/pages/home/account.dart';
 import 'package:nutribin_application/pages/home/dashboard.dart';
 import 'package:nutribin_application/pages/home/fertilizer.dart';

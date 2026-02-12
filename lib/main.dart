@@ -9,8 +9,6 @@ import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/pages/common/about.dart';
 import 'package:nutribin_application/pages/home/account.dart';
 import 'package:nutribin_application/pages/home/account_edit.dart';
-import 'package:nutribin_application/pages/home/dashboard.dart';
-import 'package:nutribin_application/pages/home/fertilizer.dart';
 import 'package:nutribin_application/pages/home/profile.dart';
 import 'package:nutribin_application/pages/auth/signup.dart';
 import 'package:nutribin_application/pages/home/home_page.dart';

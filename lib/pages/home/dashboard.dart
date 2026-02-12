@@ -16,7 +16,6 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage>
     with SingleTickerProviderStateMixin {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  int? _expandedFertilizerIndex;
   int? _expandedMachineReportIndex;
   Timer? _dataRefreshTimer;
 
@@ -99,6 +98,7 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   // Generate fertilizer data based on real sensor values
+  // ignore: unused_element
   List<Map<String, dynamic>> get _fertilizerData {
     final nitrogen = double.tryParse(sensorData['nitrogen'] ?? '0') ?? 0;
     final phosphorus = double.tryParse(sensorData['phosphorus'] ?? '0') ?? 0;

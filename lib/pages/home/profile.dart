@@ -49,10 +49,14 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     if (name.isEmpty) return Theme.of(context).primaryColor;
 
     final colors = [
-      const Color(0xFF4285F4), const Color(0xFFEA4335),
-      const Color(0xFFFBBC04), const Color(0xFF34A853),
-      const Color(0xFFFF6D00), const Color(0xFF9C27B0),
-      const Color(0xFF00BCD4), const Color(0xFFE91E63),
+      const Color(0xFF4285F4),
+      const Color(0xFFEA4335),
+      const Color(0xFFFBBC04),
+      const Color(0xFF34A853),
+      const Color(0xFFFF6D00),
+      const Color(0xFF9C27B0),
+      const Color(0xFF00BCD4),
+      const Color(0xFFE91E63),
     ];
     return colors[name.codeUnitAt(0) % colors.length];
   }
@@ -63,7 +67,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
   void _fetchMfa() async {
     if (firstName.isEmpty) setState(() => isLoading = true);
-    
+
     try {
       final response = await AuthUtility.fetchMfa();
       if (mounted) {
@@ -85,7 +89,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       });
 
       final profile = await PreferenceUtility.getProfile(
-        name: true, contacts: true, email: true,
+        name: true,
+        contacts: true,
+        email: true,
       );
 
       if (!mounted) return;
@@ -114,7 +120,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final cardColor = Theme.of(context).cardTheme.color!;
     final textColor = Theme.of(context).colorScheme.onSurface;
-    final subTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // AppBar Colors
@@ -133,7 +140,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         elevation: 0,
         scrolledUnderElevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        
+
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: appBarContentColor),
           onPressed: () => Navigator.pop(context),
@@ -162,172 +169,188 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       body: isLoading
           ? Center(child: CircularProgressIndicator(color: appBarContentColor))
           : errorMessage != null
-              ? _buildErrorView(appBarContentColor)
-              : Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    // Avatar & Name (Top Section)
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _getAvatarColor(isDarkMode),
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
+          ? _buildErrorView(appBarContentColor)
+          : Column(
+              children: [
+                const SizedBox(height: 20),
+                // Avatar & Name (Top Section)
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _getAvatarColor(isDarkMode),
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      _getInitials(),
+                      style: GoogleFonts.inter(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '$firstName $lastName',
+                  style: GoogleFonts.interTight(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: appBarContentColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: appBarContentColor.withOpacity(0.8),
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Scrollable Content Area
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                      boxShadow: isDarkMode
+                          ? []
+                          : [
+                              BoxShadow(
+                                blurRadius: 10,
+                                color: Colors.black.withOpacity(0.1),
+                                offset: const Offset(0, -2),
+                              ),
+                            ],
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Personal Info',
+                            style: GoogleFonts.interTight(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: textColor,
+                            ),
                           ),
+                          const SizedBox(height: 16),
+
+                          _buildProfileRow(
+                            icon: Icons.person_outline_rounded,
+                            label: 'Full Name',
+                            value: '$firstName $lastName',
+                            cardColor: cardColor,
+                            textColor: textColor,
+                            subTextColor: subTextColor,
+                            highlightColor: highlightColor,
+                            isDarkMode: isDarkMode,
+                          ),
+
+                          _buildProfileRow(
+                            icon: Icons.location_on_outlined,
+                            label: 'Address',
+                            value: address.isEmpty ? 'Not set' : address,
+                            cardColor: cardColor,
+                            textColor: textColor,
+                            subTextColor: subTextColor,
+                            highlightColor: highlightColor,
+                            isDarkMode: isDarkMode,
+                          ),
+
+                          _buildProfileRow(
+                            icon: Icons.phone_outlined,
+                            label: 'Phone Number',
+                            value: phoneNumber.isEmpty
+                                ? 'Not set'
+                                : phoneNumber,
+                            cardColor: cardColor,
+                            textColor: textColor,
+                            subTextColor: subTextColor,
+                            highlightColor: highlightColor,
+                            isDarkMode: isDarkMode,
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          Text(
+                            'Security',
+                            style: GoogleFonts.interTight(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // MFA Status
+                          _buildMfaStatusRow(
+                            cardColor,
+                            textColor,
+                            subTextColor,
+                            isDarkMode,
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Action Buttons
+                          _buildActionButton(
+                            icon: Icons.edit_outlined,
+                            label: 'Edit Profile Details',
+                            onTap: () async {
+                              final didUpdate = await Navigator.pushNamed(
+                                context,
+                                '/account-edit',
+                              );
+                              if (didUpdate == true) _reloadAccount();
+                            },
+                            primaryColor: primaryColor,
+                            highlightColor: highlightColor,
+                            isDarkMode: isDarkMode,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildActionButton(
+                            icon: Icons.lock_outline_rounded,
+                            label: 'Change Password',
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/forgot-password',
+                                arguments: {'type': "change"},
+                              );
+                            },
+                            primaryColor: primaryColor,
+                            highlightColor: highlightColor,
+                            isDarkMode: isDarkMode,
+                          ),
+
+                          const SizedBox(height: 40),
                         ],
                       ),
-                      child: Center(
-                        child: Text(
-                          _getInitials(),
-                          style: GoogleFonts.inter(
-                            fontSize: 40,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '$firstName $lastName',
-                      style: GoogleFonts.interTight(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: appBarContentColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      email,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: appBarContentColor.withOpacity(0.8),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Scrollable Content Area
-                    Expanded(
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: backgroundColor,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            topRight: Radius.circular(24),
-                          ),
-                          boxShadow: isDarkMode ? [] : [
-                             BoxShadow(
-                              blurRadius: 10,
-                              color: Colors.black.withOpacity(0.1),
-                              offset: const Offset(0, -2),
-                            ),
-                          ],
-                        ),
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Personal Info',
-                                style: GoogleFonts.interTight(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: textColor,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              
-                              _buildProfileRow(
-                                icon: Icons.person_outline_rounded,
-                                label: 'Full Name',
-                                value: '$firstName $lastName',
-                                cardColor: cardColor,
-                                textColor: textColor,
-                                subTextColor: subTextColor,
-                                highlightColor: highlightColor,
-                                isDarkMode: isDarkMode,
-                              ),
-                              
-                              _buildProfileRow(
-                                icon: Icons.location_on_outlined,
-                                label: 'Address',
-                                value: address.isEmpty ? 'Not set' : address,
-                                cardColor: cardColor,
-                                textColor: textColor,
-                                subTextColor: subTextColor,
-                                highlightColor: highlightColor,
-                                isDarkMode: isDarkMode,
-                              ),
-                              
-                              _buildProfileRow(
-                                icon: Icons.phone_outlined,
-                                label: 'Phone Number',
-                                value: phoneNumber.isEmpty ? 'Not set' : phoneNumber,
-                                cardColor: cardColor,
-                                textColor: textColor,
-                                subTextColor: subTextColor,
-                                highlightColor: highlightColor,
-                                isDarkMode: isDarkMode,
-                              ),
-
-                              const SizedBox(height: 32),
-                              
-                              Text(
-                                'Security',
-                                style: GoogleFonts.interTight(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: textColor,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-
-                              // MFA Status
-                              _buildMfaStatusRow(cardColor, textColor, subTextColor, isDarkMode),
-
-                              const SizedBox(height: 24),
-                              
-                              // Action Buttons
-                              _buildActionButton(
-                                icon: Icons.edit_outlined,
-                                label: 'Edit Profile Details',
-                                onTap: () async {
-                                  final didUpdate = await Navigator.pushNamed(context, '/account-edit');
-                                  if (didUpdate == true) _reloadAccount();
-                                },
-                                primaryColor: primaryColor,
-                                highlightColor: highlightColor,
-                                isDarkMode: isDarkMode,
-                              ),
-                              const SizedBox(height: 12),
-                              _buildActionButton(
-                                icon: Icons.lock_outline_rounded,
-                                label: 'Change Password',
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/forgot-password', arguments: {'type': "change"});
-                                },
-                                primaryColor: primaryColor,
-                                highlightColor: highlightColor,
-                                isDarkMode: isDarkMode,
-                              ),
-                              
-                              const SizedBox(height: 40),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
+              ],
+            ),
     );
   }
 
@@ -348,8 +371,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: isDarkMode 
-              ? Border.all(color: Colors.white.withOpacity(0.05)) 
+          border: isDarkMode
+              ? Border.all(color: Colors.white.withOpacity(0.05))
               : Border.all(color: Colors.grey.withOpacity(0.2)),
         ),
         child: Row(
@@ -386,7 +409,12 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     );
   }
 
-  Widget _buildMfaStatusRow(Color cardColor, Color textColor, Color subTextColor, bool isDarkMode) {
+  Widget _buildMfaStatusRow(
+    Color cardColor,
+    Color textColor,
+    Color subTextColor,
+    bool isDarkMode,
+  ) {
     final bool isEnabled = mfaType == 'email' || mfaType == 'sms';
     String statusText = 'Disabled';
     IconData statusIcon = Icons.cancel_outlined;
@@ -406,22 +434,21 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: isDarkMode 
-            ? Border.all(color: Colors.white.withOpacity(0.05)) 
+        border: isDarkMode
+            ? Border.all(color: Colors.white.withOpacity(0.05))
             : Border.all(color: Colors.grey.withOpacity(0.2)),
       ),
       child: InkWell(
         onTap: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => MfaSettingsPage()));
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MfaSettingsPage()),
+          );
           _fetchMfa();
         },
         child: Row(
           children: [
-            Icon(
-              Icons.security_rounded,
-              color: statusColor,
-              size: 24,
-            ),
+            Icon(Icons.security_rounded, color: statusColor, size: 24),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -439,7 +466,10 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -480,8 +510,10 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     required Color highlightColor,
     required bool isDarkMode,
   }) {
-    final btnColor = isDarkMode ? Colors.white.withOpacity(0.05) : primaryColor.withOpacity(0.08);
-    
+    final btnColor = isDarkMode
+        ? Colors.white.withOpacity(0.05)
+        : primaryColor.withOpacity(0.08);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -490,7 +522,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         decoration: BoxDecoration(
           color: btnColor,
           borderRadius: BorderRadius.circular(12),
-          border: isDarkMode ? Border.all(color: Colors.white.withOpacity(0.05)) : null,
+          border: isDarkMode
+              ? Border.all(color: Colors.white.withOpacity(0.05))
+              : null,
         ),
         child: Row(
           children: [
@@ -506,7 +540,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                 ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, color: highlightColor.withOpacity(0.5), size: 16),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: highlightColor.withOpacity(0.5),
+              size: 16,
+            ),
           ],
         ),
       ),
@@ -518,7 +556,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline_rounded, size: 48, color: contentColor.withOpacity(0.7)),
+          Icon(
+            Icons.error_outline_rounded,
+            size: 48,
+            color: contentColor.withOpacity(0.7),
+          ),
           const SizedBox(height: 16),
           Text(
             'Failed to Load Profile',
