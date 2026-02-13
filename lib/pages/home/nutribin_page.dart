@@ -117,7 +117,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Column(
                     children: [
-                      _buildAlertStatus(),
+                      // _buildAlertStatus(),
                       _buildCapacityTracking(),
                       _buildStatusOverview(),
                       _buildNutriBinCondition(),

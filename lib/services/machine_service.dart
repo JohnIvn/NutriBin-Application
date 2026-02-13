@@ -76,6 +76,39 @@ class MachineService {
     }
   }
 
+  static Future<Map<String, dynamic>> fetchNotifications({
+    required String machineId,
+  }) async {
+    try {
+      final userId = await PreferenceUtility.getUserId();
+
+      if (userId == null || userId.isEmpty) {
+        return Error.errorResponse("Customer ID Required");
+      }
+      final url = Uri.parse(
+        '$restUser/mobile/machine/notifications/$userId/$machineId',
+      );
+
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+      );
+
+      final data = jsonDecode(response.body);
+      print("TEST DATA: ${data.toString()}");
+      return {
+        "ok": true,
+        "data": data["data"],
+        "message": data["message"] ?? "Successfully fetched all machines",
+      };
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
   static Future<Map<String, dynamic>> registerMachine({
     required String serialId,
   }) async {

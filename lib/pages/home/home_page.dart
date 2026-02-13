@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
     DashboardPage(machineId: _machineId ?? ''),
     FertilizerPage(machineId: _machineId ?? ''),
     NutriBinPage(machineId: _machineId ?? ''),
-    const NotificationPage(),
+    NotificationPage(machineId: _machineId ?? ''),
     const AccountPage(),
   ];
 

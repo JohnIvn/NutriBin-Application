@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/widgets/report.dart';
 import 'package:nutribin_application/services/machine_service.dart';
+import 'package:intl/intl.dart';
 
 class DashboardPage extends StatefulWidget {
   final String machineId;
@@ -18,6 +19,7 @@ class _DashboardPageState extends State<DashboardPage>
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   int? _expandedMachineReportIndex;
   Timer? _dataRefreshTimer;
+  List<Map<String, dynamic>> notifications = [];
 
   // Loading state
   bool isLoading = true;
@@ -47,6 +49,7 @@ class _DashboardPageState extends State<DashboardPage>
     super.initState();
     _fetchData(machineId: widget.machineId);
     _startDataRefresh();
+    fetchNotifications();
   }
 
   @override
@@ -59,6 +62,7 @@ class _DashboardPageState extends State<DashboardPage>
     // Refresh data every 5 seconds
     _dataRefreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       _fetchData(machineId: widget.machineId);
+      fetchNotifications(); // Also refresh notifications
     });
   }
 
@@ -163,92 +167,61 @@ class _DashboardPageState extends State<DashboardPage>
     ];
   }
 
-  // Generate machine reports based on real sensor values
+  // Generate machine reports based on unresolved error notifications
   List<Map<String, String>> get _machineReports {
-    final reedSwitch = sensorData['reed_switch'];
-    final weight =
-        double.tryParse(sensorData['weight_kg']?.toString() ?? '0') ?? 0;
-    final temperature = double.tryParse(sensorData['temperature'] ?? '0') ?? 0;
-    final methane = double.tryParse(sensorData['methane'] ?? '0') ?? 0;
-    final humidity = double.tryParse(sensorData['humidity'] ?? '0') ?? 0;
-
-    final now = DateTime.now();
-    final timeStr =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-
     List<Map<String, String>> reports = [];
 
-    // Reed Switch / Lid Status Report
-    final isLidSecure =
-        reedSwitch == null || reedSwitch == 0 || reedSwitch == false;
-    reports.add({
-      'title': 'Lid Sensor',
-      'description': isLidSecure
-          ? 'Lid Secure, No Issues Found'
-          : 'Warning: Lid Open or Compromised',
-      'timeLabel': 'Last Check:',
-      'time': 'Today, $timeStr',
-      'details': isLidSecure
-          ? 'Lid sensor (reed switch) confirms secure closure. System integrity maintained. No tampering detected. Total secure cycles today: 52.'
-          : 'Lid sensor detected open state. Please ensure proper closure to maintain optimal composting conditions and prevent contamination.',
-    });
+    // Filter for unresolved error notifications only
+    final unresolvedErrors = notifications.where((notification) {
+      final type = notification['type']?.toString().toLowerCase() ?? '';
+      final resolved = notification['resolved'] ?? false;
+      return type == 'error' && !resolved;
+    }).toList();
 
-    // Weight/Capacity Report
-    reports.add({
-      'title': 'Capacity Monitor',
-      'description': weight > 8.5
-          ? 'Chamber Nearly Full - Emptying Recommended'
-          : weight > 5
-          ? 'Moderate Fill Level - Normal Operation'
-          : 'Low Fill Level - Ready for Input',
-      'timeLabel': 'Current:',
-      'time': '${weight.toStringAsFixed(1)}kg / 10kg',
-      'details':
-          'Current load: ${weight.toStringAsFixed(1)}kg. Capacity: ${(weight / 10 * 100).toStringAsFixed(1)}%. '
-          '${weight > 8.5 ? 'Recommend emptying soon to maintain efficiency.' : 'Operating within normal parameters.'} '
-          'Average daily input: 2.5kg. Estimated time to full: ${((10 - weight) / 2.5).toStringAsFixed(1)} days.',
-    });
+    // Convert notifications to report format
+    for (var notification in unresolvedErrors) {
+      final dateStr = notification['date'] ?? '';
+      String formattedDate = 'N/A';
 
-    // Environmental Conditions Report
-    final tempStatus = temperature >= 15 && temperature <= 25
-        ? 'Optimal'
-        : temperature > 25
-        ? 'High'
-        : 'Low';
-    final humidStatus = humidity >= 60 && humidity <= 80
-        ? 'Good'
-        : humidity > 80
-        ? 'High'
-        : 'Low';
+      try {
+        final DateTime dateTime = DateTime.parse(dateStr);
+        final now = DateTime.now();
+        final difference = now.difference(dateTime);
 
-    reports.add({
-      'title': 'Environmental Monitor',
-      'description': 'Temperature: $tempStatus, Humidity: $humidStatus',
-      'timeLabel': 'Reading:',
-      'time': 'Today, $timeStr',
-      'details':
-          'Current conditions: ${temperature.toStringAsFixed(1)}°C, ${humidity.toStringAsFixed(1)}% humidity. '
-          '${tempStatus == 'Optimal' && humidStatus == 'Good' ? 'Ideal composting conditions maintained.' : 'Monitoring conditions for optimal decomposition.'} '
-          'pH Level: ${sensorData['ph'] ?? 'N/A'}. System stability: Excellent.',
-    });
+        if (difference.inMinutes < 60) {
+          formattedDate = '${difference.inMinutes}m ago';
+        } else if (difference.inHours < 24) {
+          formattedDate = '${difference.inHours}h ago';
+        } else if (difference.inDays < 7) {
+          formattedDate = '${difference.inDays}d ago';
+        } else {
+          formattedDate = DateFormat('MMM d, yyyy').format(dateTime);
+        }
+      } catch (e) {
+        formattedDate = dateStr;
+      }
 
-    // Gas Detection Report
-    final methaneLevel = methane < 5
-        ? 'Safe'
-        : methane < 20
-        ? 'Elevated'
-        : 'High';
-    reports.add({
-      'title': 'Gas Detection',
-      'description':
-          'Methane Level: $methaneLevel - ${methane < 5 ? 'No Issues' : 'Monitoring'}',
-      'timeLabel': 'Current:',
-      'time': '${methane.toStringAsFixed(2)}ppm',
-      'details':
-          'Methane: ${methane.toStringAsFixed(2)}ppm (${methaneLevel}). '
-          '${methane < 5 ? 'All gas levels within safe operating limits.' : 'Elevated gas levels detected. Ensure adequate ventilation.'} '
-          'Air quality monitoring active. Last calibration: 2 days ago. Next check: 12 days.',
-    });
+      reports.add({
+        'title': notification['header'] ?? 'Error',
+        'description': notification['subheader'] ?? 'Issue detected',
+        'timeLabel': 'Detected:',
+        'time': formattedDate,
+        'details':
+            notification['description'] ?? 'No additional details available.',
+      });
+    }
+
+    // If no unresolved errors, show a "No Issues" report
+    if (reports.isEmpty) {
+      reports.add({
+        'title': 'System Status',
+        'description': 'All systems operating normally',
+        'timeLabel': 'Last Check:',
+        'time': 'Just now',
+        'details':
+            'No unresolved errors detected. All machine components are functioning within normal parameters.',
+      });
+    }
 
     return reports;
   }
@@ -273,9 +246,9 @@ class _DashboardPageState extends State<DashboardPage>
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                        MachineErrorReportCard(),
+                        MachineErrorReportCard(notifications: notifications),
                         _fertilizerStatusCard(),
-                        _buildMachineReportsCard(),
+                        // _buildMachineReportsCard(),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -534,7 +507,7 @@ class _DashboardPageState extends State<DashboardPage>
                             ),
                           ),
                           Text(
-                            'Recent reports from the sensors',
+                            'Unresolved errors from notifications',
                             style: GoogleFonts.inter(
                               color: subTextColor,
                               fontSize: 14,
@@ -733,6 +706,32 @@ class _DashboardPageState extends State<DashboardPage>
                 duration: 300.ms,
               ),
     );
+  }
+
+  void fetchNotifications() async {
+    try {
+      final response = await MachineService.fetchNotifications(
+        machineId: widget.machineId,
+      );
+      print("RESPONSE: ${response.toString()}");
+
+      if (response['ok'] == true && response['data'] != null) {
+        print("NOTIFICATIONS: ${response['data']}");
+        if (mounted) {
+          setState(() {
+            notifications = List<Map<String, dynamic>>.from(response['data']);
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            notifications = [];
+          });
+        }
+      }
+    } catch (e) {
+      _showError(e.toString());
+    }
   }
 
   void _showError(String message) {
