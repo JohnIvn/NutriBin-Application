@@ -76,6 +76,42 @@ class MachineService {
     }
   }
 
+  static Future<Map<String, dynamic>> createRepairRequest({
+    required String machineId,
+    required String description,
+  }) async {
+    try {
+      final userId = await PreferenceUtility.getUserId();
+
+      if (userId == null || userId.isEmpty) {
+        return Error.errorResponse("Customer ID Required");
+      }
+      final url = Uri.parse('$restUser/mobile/repair/create');
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+        body: jsonEncode({
+          "machineId": machineId,
+          "userId": userId,
+          "description": description,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      return {
+        "ok": true,
+        "data": data,
+        "message": "Repair request created successfully",
+      };
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
   static Future<Map<String, dynamic>> fetchRecommendedCrops({
     required String machineId,
   }) async {
