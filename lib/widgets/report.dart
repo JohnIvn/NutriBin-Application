@@ -4,11 +4,8 @@ import 'package:intl/intl.dart';
 
 class MachineErrorReportCard extends StatefulWidget {
   final List<Map<String, dynamic>> notifications;
-  
-  const MachineErrorReportCard({
-    super.key,
-    required this.notifications,
-  });
+
+  const MachineErrorReportCard({super.key, required this.notifications});
 
   @override
   State<MachineErrorReportCard> createState() => _MachineErrorReportCardState();
@@ -24,7 +21,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
       final DateTime dateTime = DateTime.parse(isoDate);
       final now = DateTime.now();
       final difference = now.difference(dateTime);
-      
+
       if (difference.inMinutes < 60) {
         return '${difference.inMinutes}m ago';
       } else if (difference.inHours < 24) {
@@ -41,6 +38,7 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
   }
 
   // Get organized notifications: unresolved errors first, then resolved
+  // Limited to 5 latest notifications
   List<Map<String, dynamic>> get _organizedNotifications {
     final unresolved = widget.notifications.where((n) {
       final resolved = n['resolved'] ?? false;
@@ -52,7 +50,10 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
       return isResolved;
     }).toList();
 
-    return [...unresolved, ...resolved];
+    final combined = [...unresolved, ...resolved];
+
+    // Return only the first 5 notifications
+    return combined.take(3).toList();
   }
 
   void _handleReportError(String errorTitle) {
@@ -180,7 +181,9 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                   final notification = organizedNotifications[index];
                   final isExpanded = _expandedIndex == index;
                   final isResolved = notification['resolved'] ?? false;
-                  final type = notification['type']?.toString().toLowerCase() ?? 'default';
+                  final type =
+                      notification['type']?.toString().toLowerCase() ??
+                      'default';
                   final isError = type == 'error';
 
                   // Determine color based on type
@@ -190,7 +193,9 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                   } else if (type == 'success') {
                     accentColor = successColor;
                   } else {
-                    accentColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
+                    accentColor = isDarkMode
+                        ? Colors.grey.shade400
+                        : Colors.grey.shade600;
                   }
 
                   Color expandedBgColor;
@@ -236,7 +241,9 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                 padding: const EdgeInsets.only(top: 12),
                                 child: Container(
                                   width: 4,
-                                  height: isExpanded ? (isError && !isResolved ? 230 : 130) : 76,
+                                  height: isExpanded
+                                      ? (isError && !isResolved ? 230 : 130)
+                                      : 76,
                                   decoration: BoxDecoration(
                                     color: accentColor,
                                     borderRadius: BorderRadius.circular(2),
@@ -252,7 +259,8 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                     12,
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         mainAxisAlignment:
@@ -263,7 +271,8 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                               children: [
                                                 Expanded(
                                                   child: Text(
-                                                    notification['header'] ?? 'Notification',
+                                                    notification['header'] ??
+                                                        'Notification',
                                                     style: GoogleFonts.inter(
                                                       color: textColor,
                                                       fontSize: 14,
@@ -275,21 +284,30 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                 ),
                                                 if (isResolved)
                                                   Container(
-                                                    margin: const EdgeInsets.only(left: 8),
-                                                    padding: const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 2,
-                                                    ),
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                          left: 8,
+                                                        ),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 2,
+                                                        ),
                                                     decoration: BoxDecoration(
-                                                      color: successColor.withOpacity(0.2),
-                                                      borderRadius: BorderRadius.circular(12),
+                                                      color: successColor
+                                                          .withOpacity(0.2),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
                                                     ),
                                                     child: Text(
                                                       'Resolved',
                                                       style: GoogleFonts.inter(
                                                         color: successColor,
                                                         fontSize: 10,
-                                                        fontWeight: FontWeight.w500,
+                                                        fontWeight:
+                                                            FontWeight.w500,
                                                       ),
                                                     ),
                                                   ),
@@ -306,9 +324,13 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                         ],
                                       ),
                                       if (notification['subheader'] != null &&
-                                          notification['subheader'].toString().isNotEmpty)
+                                          notification['subheader']
+                                              .toString()
+                                              .isNotEmpty)
                                         Padding(
-                                          padding: const EdgeInsets.only(top: 4),
+                                          padding: const EdgeInsets.only(
+                                            top: 4,
+                                          ),
                                           child: Text(
                                             notification['subheader']!,
                                             style: GoogleFonts.inter(
@@ -328,7 +350,9 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
-                                              _formatDate(notification['date'] ?? ''),
+                                              _formatDate(
+                                                notification['date'] ?? '',
+                                              ),
                                               style: GoogleFonts.inter(
                                                 color: subTextColor,
                                                 fontSize: 12,
@@ -340,19 +364,24 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                       AnimatedCrossFade(
                                         firstChild: const SizedBox.shrink(),
                                         secondChild: Padding(
-                                          padding: const EdgeInsets.only(top: 12),
+                                          padding: const EdgeInsets.only(
+                                            top: 12,
+                                          ),
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Container(
-                                                padding: const EdgeInsets.all(12),
+                                                padding: const EdgeInsets.all(
+                                                  12,
+                                                ),
                                                 decoration: BoxDecoration(
                                                   color: cardColor,
                                                   borderRadius:
                                                       BorderRadius.circular(6),
                                                   border: Border.all(
-                                                    color: accentColor.withOpacity(0.3),
+                                                    color: accentColor
+                                                        .withOpacity(0.3),
                                                     width: 1,
                                                   ),
                                                 ),
@@ -371,11 +400,15 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                 const SizedBox(height: 12),
                                                 // Tip container
                                                 Container(
-                                                  padding: const EdgeInsets.all(12),
+                                                  padding: const EdgeInsets.all(
+                                                    12,
+                                                  ),
                                                   decoration: BoxDecoration(
                                                     color: tipBgColor,
                                                     borderRadius:
-                                                        BorderRadius.circular(6),
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
                                                     border: Border.all(
                                                       color: warningColor
                                                           .withOpacity(0.3),
@@ -384,7 +417,8 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                   ),
                                                   child: Row(
                                                     crossAxisAlignment:
-                                                        CrossAxisAlignment.start,
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
                                                       Icon(
                                                         Icons.lightbulb_outline,
@@ -400,15 +434,14 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                           children: [
                                                             Text(
                                                               'Tip:',
-                                                              style:
-                                                                  GoogleFonts.inter(
-                                                                    color:
-                                                                        warningColor,
-                                                                    fontSize: 12,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                  ),
+                                                              style: GoogleFonts.inter(
+                                                                color:
+                                                                    warningColor,
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
                                                             ),
                                                             const SizedBox(
                                                               height: 4,
@@ -419,7 +452,8 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                                   GoogleFonts.inter(
                                                                     color:
                                                                         textColor,
-                                                                    fontSize: 12,
+                                                                    fontSize:
+                                                                        12,
                                                                     height: 1.4,
                                                                   ),
                                                             ),
@@ -436,22 +470,27 @@ class _MachineErrorReportCardState extends State<MachineErrorReportCard> {
                                                   child: ElevatedButton.icon(
                                                     onPressed: () =>
                                                         _handleReportError(
-                                                          notification['header'] ?? 'Error',
+                                                          notification['header'] ??
+                                                              'Error',
                                                         ),
                                                     icon: const Icon(
-                                                      Icons.report_problem_outlined,
+                                                      Icons
+                                                          .report_problem_outlined,
                                                       size: 18,
                                                     ),
                                                     label: Text(
                                                       'Report This Error',
                                                       style: GoogleFonts.inter(
                                                         fontSize: 14,
-                                                        fontWeight: FontWeight.w600,
+                                                        fontWeight:
+                                                            FontWeight.w600,
                                                       ),
                                                     ),
                                                     style: ElevatedButton.styleFrom(
-                                                      backgroundColor: errorColor,
-                                                      foregroundColor: Colors.white,
+                                                      backgroundColor:
+                                                          errorColor,
+                                                      foregroundColor:
+                                                          Colors.white,
                                                       padding:
                                                           const EdgeInsets.symmetric(
                                                             vertical: 12,

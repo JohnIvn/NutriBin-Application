@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:nutribin_application/services/machine_service.dart';
+import 'package:nutribin_application/pages/home/modules_page.dart';
 
 class NutriBinPage extends StatefulWidget {
   final String machineId;
@@ -117,7 +118,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Column(
                     children: [
-                      // _buildAlertStatus(),
+                      _buildAlertStatus(),
                       _buildCapacityTracking(),
                       _buildStatusOverview(),
                       _buildNutriBinCondition(),
@@ -879,7 +880,43 @@ class _NutriBinPageState extends State<NutriBinPage> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.settings, color: _iconColor, size: 28),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ModulesPage(machineId: widget.machineId),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      splashColor: Theme.of(
+                        context,
+                      ).primaryColor.withOpacity(0.2),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _isDarkMode
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.black.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _isDarkMode
+                                ? Colors.white.withOpacity(0.1)
+                                : Colors.black.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.settings,
+                          color: _iconColor,
+                          size: 26,
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

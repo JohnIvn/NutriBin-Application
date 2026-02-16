@@ -20,6 +20,8 @@ class _NotificationPageState extends State<NotificationPage> {
   int? _expandedIndex;
   List<Map<String, dynamic>> notifications = [];
   bool isLoading = true;
+  int _displayLimit = 20; // Initially show 20 notifications
+  static const int _loadMoreIncrement = 20; // Load 20 more at a time
 
   @override
   void initState() {
@@ -117,8 +119,31 @@ class _NotificationPageState extends State<NotificationPage> {
     }
   }
 
+  // Get notifications to display (limited by _displayLimit)
+  List<Map<String, dynamic>> get _displayedNotifications {
+    return notifications.take(_displayLimit).toList();
+  }
+
+  // Check if there are more notifications to load
+  bool get _hasMoreNotifications {
+    return notifications.length > _displayLimit;
+  }
+
+  // Load more notifications
+  void _loadMoreNotifications() {
+    setState(() {
+      _displayLimit += _loadMoreIncrement;
+      // Ensure we don't exceed the total number of notifications
+      if (_displayLimit > notifications.length) {
+        _displayLimit = notifications.length;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayedNotifications = _displayedNotifications;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -138,210 +163,270 @@ class _NotificationPageState extends State<NotificationPage> {
                   ),
                 ),
               )
-            : ListView.builder(
-                padding: EdgeInsets.zero,
-                itemCount: notifications.length,
-                itemBuilder: (context, index) {
-                  final notification = notifications[index];
-                  final isExpanded = _expandedIndex == index;
-                  final type = _parseType(notification['type'] ?? 'default');
-                  final isResolved = notification['resolved'] ?? false;
+            : Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      itemCount: displayedNotifications.length,
+                      itemBuilder: (context, index) {
+                        final notification = displayedNotifications[index];
+                        final isExpanded = _expandedIndex == index;
+                        final type = _parseType(
+                          notification['type'] ?? 'default',
+                        );
+                        final isResolved = notification['resolved'] ?? false;
 
-                  return Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 1),
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 200),
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: _getBackgroundColor(type, isExpanded),
-                        boxShadow: [
-                          BoxShadow(
-                            blurRadius: 0,
-                            color: _shadowColor,
-                            offset: Offset(0.0, 1),
-                          ),
-                        ],
-                        borderRadius: BorderRadius.circular(0),
-                        shape: BoxShape.rectangle,
-                      ),
-                      child: Opacity(
-                        opacity: isResolved ? 0.6 : 1.0,
-                        child: Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _expandedIndex = isExpanded ? null : index;
-                                  });
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
+                        return Padding(
+                          padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 1),
+                          child: AnimatedContainer(
+                            duration: Duration(milliseconds: 200),
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: _getBackgroundColor(type, isExpanded),
+                              boxShadow: [
+                                BoxShadow(
+                                  blurRadius: 0,
+                                  color: _shadowColor,
+                                  offset: Offset(0.0, 1),
+                                ),
+                              ],
+                              borderRadius: BorderRadius.circular(0),
+                              shape: BoxShape.rectangle,
+                            ),
+                            child: Opacity(
+                              opacity: isResolved ? 0.6 : 1.0,
+                              child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      width: 4,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: _getAccentColor(type),
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                        12,
-                                        0,
-                                        8,
-                                        0,
-                                      ),
-                                      child: Icon(
-                                        _getIcon(type),
-                                        color: _getAccentColor(type),
-                                        size: 24,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _expandedIndex = isExpanded
+                                              ? null
+                                              : index;
+                                        });
+                                      },
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.max,
                                         children: [
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  notification['header'] ?? '',
-                                                  style: GoogleFonts.inter(
-                                                    color: _secondaryText,
-                                                    fontSize: 16,
-                                                    fontWeight: isExpanded
-                                                        ? FontWeight.w600
-                                                        : FontWeight.normal,
-                                                  ),
+                                          Container(
+                                            width: 4,
+                                            height: 50,
+                                            decoration: BoxDecoration(
+                                              color: _getAccentColor(type),
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding:
+                                                EdgeInsetsDirectional.fromSTEB(
+                                                  12,
+                                                  0,
+                                                  8,
+                                                  0,
                                                 ),
-                                              ),
-                                              if (isResolved)
-                                                Container(
-                                                  margin: EdgeInsets.only(
-                                                    left: 8,
-                                                  ),
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.green
-                                                        .withOpacity(0.2),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
+                                            child: Icon(
+                                              _getIcon(type),
+                                              color: _getAccentColor(type),
+                                              size: 24,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        notification['header'] ??
+                                                            '',
+                                                        style: GoogleFonts.inter(
+                                                          color: _secondaryText,
+                                                          fontSize: 16,
+                                                          fontWeight: isExpanded
+                                                              ? FontWeight.w600
+                                                              : FontWeight
+                                                                    .normal,
                                                         ),
-                                                  ),
-                                                  child: Text(
-                                                    'Resolved',
-                                                    style: GoogleFonts.inter(
-                                                      color: Colors.green,
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                          FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                    if (isResolved)
+                                                      Container(
+                                                        margin: EdgeInsets.only(
+                                                          left: 8,
+                                                        ),
+                                                        padding:
+                                                            EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 2,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.green
+                                                              .withOpacity(0.2),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                        ),
+                                                        child: Text(
+                                                          'Resolved',
+                                                          style:
+                                                              GoogleFonts.inter(
+                                                                color: Colors
+                                                                    .green,
+                                                                fontSize: 10,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                                if (notification['subheader'] !=
+                                                        null &&
+                                                    notification['subheader']
+                                                        .toString()
+                                                        .isNotEmpty)
+                                                  Padding(
+                                                    padding: EdgeInsets.only(
+                                                      top: 2,
+                                                    ),
+                                                    child: Text(
+                                                      notification['subheader']!,
+                                                      style: GoogleFonts.inter(
+                                                        color: _secondaryText
+                                                            .withOpacity(0.6),
+                                                        fontSize: 13,
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                            ],
-                                          ),
-                                          if (notification['subheader'] !=
-                                                  null &&
-                                              notification['subheader']
-                                                  .toString()
-                                                  .isNotEmpty)
-                                            Padding(
-                                              padding: EdgeInsets.only(top: 2),
-                                              child: Text(
-                                                notification['subheader']!,
-                                                style: GoogleFonts.inter(
-                                                  color: _secondaryText
-                                                      .withOpacity(0.6),
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                        12,
-                                        0,
-                                        8,
-                                        0,
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            _formatDate(
-                                              notification['date'] ?? '',
-                                            ),
-                                            style: GoogleFonts.inter(
-                                              color: _secondaryText,
-                                              fontSize: 12,
+                                              ],
                                             ),
                                           ),
-                                          Text(
-                                            _formatTime(
-                                              notification['date'] ?? '',
+                                          Padding(
+                                            padding:
+                                                EdgeInsetsDirectional.fromSTEB(
+                                                  12,
+                                                  0,
+                                                  8,
+                                                  0,
+                                                ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Text(
+                                                  _formatDate(
+                                                    notification['date'] ?? '',
+                                                  ),
+                                                  style: GoogleFonts.inter(
+                                                    color: _secondaryText,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  _formatTime(
+                                                    notification['date'] ?? '',
+                                                  ),
+                                                  style: GoogleFonts.inter(
+                                                    color: _secondaryText
+                                                        .withOpacity(0.6),
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            style: GoogleFonts.inter(
-                                              color: _secondaryText.withOpacity(
-                                                0.6,
-                                              ),
-                                              fontSize: 11,
-                                            ),
+                                          ),
+                                          Icon(
+                                            isExpanded
+                                                ? Icons.keyboard_arrow_up
+                                                : Icons.keyboard_arrow_down,
+                                            color: _secondaryText,
+                                            size: 24,
                                           ),
                                         ],
                                       ),
                                     ),
-                                    Icon(
-                                      isExpanded
-                                          ? Icons.keyboard_arrow_up
-                                          : Icons.keyboard_arrow_down,
-                                      color: _secondaryText,
-                                      size: 24,
+                                    AnimatedCrossFade(
+                                      firstChild: SizedBox.shrink(),
+                                      secondChild: Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                          44,
+                                          12,
+                                          16,
+                                          8,
+                                        ),
+                                        child: Text(
+                                          notification['description'] ?? '',
+                                          style: GoogleFonts.inter(
+                                            color: _secondaryText.withOpacity(
+                                              0.7,
+                                            ),
+                                            fontSize: 14,
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                      crossFadeState: isExpanded
+                                          ? CrossFadeState.showSecond
+                                          : CrossFadeState.showFirst,
+                                      duration: Duration(milliseconds: 200),
                                     ),
                                   ],
                                 ),
                               ),
-                              AnimatedCrossFade(
-                                firstChild: SizedBox.shrink(),
-                                secondChild: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                    44,
-                                    12,
-                                    16,
-                                    8,
-                                  ),
-                                  child: Text(
-                                    notification['description'] ?? '',
-                                    style: GoogleFonts.inter(
-                                      color: _secondaryText.withOpacity(0.7),
-                                      fontSize: 14,
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ),
-                                crossFadeState: isExpanded
-                                    ? CrossFadeState.showSecond
-                                    : CrossFadeState.showFirst,
-                                duration: Duration(milliseconds: 200),
-                              ),
-                            ],
+                            ),
                           ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Load More button
+                  if (_hasMoreNotifications)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _primaryBackground,
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 4,
+                            color: _shadowColor,
+                            offset: Offset(0, -2),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: _loadMoreNotifications,
+                        icon: Icon(Icons.expand_more, size: 20),
+                        label: Text(
+                          'Load More (${notifications.length - _displayLimit} remaining)',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
                         ),
                       ),
                     ),
-                  );
-                },
+                ],
               ),
       ),
     );
