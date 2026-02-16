@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/services/machine_service.dart';
 
 class ModulesPage extends StatefulWidget {
   final String machineId;
@@ -39,40 +40,6 @@ class _ModulesPageState extends State<ModulesPage> {
       isLoading = true;
     });
 
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // Mock data - replace with actual API call when endpoint is ready
-    setState(() {
-      modulesData = {
-        // Microcontrollers
-        'c1': true, // Arduino Q
-        'c2': true, // ESP32_Filter
-        'c3': true, // ESP32_Servo_w_sensors
-        'c4': true, // ESP32_Sensors
-        // Sensors
-        's1': true, // Camera
-        's2': true, // Humidity
-        's3': true, // Gas_Methane
-        's4': false, // Gas_Carbon_monoxide (example offline)
-        's5': true, // Gas_Air_quality
-        's6': true, // Gas_Combustible_gassy
-        's7': true, // NPK_Sensor
-        's8': true, // Moisture
-        's9': true, // Reed
-        's10': true, // Ultrasonic
-        's11': true, // Weight
-        // Motors & Actuators
-        'm1': true, // Servo_Lid_A
-        'm2': true, // Servo_Lid_B
-        'm3': true, // Servo_Mixer
-        'm4': true, // Motor_Grinder
-        'm5': false, // Exhaust_Fan_Out (example offline)
-      };
-      isLoading = false;
-    });
-
-    /* TODO: Replace with actual API call when endpoint is ready
     try {
       final response = await MachineService.fetchModulesStatus(
         machineId: widget.machineId,
@@ -87,6 +54,7 @@ class _ModulesPageState extends State<ModulesPage> {
         setState(() {
           isLoading = false;
         });
+        _showError(response['message'] ?? 'Failed to fetch modules status');
       }
     } catch (e) {
       setState(() {
@@ -94,7 +62,6 @@ class _ModulesPageState extends State<ModulesPage> {
       });
       _showError(e.toString());
     }
-    */
   }
 
   Future<void> _restartMachine() async {

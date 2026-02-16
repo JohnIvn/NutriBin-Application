@@ -236,6 +236,17 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+                Center(
+                  child: Text(
+                    'v2.0.4',
+                    style: GoogleFonts.inter(
+                      color: subTextColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 40),
               ],
             ),

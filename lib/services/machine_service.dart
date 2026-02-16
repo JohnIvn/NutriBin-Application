@@ -76,6 +76,61 @@ class MachineService {
     }
   }
 
+  static Future<Map<String, dynamic>> fetchModulesStatus({
+    required String machineId,
+  }) async {
+    try {
+      final url = Uri.parse('$restUser/hardware/$machineId');
+
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data["ok"] == true && data["data"] != null) {
+        final modules = data["data"]["modules"];
+        // Map backend descriptive names back to short codes for the frontend
+        final mappedModules = {
+          'c1': modules['arduino_q'],
+          'c2': modules['esp32_filter'],
+          'c3': modules['esp32_servo'],
+          'c4': modules['esp32_sensors'],
+          's1': modules['camera'],
+          's2': modules['humidity'],
+          's3': modules['methane'],
+          's4': modules['carbon_monoxide'],
+          's5': modules['air_quality'],
+          's6': modules['combustible_gasses'],
+          's7': modules['npk'],
+          's8': modules['moisture'],
+          's9': modules['reed'],
+          's10': modules['ultrasonic'],
+          's11': modules['weight'],
+          'm1': modules['servo_a'],
+          'm2': modules['servo_b'],
+          'm3': modules['servo_mixer'],
+          'm4': modules['grinder'],
+          'm5': modules['exhaust'],
+        };
+
+        return {
+          "ok": true,
+          "data": mappedModules,
+          "message": data["message"] ?? "Successfully fetched module status",
+        };
+      }
+
+      return data;
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
   static Future<Map<String, dynamic>> fetchNotifications({
     required String machineId,
   }) async {
