@@ -12,6 +12,7 @@ import 'package:nutribin_application/pages/home/account_edit.dart';
 import 'package:nutribin_application/pages/home/profile.dart';
 import 'package:nutribin_application/pages/auth/signup.dart';
 import 'package:nutribin_application/pages/home/home_page.dart';
+import 'package:nutribin_application/pages/home/repair_status_page.dart';
 import 'package:nutribin_application/pages/common/support.dart';
 import 'package:nutribin_application/pages/common/terms.dart';
 import 'package:nutribin_application/services/google_auth_service.dart';
@@ -160,6 +161,7 @@ class MyApp extends StatelessWidget {
         '/verify-contacts': (context) => const ContactsVerification(),
         '/terms-acceptance': (context) => const TermsAcceptancePage(),
         '/mfa-settings': (context) => const MfaSettingsPage(),
+        '/repair-status': (context) => const RepairStatusPage(),
 
         // Common Routes
         '/support': (context) => const ContactWidget(),

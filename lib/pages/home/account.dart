@@ -33,7 +33,6 @@ class _AccountPageState extends State<AccountPage> {
 
     final profile = await ProfileUtility.fetchPfp();
 
-
     if (mounted) {
       setState(() {
         if (profile["ok"] == true && profile["data"] != null) {
@@ -184,6 +183,14 @@ class _AccountPageState extends State<AccountPage> {
                   isDarkMode: isDarkMode,
                 ),
                 _buildMenuItem(
+                  icon: Icons.build_circle_outlined,
+                  title: 'Repair Status',
+                  onTap: () => Navigator.pushNamed(context, '/repair-status'),
+                  cardColor: cardColor,
+                  textColor: textColor,
+                  isDarkMode: isDarkMode,
+                ),
+                _buildMenuItem(
                   icon: Icons.policy_outlined,
                   title: 'Terms of Service',
                   onTap: () => Navigator.pushNamed(context, '/termsOfService'),
@@ -239,7 +246,7 @@ class _AccountPageState extends State<AccountPage> {
                 const SizedBox(height: 24),
                 Center(
                   child: Text(
-                    'v2.0.7',
+                    'v2.0.8',
                     style: GoogleFonts.inter(
                       color: subTextColor,
                       fontSize: 12,
