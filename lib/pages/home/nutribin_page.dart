@@ -855,8 +855,8 @@ class _NutriBinPageState extends State<NutriBinPage> {
 
     // Check reed switch status
     final reedSwitch = sensorData['reed_switch'];
-    final isLidSecure =
-        reedSwitch == null || reedSwitch == 0 || reedSwitch == false;
+    // Inverted logic to match API: true means Secure/Online, false means Open/Offline
+    final isLidSecure = reedSwitch == true;
 
     return Padding(
       padding: const EdgeInsets.all(16),

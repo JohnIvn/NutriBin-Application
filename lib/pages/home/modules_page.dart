@@ -407,113 +407,155 @@ class _ModulesPageState extends State<ModulesPage> {
       healthStatus = 'Needs Attention';
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: _shadowColor,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.analytics, color: Theme.of(context).primaryColor),
-              const SizedBox(width: 8),
-              Text(
-                'System Health',
-                style: GoogleFonts.interTight(
-                  color: _textColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildSummaryItem(
-                  'Total Modules',
-                  totalModules.toString(),
-                  Colors.blue,
-                  Icons.apps,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSummaryItem(
-                  'Online',
-                  onlineModules.toString(),
-                  Colors.green,
-                  Icons.check_circle,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSummaryItem(
-                  'Offline',
-                  offlineModules.toString(),
-                  Colors.red,
-                  Icons.error,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+    return Column(
+      children: [
+        if (offlineModules > 0)
           Container(
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: healthColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: healthColor.withOpacity(0.3)),
+              color: Colors.red.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.withOpacity(0.3)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Overall Status',
-                      style: GoogleFonts.inter(
-                        color: _secondaryText,
-                        fontSize: 12,
+                Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Attention Required',
+                        style: GoogleFonts.interTight(
+                          color: Colors.red,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      healthStatus,
-                      style: GoogleFonts.interTight(
-                        color: healthColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                      Text(
+                        '$offlineModules module(s) are currently offline. This may affect some machine operations.',
+                        style: GoogleFonts.inter(
+                          color: _textColor,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Text(
-                  '${healthPercentage.toStringAsFixed(0)}%',
-                  style: GoogleFonts.interTight(
-                    color: healthColor,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: _cardColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: _shadowColor,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.analytics, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    'System Health',
+                    style: GoogleFonts.interTight(
+                      color: _textColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryItem(
+                      'Total Modules',
+                      totalModules.toString(),
+                      Colors.blue,
+                      Icons.apps,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSummaryItem(
+                      'Online',
+                      onlineModules.toString(),
+                      Colors.green,
+                      Icons.check_circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSummaryItem(
+                      'Offline',
+                      offlineModules.toString(),
+                      Colors.red,
+                      Icons.error,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: healthColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: healthColor.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Overall Status',
+                          style: GoogleFonts.inter(
+                            color: _secondaryText,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          healthStatus,
+                          style: GoogleFonts.interTight(
+                            color: healthColor,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '${healthPercentage.toStringAsFixed(0)}%',
+                      style: GoogleFonts.interTight(
+                        color: healthColor,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

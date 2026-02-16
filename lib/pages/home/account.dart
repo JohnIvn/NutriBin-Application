@@ -239,7 +239,7 @@ class _AccountPageState extends State<AccountPage> {
                 const SizedBox(height: 24),
                 Center(
                   child: Text(
-                    'v2.0.4',
+                    'v2.0.5',
                     style: GoogleFonts.inter(
                       color: subTextColor,
                       fontSize: 12,
