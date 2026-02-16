@@ -35,6 +35,8 @@ class _FertilizerPageState extends State<FertilizerPage> {
     'combustible_gases': null,
   };
 
+  List<Map<String, dynamic>> recommendedCrops = [];
+
   // Color scheme
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
@@ -65,19 +67,23 @@ class _FertilizerPageState extends State<FertilizerPage> {
         machineId: widget.machineId,
       );
 
-      if (response['ok'] == true && response['data'] != null) {
-        if (mounted) {
-          setState(() {
+      final recommendationsResponse =
+          await MachineService.fetchRecommendedCrops(
+            machineId: widget.machineId,
+          );
+
+      if (mounted) {
+        setState(() {
+          if (response['ok'] == true && response['data'] != null) {
             sensorData = Map<String, dynamic>.from(response['data']);
-            isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-          });
-        }
+          }
+          if (recommendationsResponse['ok'] == true) {
+            recommendedCrops = List<Map<String, dynamic>>.from(
+              recommendationsResponse['recommendations'],
+            );
+          }
+          isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -138,12 +144,15 @@ class _FertilizerPageState extends State<FertilizerPage> {
         ? Colors.black.withOpacity(0.3)
         : const Color(0x33000000);
 
-    final List<String> fruits = [
-      'Tomato',
-      'Cucumber',
-      'Bell Pepper',
-      'Strawberry',
-    ];
+    final List<Map<String, dynamic>> displayedCrops =
+        recommendedCrops.isNotEmpty
+        ? recommendedCrops
+        : [
+            {'name': 'Tomato', 'score': null},
+            {'name': 'Cucumber', 'score': null},
+            {'name': 'Bell Pepper', 'score': null},
+            {'name': 'Strawberry', 'score': null},
+          ];
 
     // --- NPK Values ---
     final nitrogen = double.tryParse(sensorData['nitrogen'] ?? '0') ?? 0;
@@ -274,13 +283,30 @@ class _FertilizerPageState extends State<FertilizerPage> {
 
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-                child: Text(
-                  'Recommended Crops',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: textColor,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Recommended Crops',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: textColor,
+                      ),
+                    ),
+                    if (recommendedCrops.isNotEmpty)
+                      const Icon(
+                        Icons.cloud_done,
+                        size: 14,
+                        color: Colors.green,
+                      )
+                    else
+                      const Icon(
+                        Icons.info_outline,
+                        size: 14,
+                        color: Colors.orange,
+                      ),
+                  ],
                 ),
               ),
 
@@ -289,23 +315,35 @@ class _FertilizerPageState extends State<FertilizerPage> {
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 6,
-                  children: fruits
+                  children: displayedCrops
                       .map(
-                        (fruit) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: chipBgColor,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            fruit,
-                            style: TextStyle(
-                              color: accentColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                        (crop) => InkWell(
+                          onTap: () {
+                            if (crop['score'] != null) {
+                              _showCropScore(crop['name'], crop['score']);
+                            } else {
+                              _showError(
+                                "No CSI score available for this crop yet.",
+                              );
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: chipBgColor,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              crop['name'],
+                              style: TextStyle(
+                                color: accentColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
@@ -318,6 +356,76 @@ class _FertilizerPageState extends State<FertilizerPage> {
         ),
       ),
     );
+  }
+
+  void _showCropScore(String name, dynamic score) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          '$name Suitability',
+          style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Crop Suitability Index (CSI)',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: CircularProgressIndicator(
+                    value: (score as num) / 100,
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      score > 70
+                          ? Colors.green
+                          : score > 40
+                          ? Colors.orange
+                          : Colors.red,
+                    ),
+                    strokeWidth: 10,
+                  ),
+                ),
+                Text(
+                  '$score%',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _getScoreDescription(score as int),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getScoreDescription(int score) {
+    if (score > 80) return 'Highly recommended! Soil conditions are ideal.';
+    if (score > 60) return 'Recommended. Conditions are favorable for growth.';
+    if (score > 40) return 'Moderately suitable. May require some adjustments.';
+    return 'Low compatibility. Soil nutrients are not optimal for this crop.';
   }
 
   Widget _buildNPKMonitoring() {

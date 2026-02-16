@@ -76,6 +76,32 @@ class MachineService {
     }
   }
 
+  static Future<Map<String, dynamic>> fetchRecommendedCrops({
+    required String machineId,
+  }) async {
+    try {
+      final url = Uri.parse('$restUser/mobile/recommendations/$machineId');
+
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+      );
+
+      final data = jsonDecode(response.body);
+      print("RECOMMENDATIONS DATA: ${data.toString()}");
+      return {
+        "ok": data["ok"] ?? false,
+        "recommendations": data["recommendations"] ?? [],
+        "message": data["message"] ?? "Successfully fetched recommendations",
+      };
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
   static Future<Map<String, dynamic>> fetchModulesStatus({
     required String machineId,
   }) async {
