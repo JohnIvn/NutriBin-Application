@@ -1078,7 +1078,7 @@ class _SignUpPageState extends State<SignUpPage>
 
     try {
       final result = await AccountUtility.googleAuth();
-
+      print("TEST DEBUG: $result");
       if (result['ok'] != true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
