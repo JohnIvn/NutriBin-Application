@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nutribin_application/pages/home/account.dart';
-import 'package:nutribin_application/pages/home/dashboard.dart';
 import 'package:nutribin_application/pages/home/fertilizer.dart';
 import 'package:nutribin_application/pages/home/notification_page.dart';
 import 'package:nutribin_application/pages/home/nutribin_page.dart';
@@ -23,11 +21,9 @@ class _HomePageState extends State<HomePage> {
   String? _machineId;
 
   List<Widget> get _pages => [
-    DashboardPage(machineId: _machineId ?? ''),
     FertilizerPage(machineId: _machineId ?? ''),
     NutriBinPage(machineId: _machineId ?? ''),
     NotificationPage(machineId: _machineId ?? ''),
-    const AccountPage(),
   ];
 
   void initState() {

@@ -11,17 +11,36 @@ class AccountPage extends StatefulWidget {
   State<AccountPage> createState() => _AccountPageState();
 }
 
-class _AccountPageState extends State<AccountPage> {
+class _AccountPageState extends State<AccountPage>
+    with SingleTickerProviderStateMixin {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   String userName = "User";
   String userEmail = "user@example.com";
   String? profileUrl;
+  bool _isProfileLoading = true; // <-- NEW
+
+  // Shimmer animation controller
+  late AnimationController _shimmerController;
+  late Animation<double> _shimmerAnimation;
 
   @override
   void initState() {
     super.initState();
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _shimmerAnimation = Tween<double>(begin: -1.5, end: 1.5).animate(
+      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
+    );
     _loadUserProfile();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUserProfile() async {
@@ -45,6 +64,8 @@ class _AccountPageState extends State<AccountPage> {
         if (userName.isEmpty) userName = "NutriBin User";
 
         userEmail = user["email"] as String? ?? "";
+
+        _isProfileLoading = false; // <-- NEW
       });
     }
   }
@@ -61,16 +82,15 @@ class _AccountPageState extends State<AccountPage> {
   Color _getAvatarColor(bool isDarkMode) {
     if (userName.isEmpty) return Theme.of(context).primaryColor;
 
-    // pallette
     final colors = [
-      const Color(0xFF4285F4), // Blue
-      const Color(0xFFEA4335), // Red
-      const Color(0xFFFBBC04), // Yellow (Darker)
-      const Color(0xFF34A853), // Green
-      const Color(0xFFFF6D00), // Orange
-      const Color(0xFF9C27B0), // Purple
-      const Color(0xFF00BCD4), // Cyan
-      const Color(0xFFE91E63), // Pink
+      const Color(0xFF4285F4),
+      const Color(0xFFEA4335),
+      const Color(0xFFFBBC04),
+      const Color(0xFF34A853),
+      const Color(0xFFFF6D00),
+      const Color(0xFF9C27B0),
+      const Color(0xFF00BCD4),
+      const Color(0xFFE91E63),
     ];
 
     final index = userName.codeUnitAt(0) % colors.length;
@@ -135,7 +155,6 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    // --- DYNAMIC THEME VALUES ---
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final cardColor = Theme.of(context).cardTheme.color!;
@@ -154,12 +173,15 @@ class _AccountPageState extends State<AccountPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildProfileHeader(
-                  cardColor,
-                  textColor,
-                  subTextColor,
-                  isDarkMode,
-                ),
+                // Swap between skeleton and real header
+                _isProfileLoading
+                    ? _buildProfileHeaderSkeleton(cardColor, isDarkMode)
+                    : _buildProfileHeader(
+                        cardColor,
+                        textColor,
+                        subTextColor,
+                        isDarkMode,
+                      ),
 
                 const SizedBox(height: 16),
 
@@ -246,7 +268,7 @@ class _AccountPageState extends State<AccountPage> {
                 const SizedBox(height: 24),
                 Center(
                   child: Text(
-                    'v2.0.8',
+                    'v2.0.9',
                     style: GoogleFonts.inter(
                       color: subTextColor,
                       fontSize: 12,
@@ -263,6 +285,78 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  // ── SKELETON HEADER ────────────────────────────────────────────────────────
+
+  Widget _buildProfileHeaderSkeleton(Color cardColor, bool isDarkMode) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardColor,
+        border: isDarkMode
+            ? const Border(bottom: BorderSide(color: Colors.white10))
+            : null,
+        boxShadow: isDarkMode
+            ? []
+            : [
+                const BoxShadow(
+                  blurRadius: 4,
+                  color: Color(0x1A000000),
+                  offset: Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Row(
+          children: [
+            // Circle skeleton
+            _ShimmerBox(
+              animation: _shimmerAnimation,
+              isDarkMode: isDarkMode,
+              width: 70,
+              height: 70,
+              borderRadius: 35,
+            ),
+            const SizedBox(width: 20),
+            // Text skeletons
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ShimmerBox(
+                    animation: _shimmerAnimation,
+                    isDarkMode: isDarkMode,
+                    width: 140,
+                    height: 18,
+                    borderRadius: 6,
+                  ),
+                  const SizedBox(height: 8),
+                  _ShimmerBox(
+                    animation: _shimmerAnimation,
+                    isDarkMode: isDarkMode,
+                    width: 180,
+                    height: 14,
+                    borderRadius: 6,
+                  ),
+                  const SizedBox(height: 10),
+                  _ShimmerBox(
+                    animation: _shimmerAnimation,
+                    isDarkMode: isDarkMode,
+                    width: 70,
+                    height: 12,
+                    borderRadius: 6,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── REAL HEADER ────────────────────────────────────────────────────────────
+
   Widget _buildProfileHeader(
     Color cardColor,
     Color textColor,
@@ -273,9 +367,8 @@ class _AccountPageState extends State<AccountPage> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardColor,
-        // Bottom border for separation in Dark Mode
         border: isDarkMode
-            ? Border(bottom: BorderSide(color: Colors.white10))
+            ? const Border(bottom: BorderSide(color: Colors.white10))
             : null,
         boxShadow: isDarkMode
             ? []
@@ -318,7 +411,6 @@ class _AccountPageState extends State<AccountPage> {
                         height: 70,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          // Fallback to initials if image fails to load
                           return Container(
                             width: 70,
                             height: 70,
@@ -387,7 +479,6 @@ class _AccountPageState extends State<AccountPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
-                  // "Edit Profile" hint (optional polish)
                   InkWell(
                     onTap: () => Navigator.pushNamed(context, '/profile'),
                     child: Text(
@@ -480,5 +571,63 @@ class _AccountPageState extends State<AccountPage> {
         ),
       ),
     );
+  }
+}
+
+// ── SHIMMER BOX WIDGET ───────────────────────────────────────────────────────
+
+class _ShimmerBox extends StatelessWidget {
+  final Animation<double> animation;
+  final bool isDarkMode;
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  const _ShimmerBox({
+    required this.animation,
+    required this.isDarkMode,
+    required this.width,
+    required this.height,
+    required this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = isDarkMode
+        ? const Color(0xFF2A2A2A)
+        : const Color(0xFFE0E0E0);
+    final highlightColor = isDarkMode
+        ? const Color(0xFF3D3D3D)
+        : const Color(0xFFF5F5F5);
+
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        return Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(borderRadius),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [baseColor, highlightColor, baseColor],
+              stops: const [0.0, 0.5, 1.0],
+              transform: _SlidingGradientTransform(animation.value),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SlidingGradientTransform extends GradientTransform {
+  final double slidePercent;
+  const _SlidingGradientTransform(this.slidePercent);
+
+  @override
+  Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
+    return Matrix4.translationValues(bounds.width * slidePercent, 0, 0);
   }
 }

@@ -67,73 +67,6 @@ class _CustomNavBarState extends State<CustomNavBar> {
   List<TargetFocus> _createTargets() {
     return [
       TargetFocus(
-        identify: "home_key",
-        keyTarget: _navKeys[0],
-        contents: [
-          TargetContent(
-            align: ContentAlign.top,
-            builder: (context, controller) {
-              return ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.7,
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Home",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Access your dashboard and main features here",
-                        style: TextStyle(fontSize: 14, color: Colors.white),
-                      ),
-                      const SizedBox(height: 12),
-
-                      /// ✅ Prevent button overflow
-                      SizedBox(
-                        width: double.infinity,
-                        child: TextButton.icon(
-                          onPressed: () {
-                            controller.skip();
-                          },
-                          icon: const Icon(
-                            Icons.menu_book,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          label: const Text(
-                            'View Full Guide',
-                            overflow: TextOverflow.ellipsis, // ← extra safety
-                            style: TextStyle(color: Colors.white, fontSize: 13),
-                          ),
-                          style: TextButton.styleFrom(
-                            alignment: Alignment.centerLeft,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      TargetFocus(
         identify: "fertilizers_key",
         keyTarget: _navKeys[1],
         contents: [
@@ -273,10 +206,10 @@ class _CustomNavBarState extends State<CustomNavBar> {
           unselectedItemColor: unselectedItemColor,
 
           items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined, key: _navKeys[0]),
-              label: 'Home',
-            ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.home_outlined, key: _navKeys[0]),
+            //   label: 'Home',
+            // ),
             BottomNavigationBarItem(
               icon: Icon(Icons.agriculture_outlined, key: _navKeys[1]),
               label: 'Fertilizers',
