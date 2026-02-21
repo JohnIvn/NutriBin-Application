@@ -18,9 +18,8 @@ class _AccountPageState extends State<AccountPage>
   String userName = "User";
   String userEmail = "user@example.com";
   String? profileUrl;
-  bool _isProfileLoading = true; // <-- NEW
+  bool _isProfileLoading = true;
 
-  // Shimmer animation controller
   late AnimationController _shimmerController;
   late Animation<double> _shimmerAnimation;
 
@@ -65,7 +64,7 @@ class _AccountPageState extends State<AccountPage>
 
         userEmail = user["email"] as String? ?? "";
 
-        _isProfileLoading = false; // <-- NEW
+        _isProfileLoading = false;
       });
     }
   }
@@ -173,7 +172,6 @@ class _AccountPageState extends State<AccountPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Swap between skeleton and real header
                 _isProfileLoading
                     ? _buildProfileHeaderSkeleton(cardColor, isDarkMode)
                     : _buildProfileHeader(
@@ -221,7 +219,6 @@ class _AccountPageState extends State<AccountPage>
                   isDarkMode: isDarkMode,
                 ),
 
-                // DEBUG ITEM
                 _buildMenuItem(
                   icon: Icons.restart_alt_rounded,
                   title: 'Reset Tutorial (Debug)',
@@ -233,7 +230,6 @@ class _AccountPageState extends State<AccountPage>
 
                 const SizedBox(height: 24),
 
-                // LOGOUT BUTTON
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: InkWell(
@@ -268,7 +264,7 @@ class _AccountPageState extends State<AccountPage>
                 const SizedBox(height: 24),
                 Center(
                   child: Text(
-                    'v2.0.9',
+                    'v2.1.0',
                     style: GoogleFonts.inter(
                       color: subTextColor,
                       fontSize: 12,
@@ -284,8 +280,6 @@ class _AccountPageState extends State<AccountPage>
       ),
     );
   }
-
-  // ── SKELETON HEADER ────────────────────────────────────────────────────────
 
   Widget _buildProfileHeaderSkeleton(Color cardColor, bool isDarkMode) {
     return Container(
@@ -309,7 +303,6 @@ class _AccountPageState extends State<AccountPage>
         padding: const EdgeInsets.all(24),
         child: Row(
           children: [
-            // Circle skeleton
             _ShimmerBox(
               animation: _shimmerAnimation,
               isDarkMode: isDarkMode,
@@ -318,7 +311,6 @@ class _AccountPageState extends State<AccountPage>
               borderRadius: 35,
             ),
             const SizedBox(width: 20),
-            // Text skeletons
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,9 +346,7 @@ class _AccountPageState extends State<AccountPage>
       ),
     );
   }
-
-  // ── REAL HEADER ────────────────────────────────────────────────────────────
-
+  
   Widget _buildProfileHeader(
     Color cardColor,
     Color textColor,
@@ -384,7 +374,6 @@ class _AccountPageState extends State<AccountPage>
         padding: const EdgeInsets.all(24),
         child: Row(
           children: [
-            // Avatar
             Container(
               width: 70,
               height: 70,
@@ -456,7 +445,6 @@ class _AccountPageState extends State<AccountPage>
                     ),
             ),
             const SizedBox(width: 20),
-            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,8 +561,6 @@ class _AccountPageState extends State<AccountPage>
     );
   }
 }
-
-// ── SHIMMER BOX WIDGET ───────────────────────────────────────────────────────
 
 class _ShimmerBox extends StatelessWidget {
   final Animation<double> animation;
