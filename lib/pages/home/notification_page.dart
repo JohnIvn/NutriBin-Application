@@ -20,8 +20,8 @@ class _NotificationPageState extends State<NotificationPage> {
   int? _expandedIndex;
   List<Map<String, dynamic>> notifications = [];
   bool isLoading = true;
-  int _displayLimit = 20; // Initially show 20 notifications
-  static const int _loadMoreIncrement = 20; // Load 20 more at a time
+  int _displayLimit = 20;
+  static const int _loadMoreIncrement = 20;
 
   @override
   void initState() {
@@ -29,15 +29,23 @@ class _NotificationPageState extends State<NotificationPage> {
     fetchNotifications();
   }
 
-  // Get colors based on theme
-  Color get _primaryBackground => Theme.of(context).scaffoldBackgroundColor;
-  Color get _secondaryText => Theme.of(context).colorScheme.onSurface;
-  Color get _shadowColor {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return isDarkMode ? Colors.black.withOpacity(0.2) : Color(0xFFE0E3E7);
-  }
 
-  // Parse notification type from string
+  Color get _primaryBackground => Theme.of(context).scaffoldBackgroundColor;
+  Color get _cardColor =>
+      Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor;
+  Color get _onSurface => Theme.of(context).colorScheme.onSurface;
+  Color get _subText =>
+      Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _shadowColor =>
+      _isDark ? Colors.black.withOpacity(0.2) : const Color(0xFFE0E3E7);
+
+  static const Color _errorColor = Color(0xFFF44336);
+  static const Color _successColor = Color(0xFF4CAF50);
+  static const Color _warningColor = Color(0xFFFF9800);
+
+
   NotificationType _parseType(String type) {
     switch (type.toLowerCase()) {
       case 'success':
@@ -49,66 +57,49 @@ class _NotificationPageState extends State<NotificationPage> {
     }
   }
 
-  // Format date from ISO string
   String _formatDate(String isoDate) {
     try {
-      final DateTime dateTime = DateTime.parse(isoDate);
-      final DateFormat formatter = DateFormat('MMM d, yyyy');
-      return formatter.format(dateTime);
-    } catch (e) {
+      return DateFormat('MMM d, yyyy').format(DateTime.parse(isoDate));
+    } catch (_) {
       return isoDate;
     }
   }
 
-  // Format time from ISO string
   String _formatTime(String isoDate) {
     try {
-      final DateTime dateTime = DateTime.parse(isoDate);
-      final DateFormat formatter = DateFormat('h:mm a');
-      return formatter.format(dateTime);
-    } catch (e) {
+      return DateFormat('h:mm a').format(DateTime.parse(isoDate));
+    } catch (_) {
       return '';
     }
   }
 
-  // Get colors based on notification type
-  Color _getAccentColor(NotificationType type) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
+  Color _accentColor(NotificationType type) {
     switch (type) {
       case NotificationType.success:
-        return Color(0xFF4CAF50);
+        return _successColor;
       case NotificationType.error:
-        return Color(0xFFF44336);
+        return _errorColor;
       case NotificationType.defaultType:
-        return isDarkMode
-            ? Colors.grey.shade400
-            : Color.fromARGB(156, 26, 23, 23);
+        return _isDark ? Colors.grey.shade400 : const Color(0xFF616161);
     }
   }
 
-  Color _getBackgroundColor(NotificationType type, bool isExpanded) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    if (!isExpanded) {
-      return isDarkMode ? Theme.of(context).cardColor : _primaryBackground;
-    }
-
+  Color _expandedBg(NotificationType type) {
     switch (type) {
       case NotificationType.success:
-        return isDarkMode
-            ? Color(0xFF1B5E20).withOpacity(0.3)
-            : Color(0xFFE8F5E9);
+        return _isDark
+            ? const Color(0xFF1B5E20).withOpacity(0.3)
+            : const Color(0xFFE8F5E9);
       case NotificationType.error:
-        return isDarkMode
-            ? Color(0xFFC62828).withOpacity(0.3)
-            : Color(0xFFFFEBEE);
+        return _isDark
+            ? const Color(0xFFC62828).withOpacity(0.3)
+            : const Color(0xFFFFEBEE);
       case NotificationType.defaultType:
-        return isDarkMode ? Colors.grey.shade800 : Color(0xFFF5F5F5);
+        return _isDark ? Colors.grey.shade800 : const Color(0xFFF5F5F5);
     }
   }
 
-  IconData _getIcon(NotificationType type) {
+  IconData _icon(NotificationType type) {
     switch (type) {
       case NotificationType.success:
         return Icons.check_circle_outline;
@@ -119,46 +110,62 @@ class _NotificationPageState extends State<NotificationPage> {
     }
   }
 
-  // Get notifications to display (limited by _displayLimit)
-  List<Map<String, dynamic>> get _displayedNotifications {
-    return notifications.take(_displayLimit).toList();
-  }
+  List<Map<String, dynamic>> get _displayedNotifications =>
+      notifications.take(_displayLimit).toList();
 
-  // Check if there are more notifications to load
-  bool get _hasMoreNotifications {
-    return notifications.length > _displayLimit;
-  }
+  bool get _hasMore => notifications.length > _displayLimit;
 
-  // Load more notifications
-  void _loadMoreNotifications() {
+  void _loadMore() {
     setState(() {
-      _displayLimit += _loadMoreIncrement;
-      // Ensure we don't exceed the total number of notifications
-      if (_displayLimit > notifications.length) {
-        _displayLimit = notifications.length;
-      }
+      _displayLimit = (_displayLimit + _loadMoreIncrement).clamp(
+        0,
+        notifications.length,
+      );
     });
+  }
+
+  void _handleReportError(String errorTitle) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Report Error',
+          style: GoogleFonts.interTight(fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          'Error report for "$errorTitle" has been submitted to the maintenance team.',
+          style: GoogleFonts.inter(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'OK',
+              style: GoogleFonts.inter(
+                color: _isDark ? Colors.white : Theme.of(context).primaryColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final displayedNotifications = _displayedNotifications;
-
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         backgroundColor: _primaryBackground,
         body: isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator())
             : notifications.isEmpty
             ? Center(
                 child: Text(
                   'No notifications',
                   style: GoogleFonts.inter(
-                    color: _secondaryText.withOpacity(0.6),
+                    color: _onSurface.withOpacity(0.6),
                     fontSize: 16,
                   ),
                 ),
@@ -168,283 +175,328 @@ class _NotificationPageState extends State<NotificationPage> {
                   Expanded(
                     child: ListView.builder(
                       padding: EdgeInsets.zero,
-                      itemCount: displayedNotifications.length,
-                      itemBuilder: (context, index) {
-                        final notification = displayedNotifications[index];
-                        final isExpanded = _expandedIndex == index;
-                        final type = _parseType(
-                          notification['type'] ?? 'default',
-                        );
-                        final isResolved = notification['resolved'] ?? false;
-
-                        return Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 1),
-                          child: AnimatedContainer(
-                            duration: Duration(milliseconds: 200),
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: _getBackgroundColor(type, isExpanded),
-                              boxShadow: [
-                                BoxShadow(
-                                  blurRadius: 0,
-                                  color: _shadowColor,
-                                  offset: Offset(0.0, 1),
-                                ),
-                              ],
-                              borderRadius: BorderRadius.circular(0),
-                              shape: BoxShape.rectangle,
-                            ),
-                            child: Opacity(
-                              opacity: isResolved ? 0.6 : 1.0,
-                              child: Padding(
-                                padding: EdgeInsets.all(8),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          _expandedIndex = isExpanded
-                                              ? null
-                                              : index;
-                                        });
-                                      },
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Container(
-                                            width: 4,
-                                            height: 50,
-                                            decoration: BoxDecoration(
-                                              color: _getAccentColor(type),
-                                              borderRadius:
-                                                  BorderRadius.circular(2),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                  12,
-                                                  0,
-                                                  8,
-                                                  0,
-                                                ),
-                                            child: Icon(
-                                              _getIcon(type),
-                                              color: _getAccentColor(type),
-                                              size: 24,
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Text(
-                                                        notification['header'] ??
-                                                            '',
-                                                        style: GoogleFonts.inter(
-                                                          color: _secondaryText,
-                                                          fontSize: 16,
-                                                          fontWeight: isExpanded
-                                                              ? FontWeight.w600
-                                                              : FontWeight
-                                                                    .normal,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    if (isResolved)
-                                                      Container(
-                                                        margin: EdgeInsets.only(
-                                                          left: 8,
-                                                        ),
-                                                        padding:
-                                                            EdgeInsets.symmetric(
-                                                              horizontal: 8,
-                                                              vertical: 2,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.green
-                                                              .withOpacity(0.2),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                12,
-                                                              ),
-                                                        ),
-                                                        child: Text(
-                                                          'Resolved',
-                                                          style:
-                                                              GoogleFonts.inter(
-                                                                color: Colors
-                                                                    .green,
-                                                                fontSize: 10,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                  ],
-                                                ),
-                                                if (notification['subheader'] !=
-                                                        null &&
-                                                    notification['subheader']
-                                                        .toString()
-                                                        .isNotEmpty)
-                                                  Padding(
-                                                    padding: EdgeInsets.only(
-                                                      top: 2,
-                                                    ),
-                                                    child: Text(
-                                                      notification['subheader']!,
-                                                      style: GoogleFonts.inter(
-                                                        color: _secondaryText
-                                                            .withOpacity(0.6),
-                                                        fontSize: 13,
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                  12,
-                                                  0,
-                                                  8,
-                                                  0,
-                                                ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                Text(
-                                                  _formatDate(
-                                                    notification['date'] ?? '',
-                                                  ),
-                                                  style: GoogleFonts.inter(
-                                                    color: _secondaryText,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  _formatTime(
-                                                    notification['date'] ?? '',
-                                                  ),
-                                                  style: GoogleFonts.inter(
-                                                    color: _secondaryText
-                                                        .withOpacity(0.6),
-                                                    fontSize: 11,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Icon(
-                                            isExpanded
-                                                ? Icons.keyboard_arrow_up
-                                                : Icons.keyboard_arrow_down,
-                                            color: _secondaryText,
-                                            size: 24,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    AnimatedCrossFade(
-                                      firstChild: SizedBox.shrink(),
-                                      secondChild: Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                          44,
-                                          12,
-                                          16,
-                                          8,
-                                        ),
-                                        child: Text(
-                                          notification['description'] ?? '',
-                                          style: GoogleFonts.inter(
-                                            color: _secondaryText.withOpacity(
-                                              0.7,
-                                            ),
-                                            fontSize: 14,
-                                            height: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                      crossFadeState: isExpanded
-                                          ? CrossFadeState.showSecond
-                                          : CrossFadeState.showFirst,
-                                      duration: Duration(milliseconds: 200),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
+                      itemCount: _displayedNotifications.length,
+                      itemBuilder: (context, index) => _buildItem(index),
                     ),
                   ),
-                  // Load More button
-                  if (_hasMoreNotifications)
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: _primaryBackground,
-                        boxShadow: [
-                          BoxShadow(
-                            blurRadius: 4,
-                            color: _shadowColor,
-                            offset: Offset(0, -2),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: _loadMoreNotifications,
-                        icon: Icon(Icons.expand_more, size: 20),
-                        label: Text(
-                          'Load More (${notifications.length - _displayLimit} remaining)',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
+                  if (_hasMore) _buildLoadMoreButton(),
                 ],
               ),
       ),
     );
   }
 
-  void fetchNotifications() async {
-    setState(() {
-      isLoading = true;
-    });
+  Widget _buildItem(int index) {
+    final notification = _displayedNotifications[index];
+    final isExpanded = _expandedIndex == index;
+    final type = _parseType(notification['type'] ?? 'default');
+    final isResolved = notification['resolved'] ?? false;
+    final isUnresolvedError = type == NotificationType.error && !isResolved;
+    final accent = _accentColor(type);
 
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isExpanded ? _expandedBg(type) : _primaryBackground,
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 0,
+            color: _shadowColor,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Opacity(
+        opacity: isResolved ? 0.6 : 1.0,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InkWell(
+                onTap: () =>
+                    setState(() => _expandedIndex = isExpanded ? null : index),
+                child: Row(
+                  children: [
+                    // Accent bar
+                    Container(
+                      width: 4,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: accent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Type icon
+                    Icon(_icon(type), color: accent, size: 24),
+                    const SizedBox(width: 8),
+                    // Title + subheader
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  notification['header'] ?? '',
+                                  style: GoogleFonts.inter(
+                                    color: _onSurface,
+                                    fontSize: 16,
+                                    fontWeight: isExpanded
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                              if (isResolved) _resolvedBadge(),
+                            ],
+                          ),
+                          if ((notification['subheader'] ?? '')
+                              .toString()
+                              .isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                notification['subheader']!,
+                                style: GoogleFonts.inter(
+                                  color: _onSurface.withOpacity(0.6),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Date/time
+                    Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        12,
+                        0,
+                        8,
+                        0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            _formatDate(notification['date'] ?? ''),
+                            style: GoogleFonts.inter(
+                              color: _onSurface,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            _formatTime(notification['date'] ?? ''),
+                            style: GoogleFonts.inter(
+                              color: _onSurface.withOpacity(0.6),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      isExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: _onSurface,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Expandable content ───────────────────────────────────────
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 200),
+                crossFadeState: isExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                firstChild: const SizedBox.shrink(),
+                secondChild: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(44, 12, 16, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Description box
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _cardColor,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: accent.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          notification['description'] ??
+                              'No additional details available.',
+                          style: GoogleFonts.inter(
+                            color: _onSurface,
+                            fontSize: 13,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+
+                      // Tip + Report button — only for unresolved errors
+                      if (isUnresolvedError) ...[
+                        const SizedBox(height: 12),
+                        // Tip box
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _isDark
+                                ? _warningColor.withOpacity(0.1)
+                                : const Color(0xFFFFF3E0),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: _warningColor.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.lightbulb_outline,
+                                color: _warningColor,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Tip:',
+                                      style: GoogleFonts.inter(
+                                        color: _warningColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Try restarting the device twice before filing a report. '
+                                      'This often resolves temporary sensor and connection issues.',
+                                      style: GoogleFonts.inter(
+                                        color: _onSurface,
+                                        fontSize: 12,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Report button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _handleReportError(
+                              notification['header'] ?? 'Error',
+                            ),
+                            icon: const Icon(
+                              Icons.report_problem_outlined,
+                              size: 18,
+                            ),
+                            label: Text(
+                              'Report This Error',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _errorColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _resolvedBadge() {
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: _successColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        'Resolved',
+        style: GoogleFonts.inter(
+          color: _successColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreButton() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _primaryBackground,
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 4,
+            color: _shadowColor,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        onPressed: _loadMore,
+        icon: const Icon(Icons.expand_more, size: 20),
+        label: Text(
+          'Load More (${notifications.length - _displayLimit} remaining)',
+          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 0,
+        ),
+      ),
+    );
+  }
+
+  void fetchNotifications() async {
+    setState(() => isLoading = true);
     try {
       final response = await MachineService.fetchNotifications(
         machineId: widget.machineId,
       );
-      print("RESPONSE: ${response.toString()}");
-
       if (response['ok'] == true && response['data'] != null) {
-        print("NOTIFICATIONS: ${response['data']}");
         setState(() {
           notifications = List<Map<String, dynamic>>.from(response['data']);
           isLoading = false;
@@ -456,9 +508,7 @@ class _NotificationPageState extends State<NotificationPage> {
         });
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       _showError(e.toString());
     }
   }
