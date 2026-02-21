@@ -20,8 +20,8 @@ class _NotificationPageState extends State<NotificationPage> {
   int? _expandedIndex;
   List<Map<String, dynamic>> notifications = [];
   bool isLoading = true;
-  int _displayLimit = 20;
-  static const int _loadMoreIncrement = 20;
+  int _displayLimit = 10;
+  static const int _loadMoreIncrement = 10;
 
   @override
   void initState() {
@@ -29,6 +29,7 @@ class _NotificationPageState extends State<NotificationPage> {
     fetchNotifications();
   }
 
+  // ── Theme helpers ──────────────────────────────────────────────────────────
 
   Color get _primaryBackground => Theme.of(context).scaffoldBackgroundColor;
   Color get _cardColor =>
@@ -45,6 +46,7 @@ class _NotificationPageState extends State<NotificationPage> {
   static const Color _successColor = Color(0xFF4CAF50);
   static const Color _warningColor = Color(0xFFFF9800);
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   NotificationType _parseType(String type) {
     switch (type.toLowerCase()) {
@@ -152,6 +154,8 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
+  // ── Build ──────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -214,6 +218,7 @@ class _NotificationPageState extends State<NotificationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Header row (always visible) ──────────────────────────────
               InkWell(
                 onTap: () =>
                     setState(() => _expandedIndex = isExpanded ? null : index),
@@ -489,6 +494,8 @@ class _NotificationPageState extends State<NotificationPage> {
       ),
     );
   }
+
+  // ── Data ───────────────────────────────────────────────────────────────────
 
   void fetchNotifications() async {
     setState(() => isLoading = true);
