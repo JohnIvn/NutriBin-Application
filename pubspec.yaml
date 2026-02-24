@@ -75,7 +75,7 @@ flutter_launcher_icons:
   image_path_ios: "assets/icon/iOS_nutribin_icon.png"
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: "assets/icon/android_nutribin_icon.png"
-  image_path_android: "assets/icon/android_nutribin_icon.png"
+  image_path_android: "assets/icon/android.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -93,13 +93,21 @@ flutter:
     - .env
 
 flutter_native_splash:
-  color: "#ffffff" # background color
-  image: assets/images/splash_screen.png # your splash logo
-  android: true
+  color: "#FDFCF8" 
+
   ios: true
-  web: false
-  android_gravity: center
+  image_ios: "assets/images/splash_screen.png"
   ios_content_mode: scaleAspectFill
+
+  android: true
+  image_android: "assets/icon/icon.png"
+  android_gravity: center
+
+  android_12:
+    image: "assets/icon/android.png"
+    color: "#FDFCF8"
+    
+  web: false
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
