@@ -73,10 +73,9 @@ flutter_launcher_icons:
   min_sdk_android: 21
 
   image_path_ios: "assets/icon/iOS_nutribin_icon.png"
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/icon/android_nutribin_icon.png"
+  adaptive_icon_background: "#FDFCF8"
+  adaptive_icon_foreground: "assets/icon/android.png" 
   image_path_android: "assets/icon/android.png"
-
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -102,6 +101,7 @@ flutter_native_splash:
   android: true
   image_android: "assets/icon/icon.png"
   android_gravity: center
+  color_android: "#FDFCF8"
 
   android_12:
     image: "assets/icon/android.png"
