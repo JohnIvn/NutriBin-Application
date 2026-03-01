@@ -19,7 +19,7 @@ class _AccountPageState extends State<AccountPage>
   String userName = "User";
   String userEmail = "user@example.com";
   String? profileUrl;
-  String _appVersion = "v1.0.0";
+  String _appVersion = "v2.2.1";
   bool _isProfileLoading = true;
 
   late AnimationController _shimmerController;
