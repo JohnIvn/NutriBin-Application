@@ -209,40 +209,92 @@ class _ModulesPageState extends State<ModulesPage> {
     );
 
     if (confirmed == true) {
-      // Mock restart - replace with actual API call when endpoint is ready
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Machine restart initiated successfully (Mock)'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      if (!mounted) return;
 
-      /* TODO: Replace with actual API call when endpoint is ready
+      // Show loading modal
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 20),
+              const CircularProgressIndicator(color: Colors.orange),
+              const SizedBox(height: 24),
+              Text(
+                'Restarting Machine...',
+                style: GoogleFonts.interTight(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please wait while the system reboots.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(color: _secondaryText, fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      );
+
       try {
-        final response = await MachineService.restartMachine(
-          machineId: widget.machineId,
-        );
+        final response = await MachineService.restartMachine();
+
+        // Close loading modal
+        if (mounted) Navigator.pop(context);
 
         if (response['ok'] == true) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Machine restart initiated successfully'),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.green,
+            // Show Success Modal
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                title: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.green),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Restart Initiated',
+                      style: GoogleFonts.interTight(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  'The machine has received the restart signal and is rebooting.',
+                  style: GoogleFonts.inter(),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Done',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
               ),
             );
           }
         } else {
-          _showError('Failed to restart machine');
+          _showError(response['message'] ?? 'Failed to restart machine');
         }
       } catch (e) {
+        // Ensure loading modal is closed on error
+        if (mounted) Navigator.pop(context);
         _showError(e.toString());
       }
-      */
     }
   }
 

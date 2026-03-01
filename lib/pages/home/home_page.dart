@@ -19,6 +19,7 @@ class _HomePageState extends State<HomePage> {
   bool _isAuthenticated = false;
   String? _machineName;
   String? _machineId;
+  bool? _isOnline;
 
   List<Widget> get _pages => [
     FertilizerPage(machineId: _machineId ?? ''),
@@ -37,6 +38,8 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _machineName = arguments["serialNumber"];
           _machineId = arguments["machineId"].toString();
+          _isOnline =
+              arguments["isActive"] == true || arguments["is_active"] == true;
         });
       }
     });
@@ -128,7 +131,10 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Scaffold(
-      appBar: CustomAppBar(machineNameOverride: _machineName),
+      appBar: CustomAppBar(
+        machineNameOverride: _machineName,
+        isOnline: _isOnline,
+      ),
       body: _pages[_currentIndex],
       bottomNavigationBar: CustomNavBar(
         currentIndex: _currentIndex,

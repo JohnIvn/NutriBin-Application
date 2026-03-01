@@ -5,11 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final String? machineNameOverride;
+  final bool? isOnline;
 
   const CustomAppBar({
     super.key,
     this.showBackButton = true,
     this.machineNameOverride,
+    this.isOnline,
   });
 
   @override
@@ -64,12 +66,42 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
           // Display machine name
           if (machineNameOverride != null && machineNameOverride!.isNotEmpty)
-            Text(
-              machineNameOverride!,
-              style: GoogleFonts.interTight(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: contentColor,
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      machineNameOverride!,
+                      style: GoogleFonts.interTight(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: contentColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isOnline != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: isOnline! ? Colors.greenAccent : Colors.grey,
+                        shape: BoxShape.circle,
+                        boxShadow: isOnline!
+                            ? [
+                                BoxShadow(
+                                  color: Colors.greenAccent.withOpacity(0.5),
+                                  blurRadius: 4,
+                                  spreadRadius: 1,
+                                ),
+                              ]
+                            : [],
+                      ),
+                    ),
+                  ],
+                ],
               ),
             )
           else
