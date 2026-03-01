@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/services/machine_service.dart';
@@ -14,6 +15,7 @@ class ModulesPage extends StatefulWidget {
 }
 
 class _ModulesPageState extends State<ModulesPage> {
+  Timer? _dataRefreshTimer;
   bool isLoading = true;
   Map<String, dynamic> modulesData = {};
 
@@ -21,6 +23,19 @@ class _ModulesPageState extends State<ModulesPage> {
   void initState() {
     super.initState();
     _fetchModulesStatus();
+    _startDataRefresh();
+  }
+
+  @override
+  void dispose() {
+    _dataRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startDataRefresh() {
+    _dataRefreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      _fetchModulesStatus(silent: true);
+    });
   }
 
   // Color scheme
@@ -35,10 +50,12 @@ class _ModulesPageState extends State<ModulesPage> {
       ? Colors.black.withOpacity(0.3)
       : Colors.black.withOpacity(0.1);
 
-  Future<void> _fetchModulesStatus() async {
-    setState(() {
-      isLoading = true;
-    });
+  Future<void> _fetchModulesStatus({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        isLoading = true;
+      });
+    }
 
     try {
       final response = await MachineService.fetchModulesStatus(
@@ -46,21 +63,31 @@ class _ModulesPageState extends State<ModulesPage> {
       );
 
       if (response['ok'] == true && response['data'] != null) {
-        setState(() {
-          modulesData = Map<String, dynamic>.from(response['data']);
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            modulesData = Map<String, dynamic>.from(response['data']);
+            isLoading = false;
+          });
+        }
       } else {
-        setState(() {
-          isLoading = false;
-        });
-        _showError(response['message'] ?? 'Failed to fetch modules status');
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+          if (!silent) {
+            _showError(response['message'] ?? 'Failed to fetch modules status');
+          }
+        }
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      _showError(e.toString());
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        if (!silent) {
+          _showError(e.toString());
+        }
+      }
     }
   }
 
@@ -264,7 +291,7 @@ class _ModulesPageState extends State<ModulesPage> {
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _fetchModulesStatus,
+              onRefresh: () => _fetchModulesStatus(),
               child: SingleChildScrollView(
                 physics: AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
