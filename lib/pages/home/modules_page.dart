@@ -389,13 +389,24 @@ class _ModulesPageState extends State<ModulesPage> {
 
   Widget _buildModuleCard(ModuleInfo module) {
     final isOnline = module.status == true;
-    final statusColor = isOnline ? Colors.green : Colors.red;
-    final bgColor = isOnline
-        ? (_isDarkMode ? Colors.green.withOpacity(0.1) : Colors.green.shade50)
-        : (_isDarkMode ? Colors.red.withOpacity(0.1) : Colors.red.shade50);
+    final isOffline = module.status == 'offline';
+    final statusColor = isOffline
+        ? Colors.grey
+        : (isOnline ? Colors.green : Colors.red);
+    final bgColor = isOffline
+        ? (_isDarkMode ? Colors.grey.withOpacity(0.1) : Colors.grey.shade50)
+        : (isOnline
+              ? (_isDarkMode
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.green.shade50)
+              : (_isDarkMode
+                    ? Colors.red.withOpacity(0.1)
+                    : Colors.red.shade50));
 
     return InkWell(
-      onTap: isOnline ? null : () => _requestRepair(module.name, module.code),
+      onTap: (isOnline || isOffline)
+          ? null
+          : () => _requestRepair(module.name, module.code),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
@@ -451,7 +462,7 @@ class _ModulesPageState extends State<ModulesPage> {
               Text(
                 module.name,
                 style: GoogleFonts.inter(
-                  color: _textColor,
+                  color: isOffline ? _secondaryText : _textColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -462,13 +473,15 @@ class _ModulesPageState extends State<ModulesPage> {
               Row(
                 children: [
                   Icon(
-                    isOnline ? Icons.check_circle : Icons.error,
+                    isOffline
+                        ? Icons.cloud_off
+                        : (isOnline ? Icons.check_circle : Icons.error),
                     color: statusColor,
                     size: 14,
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    isOnline ? 'Online' : 'Offline',
+                    isOffline ? 'Offline' : (isOnline ? 'Online' : 'Fault'),
                     style: GoogleFonts.inter(
                       color: statusColor,
                       fontSize: 11,
@@ -708,7 +721,7 @@ class _ModulesPageState extends State<ModulesPage> {
 class ModuleInfo {
   final String code;
   final String name;
-  final bool? status;
+  final dynamic status;
 
   ModuleInfo(this.code, this.name, this.status);
 }

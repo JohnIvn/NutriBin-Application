@@ -450,9 +450,16 @@ class _FertilizerPageState extends State<FertilizerPage> {
         : Colors.blue.shade900;
 
     // Parse sensor values
-    final nitrogen = double.tryParse(sensorData['nitrogen'] ?? '0') ?? 0;
-    final phosphorus = double.tryParse(sensorData['phosphorus'] ?? '0') ?? 0;
-    final potassium = double.tryParse(sensorData['potassium'] ?? '0') ?? 0;
+    final isMachineOffline = sensorData['is_active'] == false;
+    final nitrogen = isMachineOffline
+        ? 0.0
+        : (double.tryParse(sensorData['nitrogen'] ?? '0') ?? 0);
+    final phosphorus = isMachineOffline
+        ? 0.0
+        : (double.tryParse(sensorData['phosphorus'] ?? '0') ?? 0);
+    final potassium = isMachineOffline
+        ? 0.0
+        : (double.tryParse(sensorData['potassium'] ?? '0') ?? 0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

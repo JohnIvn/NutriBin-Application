@@ -260,24 +260,28 @@ class _NutriBinPageState extends State<NutriBinPage> {
     IconData icon,
     Color color,
   ) {
+    final isMachineOffline = sensorData['is_active'] == false;
+    final displayValue = isMachineOffline ? '--' : value;
+    final displayColor = isMachineOffline ? Colors.grey : color;
+
     return Container(
       margin: const EdgeInsets.all(4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: displayColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: displayColor.withOpacity(0.3), width: 1),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 28),
+          Icon(icon, color: displayColor, size: 28),
           const SizedBox(height: 8),
           Text(
-            value,
+            displayValue,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: color,
+              color: displayColor,
             ),
           ),
           const SizedBox(height: 4),
@@ -433,23 +437,28 @@ class _NutriBinPageState extends State<NutriBinPage> {
     Color color,
     String status,
   ) {
+    final isMachineOffline = sensorData['is_active'] == false;
+    final displayValue = isMachineOffline ? '--' : value;
+    final displayStatus = isMachineOffline ? 'Offline' : status;
+    final displayColor = isMachineOffline ? Colors.grey : color;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: displayColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: displayColor.withOpacity(0.3)),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 32),
+          Icon(icon, color: displayColor, size: 32),
           const SizedBox(height: 10),
           Text(
-            value,
+            displayValue,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: color,
+              color: displayColor,
             ),
           ),
           const SizedBox(height: 6),
@@ -463,16 +472,18 @@ class _NutriBinPageState extends State<NutriBinPage> {
           ),
           const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const Offset(10, 4) != null
+                ? const EdgeInsets.symmetric(horizontal: 10, vertical: 4)
+                : EdgeInsets.zero,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: displayColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              status,
+              displayStatus,
               style: TextStyle(
                 fontSize: 11,
-                color: color,
+                color: displayColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -629,6 +640,11 @@ class _NutriBinPageState extends State<NutriBinPage> {
     Color color,
     double progress,
   ) {
+    final isMachineOffline = sensorData['is_active'] == false;
+    final displayValue = isMachineOffline ? '--' : value.toStringAsFixed(1);
+    final displayColor = isMachineOffline ? Colors.grey : color;
+    final displayProgress = isMachineOffline ? 0.0 : progress;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -644,11 +660,11 @@ class _NutriBinPageState extends State<NutriBinPage> {
               ),
             ),
             Text(
-              '${value.toStringAsFixed(1)} $unit',
+              isMachineOffline ? '--' : '$displayValue $unit',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: color,
+                color: displayColor,
               ),
             ),
           ],
@@ -662,10 +678,10 @@ class _NutriBinPageState extends State<NutriBinPage> {
           ),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
-            widthFactor: progress,
+            widthFactor: displayProgress,
             child: Container(
               decoration: BoxDecoration(
-                color: color,
+                color: displayColor,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
