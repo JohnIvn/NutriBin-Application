@@ -342,13 +342,32 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                               color: highlightColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(
-                              '${existingMachines.length} Active',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: highlightColor,
-                              ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '${existingMachines.length} Registered',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: highlightColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 1,
+                                  height: 12,
+                                  color: highlightColor.withOpacity(0.3),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${existingMachines.where((m) => m['is_active'] == true).length} Online',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -379,6 +398,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                             context: context,
                             serialNumber: machine['serial_number'] ?? 'Unknown',
                             machineId: machine['machine_id'] ?? '',
+                            isActive: machine['is_active'] ?? false,
                             highlightColor: highlightColor,
                             cardColor: cardColor,
                             textColor: textColor,
@@ -401,6 +421,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
     required BuildContext context,
     required String serialNumber,
     required String machineId,
+    required bool isActive,
     required Color highlightColor,
     required Color cardColor,
     required Color textColor,
@@ -441,80 +462,158 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
               borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                child: Column(
                   children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: highlightColor.withOpacity(
-                          isDarkMode ? 0.2 : 0.1,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.restore_from_trash,
-                        size: 26,
-                        color: highlightColor,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            serialNumber,
-                            style: GoogleFonts.interTight(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: textColor,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: highlightColor.withOpacity(
+                              isDarkMode ? 0.2 : 0.1,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
+                          child: Icon(
+                            Icons.restore_from_trash,
+                            size: 24,
+                            color: highlightColor,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                serialNumber,
+                                style: GoogleFonts.interTight(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Online/Offline status indicator
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? Colors.green.withOpacity(
+                                    isDarkMode ? 0.2 : 0.1,
+                                  )
+                                : Colors.grey.withOpacity(
+                                    isDarkMode ? 0.2 : 0.1,
+                                  ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isActive
+                                  ? Colors.green.withOpacity(0.5)
+                                  : Colors.grey.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: isActive ? Colors.green : Colors.grey,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isActive ? 'ONLINE' : 'OFFLINE',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: isActive
+                                      ? (isDarkMode
+                                            ? Colors.green[300]
+                                            : Colors.green[700])
+                                      : (isDarkMode
+                                            ? Colors.grey[400]
+                                            : Colors.grey[600]),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Delete button
+                        IconButton(
+                          onPressed: () {
+                            _showDeleteConfirmation(
+                              serialNumber: serialNumber,
+                              machineId: machineId,
+                              highlightColor: highlightColor,
+                              textColor: textColor,
+                              subTextColor: subTextColor,
+                              isDarkMode: isDarkMode,
+                            );
+                          },
+                          icon: Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.red.withOpacity(0.7),
+                            size: 20,
+                          ),
+                          tooltip: 'Remove machine',
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: subTextColor.withOpacity(0.5),
+                          size: 22,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(height: 1, thickness: 0.5),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.fingerprint_rounded,
+                          size: 14,
+                          color: subTextColor.withOpacity(0.7),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'MACHINE ID:',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: subTextColor.withOpacity(0.7),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
                             machineId,
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
+                            style: GoogleFonts.firaCode(
+                              fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: subTextColor,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
-                    ),
-                    // Delete button
-                    IconButton(
-                      onPressed: () {
-                        _showDeleteConfirmation(
-                          serialNumber: serialNumber,
-                          machineId: machineId,
-                          highlightColor: highlightColor,
-                          textColor: textColor,
-                          subTextColor: subTextColor,
-                          isDarkMode: isDarkMode,
-                        );
-                      },
-                      icon: Icon(
-                        Icons.delete_outline_rounded,
-                        color: Colors.red.withOpacity(0.7),
-                        size: 22,
-                      ),
-                      tooltip: 'Remove machine',
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: subTextColor.withOpacity(0.5),
-                      size: 24,
+                        ),
+                      ],
                     ),
                   ],
                 ),
