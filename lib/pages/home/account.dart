@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/services/account_service.dart';
 import 'package:nutribin_application/utils/helpers.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AccountPage extends StatefulWidget {
@@ -18,6 +19,7 @@ class _AccountPageState extends State<AccountPage>
   String userName = "User";
   String userEmail = "user@example.com";
   String? profileUrl;
+  String _appVersion = "v1.0.0";
   bool _isProfileLoading = true;
 
   late AnimationController _shimmerController;
@@ -34,6 +36,20 @@ class _AccountPageState extends State<AccountPage>
       CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
     );
     _loadUserProfile();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _appVersion = "v${packageInfo.version}";
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading app version: $e");
+    }
   }
 
   @override
@@ -264,7 +280,7 @@ class _AccountPageState extends State<AccountPage>
                 const SizedBox(height: 24),
                 Center(
                   child: Text(
-                    'v2.1.0',
+                    _appVersion,
                     style: GoogleFonts.inter(
                       color: subTextColor,
                       fontSize: 12,
@@ -346,7 +362,7 @@ class _AccountPageState extends State<AccountPage>
       ),
     );
   }
-  
+
   Widget _buildProfileHeader(
     Color cardColor,
     Color textColor,
