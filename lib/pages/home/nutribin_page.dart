@@ -35,6 +35,9 @@ class _NutriBinPageState extends State<NutriBinPage> {
     'combustible_gases': null,
   };
 
+  // Modules Data for alert
+  Map<String, dynamic> modulesData = {};
+
   // Color scheme
   Color get _primaryColor => Theme.of(context).primaryColor;
   Color get _secondaryBackground => Theme.of(context).scaffoldBackgroundColor;
@@ -68,29 +71,29 @@ class _NutriBinPageState extends State<NutriBinPage> {
 
   Future<void> _fetchData() async {
     try {
-      final response = await MachineService.fetchFertilizerStatus(
-        machineId: widget.machineId,
-      );
+      final results = await Future.wait([
+        MachineService.fetchFertilizerStatus(machineId: widget.machineId),
+        MachineService.fetchModulesStatus(machineId: widget.machineId),
+      ]);
 
-      if (response['ok'] == true && response['data'] != null) {
-        if (mounted) {
-          setState(() {
-            sensorData = Map<String, dynamic>.from(response['data']);
-            isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-          });
-        }
+      final sensorResponse = results[0];
+      final modulesResponse = results[1];
+
+      if (mounted) {
+        setState(() {
+          if (sensorResponse['ok'] == true && sensorResponse['data'] != null) {
+            sensorData = Map<String, dynamic>.from(sensorResponse['data']);
+          }
+          if (modulesResponse['ok'] == true &&
+              modulesResponse['data'] != null) {
+            modulesData = Map<String, dynamic>.from(modulesResponse['data']);
+          }
+          isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
         _showError(e.toString());
       }
     }
@@ -137,12 +140,18 @@ class _NutriBinPageState extends State<NutriBinPage> {
         ? Colors.black.withOpacity(0.3)
         : Colors.black.withOpacity(0.1);
 
-    // Calculate derived metrics from real data
+    final isMachineOffline = sensorData['is_active'] == false;
+
     final weight =
         double.tryParse(sensorData['weight_kg']?.toString() ?? '0') ?? 0;
     final dailyOutput = weight > 0 ? (weight * 0.12).toStringAsFixed(1) : '0.0';
     final quality = weight > 0 ? '84.5' : '0.0';
     final efficiency = weight > 0 ? '85.2' : '0.0';
+
+    // Badge properties driven by machine state
+    final badgeColor = isMachineOffline ? Colors.grey : Colors.green;
+    final badgeLabel = isMachineOffline ? 'OFFLINE' : 'ACTIVE';
+    final badgeIcon = isMachineOffline ? Icons.circle_outlined : Icons.circle;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -181,21 +190,17 @@ class _NutriBinPageState extends State<NutriBinPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade100,
+                      color: badgeColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.circle,
-                          color: Colors.green.shade700,
-                          size: 10,
-                        ),
+                        Icon(badgeIcon, color: badgeColor, size: 10),
                         const SizedBox(width: 6),
                         Text(
-                          'ACTIVE',
+                          badgeLabel,
                           style: TextStyle(
-                            color: Colors.green.shade700,
+                            color: badgeColor,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -499,16 +504,33 @@ class _NutriBinPageState extends State<NutriBinPage> {
         : Colors.black.withOpacity(0.1);
 
     // Parse gas sensor values
-    final methane = double.tryParse(sensorData['methane'] ?? '0') ?? 0;
+    final methane =
+        double.tryParse(sensorData['methane']?.toString() ?? '0') ?? 0;
     final co =
         double.tryParse(sensorData['carbon_monoxide']?.toString() ?? '0') ?? 0;
     final airQuality =
         double.tryParse(sensorData['air_quality']?.toString() ?? '0') ?? 0;
 
-    // Calculate gas levels (assuming max safe values)
-    final methaneProgress = (methane / 50).clamp(0.0, 1.0);
-    final coProgress = (co / 50).clamp(0.0, 1.0);
-    final aqProgress = (airQuality / 100).clamp(0.0, 1.0);
+    // If all zero (offline/no data), hide the entire widget
+    final bool allZero = methane == 0 && co == 0 && airQuality == 0;
+    if (allZero) return const SizedBox.shrink();
+
+    // Progress bars (max raw ADC = 4095)
+    final methaneProgress = (methane / 4095).clamp(0.0, 1.0);
+    final coProgress = (co / 4095).clamp(0.0, 1.0);
+    final aqProgress = (airQuality / 4095).clamp(0.0, 1.0);
+
+    // Danger thresholds — flag if any reading hits 4095
+    final bool methaneDanger = methane >= 4095;
+    final bool coDanger = co >= 4095;
+    final bool aqDanger = airQuality >= 4095;
+    final bool anyDanger = methaneDanger || coDanger || aqDanger;
+
+    // Status badge
+    final badgeColor = anyDanger ? Colors.red : Colors.green;
+    final badgeIcon = anyDanger
+        ? Icons.warning_amber_rounded
+        : Icons.check_circle;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -530,6 +552,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -562,24 +585,22 @@ class _NutriBinPageState extends State<NutriBinPage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade100,
+                      color: badgeColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      Icons.check_circle,
-                      color: Colors.green.shade700,
-                      size: 24,
-                    ),
+                    child: Icon(badgeIcon, color: badgeColor, size: 24),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
+
               _buildGasLevelBar(
                 'Methane (CH₄)',
                 methane,
                 'ppm',
                 Colors.orange,
                 methaneProgress,
+                methaneDanger,
               ),
               const SizedBox(height: 12),
               _buildGasLevelBar(
@@ -588,6 +609,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
                 'ppm',
                 Colors.red,
                 coProgress,
+                coDanger,
               ),
               const SizedBox(height: 12),
               _buildGasLevelBar(
@@ -596,36 +618,41 @@ class _NutriBinPageState extends State<NutriBinPage> {
                 'AQI',
                 Colors.blue,
                 aqProgress,
+                aqDanger,
               ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.green.shade700,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'All gas levels within safe operating limits',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green.shade900,
-                          fontWeight: FontWeight.w500,
+
+              // Only show status banner when there's a concern
+              if (anyDanger) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red.shade700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'High gas levels detected! Ventilate the area and inspect the machine immediately.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.red.shade900,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -639,10 +666,12 @@ class _NutriBinPageState extends State<NutriBinPage> {
     String unit,
     Color color,
     double progress,
+    bool isDanger,
   ) {
     final isMachineOffline = sensorData['is_active'] == false;
-    final displayValue = isMachineOffline ? '--' : value.toStringAsFixed(1);
-    final displayColor = isMachineOffline ? Colors.grey : color;
+    final displayColor = isMachineOffline
+        ? Colors.grey
+        : (isDanger ? Colors.red : color);
     final displayProgress = isMachineOffline ? 0.0 : progress;
 
     return Column(
@@ -651,16 +680,28 @@ class _NutriBinPageState extends State<NutriBinPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              name,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: _secondaryText,
-              ),
+            Row(
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _secondaryText,
+                  ),
+                ),
+                if (isDanger) ...[
+                  const SizedBox(width: 6),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.red,
+                    size: 14,
+                  ),
+                ],
+              ],
             ),
             Text(
-              isMachineOffline ? '--' : '$displayValue $unit',
+              isMachineOffline ? '--' : '${value.toStringAsFixed(1)} $unit',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -869,10 +910,40 @@ class _NutriBinPageState extends State<NutriBinPage> {
         ? Colors.black.withOpacity(0.3)
         : Colors.black.withOpacity(0.1);
 
-    // Check reed switch status
-    final reedSwitch = sensorData['reed_switch'];
-    // Inverted logic to match API: true means Secure/Online, false means Open/Offline
-    final isLidSecure = reedSwitch == true;
+    // Collect faulted modules from modulesData
+    final List<String> faultedModules = [];
+    const moduleLabels = {
+      'c1': 'Arduino Q (C1)',
+      'c2': 'ESP32 Filter (C2)',
+      'c3': 'ESP32 Servo w/ Sensors (C3)',
+      'c4': 'ESP32 Sensors (C4)',
+      's1': 'Camera (S1)',
+      's2': 'Humidity (S2)',
+      's3': 'Gas Methane (S3)',
+      's4': 'Gas Carbon Monoxide (S4)',
+      's5': 'Gas Air Quality (S5)',
+      's6': 'Gas Combustible (S6)',
+      's7': 'NPK Sensor (S7)',
+      's8': 'Moisture (S8)',
+      's9': 'Reed Switch (S9)',
+      's10': 'Ultrasonic (S10)',
+      's11': 'Weight Sensor (S11)',
+      'm1': 'Servo Lid A (M1)',
+      'm2': 'Servo Lid B (M2)',
+      'm3': 'Servo Mixer (M3)',
+      'm4': 'Motor Grinder (M4)',
+      'm5': 'Exhaust Fan (M5)',
+    };
+
+    modulesData.forEach((key, value) {
+      if (moduleLabels.containsKey(key) && value != true) {
+        faultedModules.add(moduleLabels[key]!);
+      }
+    });
+
+    final bool hasModuleFaults = faultedModules.isNotEmpty;
+    final displayedModules = faultedModules.take(5).toList();
+    final extraCount = faultedModules.length - displayedModules.length;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -894,20 +965,19 @@ class _NutriBinPageState extends State<NutriBinPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header
               Row(
                 children: [
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ModulesPage(machineId: widget.machineId),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ModulesPage(machineId: widget.machineId),
+                        ),
+                      ),
                       borderRadius: BorderRadius.circular(12),
                       splashColor: Theme.of(
                         context,
@@ -959,45 +1029,187 @@ class _NutriBinPageState extends State<NutriBinPage> {
                 ],
               ),
               const SizedBox(height: 20),
-              Container(
+
+              // Static care tips — tap to reveal tooltip
+              Tooltip(
+                message:
+                    '• Keep away from water and rain\n'
+                    '• Avoid prolonged direct sunlight\n'
+                    '• Do not place heavy objects on top\n'
+                    '• Keep lid free from hard impacts\n'
+                    '• Ensure ventilation around the unit',
+                triggerMode: TooltipTriggerMode.tap,
+                showDuration: const Duration(seconds: 4),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isLidSecure
-                      ? Colors.green.shade50
-                      : Colors.orange.shade50,
+                  color: Colors.grey.shade800,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isLidSecure
-                        ? Colors.green.shade200
-                        : Colors.orange.shade200,
-                  ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isLidSecure ? Icons.info_outline : Icons.warning_amber,
-                      color: isLidSecure
-                          ? Colors.green.shade700
-                          : Colors.orange.shade700,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        isLidSecure
-                            ? 'All modules functional: Keep the lid from being tampered with hard objects'
-                            : 'Warning: Lid is open or compromised',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isLidSecure
-                              ? Colors.green.shade900
-                              : Colors.orange.shade900,
+                textStyle: const TextStyle(color: Colors.white, fontSize: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.blue.shade700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Keep the machine in a dry, ventilated area away from direct sunlight.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue.shade900,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      Icon(
+                        Icons.touch_app,
+                        color: Colors.blue.shade400,
+                        size: 16,
+                      ),
+                    ],
+                  ),
                 ),
               ),
+
+              // Module faults
+              if (hasModuleFaults) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: Colors.red.shade700,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            '${faultedModules.length} module${faultedModules.length > 1 ? 's' : ''} require attention',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade900,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ...displayedModules.map(
+                        (module) => Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.circle,
+                                size: 6,
+                                color: Colors.red.shade400,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                module,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red.shade800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (extraCount > 0) ...[
+                        const SizedBox(height: 6),
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ModulesPage(machineId: widget.machineId),
+                            ),
+                          ),
+                          child: Text(
+                            '+$extraCount more...',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red.shade600,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ModulesPage(machineId: widget.machineId),
+                          ),
+                        ),
+                        child: Text(
+                          'Tap to view modules & request repair →',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.red.shade700,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // All clear
+              if (!hasModuleFaults) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.green.shade700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'All modules are online and functioning normally',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green.shade900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),
