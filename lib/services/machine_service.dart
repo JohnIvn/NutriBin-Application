@@ -170,7 +170,7 @@ class MachineService {
       return Error.errorResponse(e.toString());
     }
   }
-
+  
   static Future<Map<String, dynamic>> fetchModulesStatus({
     required String machineId,
   }) async {

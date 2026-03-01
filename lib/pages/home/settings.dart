@@ -186,7 +186,7 @@ class _AccountPageState extends State<AccountPage>
                 _buildSectionTitle('Account', subTextColor),
                 _buildMenuItem(
                   icon: Icons.person_outline_rounded,
-                  title: 'Profile Settings',
+                  title: 'Profile',
                   onTap: () => Navigator.pushNamed(context, '/profile'),
                   cardColor: cardColor,
                   textColor: textColor,
@@ -346,7 +346,7 @@ class _AccountPageState extends State<AccountPage>
       ),
     );
   }
-  
+
   Widget _buildProfileHeader(
     Color cardColor,
     Color textColor,

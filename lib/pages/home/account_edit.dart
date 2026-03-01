@@ -168,7 +168,6 @@ class _AccountEditWidgetState extends State<AccountEditWidget> {
   }
 
   void _showProfilePictureOptions() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final cardColor = Theme.of(context).cardTheme.color!;
     final textColor = Theme.of(context).colorScheme.onSurface;
 

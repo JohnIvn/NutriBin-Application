@@ -7,7 +7,7 @@ import 'package:nutribin_application/pages/home/machine_page.dart';
 import 'package:nutribin_application/pages/home/mfa_settings.dart';
 import 'package:nutribin_application/services/auth_service.dart';
 import 'package:nutribin_application/pages/common/about.dart';
-import 'package:nutribin_application/pages/home/account.dart';
+import 'package:nutribin_application/pages/home/settings.dart';
 import 'package:nutribin_application/pages/home/account_edit.dart';
 import 'package:nutribin_application/pages/home/profile.dart';
 import 'package:nutribin_application/pages/auth/signup.dart';
@@ -154,7 +154,7 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfileWidget(),
         // '/fertilizers': (context) => const FertilizerPage(),
         '/account': (context) => const AccountPage(),
-        '/account-edit': (context) => const AccountEditWidget(),
+        '/settings': (context) => const AccountEditWidget(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/reset-password': (context) => const ResetPasswordPage(),
         '/map-picker': (context) => const MapPickerPage(),

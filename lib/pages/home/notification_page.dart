@@ -29,14 +29,10 @@ class _NotificationPageState extends State<NotificationPage> {
     fetchNotifications();
   }
 
-  // ── Theme helpers ──────────────────────────────────────────────────────────
-
   Color get _primaryBackground => Theme.of(context).scaffoldBackgroundColor;
   Color get _cardColor =>
       Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor;
   Color get _onSurface => Theme.of(context).colorScheme.onSurface;
-  Color get _subText =>
-      Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
   Color get _shadowColor =>
@@ -46,7 +42,7 @@ class _NotificationPageState extends State<NotificationPage> {
   static const Color _successColor = Color(0xFF4CAF50);
   static const Color _warningColor = Color(0xFFFF9800);
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // Helpers
 
   NotificationType _parseType(String type) {
     switch (type.toLowerCase()) {
@@ -154,8 +150,6 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -218,13 +212,11 @@ class _NotificationPageState extends State<NotificationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header row (always visible) ──────────────────────────────
               InkWell(
                 onTap: () =>
                     setState(() => _expandedIndex = isExpanded ? null : index),
                 child: Row(
                   children: [
-                    // Accent bar
                     Container(
                       width: 4,
                       height: 50,
@@ -234,10 +226,8 @@ class _NotificationPageState extends State<NotificationPage> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Type icon
                     Icon(_icon(type), color: accent, size: 24),
                     const SizedBox(width: 8),
-                    // Title + subheader
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,7 +265,6 @@ class _NotificationPageState extends State<NotificationPage> {
                         ],
                       ),
                     ),
-                    // Date/time
                     Padding(
                       padding: const EdgeInsetsDirectional.fromSTEB(
                         12,
@@ -314,7 +303,6 @@ class _NotificationPageState extends State<NotificationPage> {
                 ),
               ),
 
-              // ── Expandable content ───────────────────────────────────────
               AnimatedCrossFade(
                 duration: const Duration(milliseconds: 200),
                 crossFadeState: isExpanded
@@ -349,10 +337,8 @@ class _NotificationPageState extends State<NotificationPage> {
                         ),
                       ),
 
-                      // Tip + Report button — only for unresolved errors
                       if (isUnresolvedError) ...[
                         const SizedBox(height: 12),
-                        // Tip box
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -403,7 +389,6 @@ class _NotificationPageState extends State<NotificationPage> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Report button
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
@@ -494,8 +479,6 @@ class _NotificationPageState extends State<NotificationPage> {
       ),
     );
   }
-
-  // ── Data ───────────────────────────────────────────────────────────────────
 
   void fetchNotifications() async {
     setState(() => isLoading = true);

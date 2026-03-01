@@ -55,8 +55,6 @@ class _ProfileWidgetState extends State<ProfileWidget>
     super.dispose();
   }
 
-  // --- HELPERS ---
-
   String _getInitials() {
     String initials = '';
     if (firstName.isNotEmpty) initials += firstName[0];
@@ -80,8 +78,6 @@ class _ProfileWidgetState extends State<ProfileWidget>
     ];
     return colors[name.codeUnitAt(0) % colors.length];
   }
-
-  // --- DATA FETCHING ---
 
   void _reloadAccount() => _fetchAccount();
 
@@ -200,8 +196,6 @@ class _ProfileWidgetState extends State<ProfileWidget>
             ),
     );
   }
-
-  // ── SKELETON ───────────────────────────────────────────────────────────────
 
   Widget _buildSkeletonBody(
     Color backgroundColor,
@@ -364,8 +358,6 @@ class _ProfileWidgetState extends State<ProfileWidget>
       ),
     );
   }
-
-  // ── REAL CONTENT ───────────────────────────────────────────────────────────
 
   Widget _buildContent(
     Color primaryColor,
@@ -559,7 +551,7 @@ class _ProfileWidgetState extends State<ProfileWidget>
                     onTap: () async {
                       final didUpdate = await Navigator.pushNamed(
                         context,
-                        '/account-edit',
+                        '/settings',
                       );
                       if (didUpdate == true) _reloadAccount();
                     },
@@ -824,8 +816,6 @@ class _ProfileWidgetState extends State<ProfileWidget>
     );
   }
 }
-
-// ── SHIMMER WIDGETS ──────────────────────────────────────────────────────────
 
 class _ShimmerBox extends StatelessWidget {
   final Animation<double> animation;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nutribin_application/pages/home/account.dart';
+import 'package:nutribin_application/pages/home/settings.dart';
 import 'package:nutribin_application/pages/home/guide_page.dart';
 import 'package:nutribin_application/pages/home/machines_home_page.dart';
 import 'package:nutribin_application/widgets/machines_navbar.dart';
