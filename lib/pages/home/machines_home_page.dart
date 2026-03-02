@@ -456,6 +456,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                   arguments: {
                     "serialNumber": serialNumber,
                     "machineId": machineId,
+                    "isActive": isActive,
                   },
                 );
               },

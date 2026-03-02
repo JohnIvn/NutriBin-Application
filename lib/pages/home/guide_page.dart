@@ -294,7 +294,7 @@ class GuidePage extends StatelessWidget {
                       delay: (delay + 100 + (index * 50)).ms,
                     ),
           );
-        }).toList(),
+        }),
         const SizedBox(height: 24),
       ],
     );

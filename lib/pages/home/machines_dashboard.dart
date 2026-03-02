@@ -223,7 +223,9 @@ class _MachineDashboardPageState extends State<MachineDashboardPage> {
                   onTap: () {
                     // TODO: Navigate to add waste entry
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Add Waste Entry - Coming Soon')),
+                      const SnackBar(
+                        content: Text('Add Waste Entry - Coming Soon'),
+                      ),
                     );
                   },
                 ),
@@ -235,7 +237,9 @@ class _MachineDashboardPageState extends State<MachineDashboardPage> {
                   onTap: () {
                     // TODO: Navigate to history
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('View History - Coming Soon')),
+                      const SnackBar(
+                        content: Text('View History - Coming Soon'),
+                      ),
                     );
                   },
                 ),
@@ -247,7 +251,9 @@ class _MachineDashboardPageState extends State<MachineDashboardPage> {
                   onTap: () {
                     // TODO: Navigate to settings
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Machine Settings - Coming Soon')),
+                      const SnackBar(
+                        content: Text('Machine Settings - Coming Soon'),
+                      ),
                     );
                   },
                 ),
@@ -461,11 +467,7 @@ class _MachineDashboardPageState extends State<MachineDashboardPage> {
           'label': 'Online',
         };
       case MachineStatus.offline:
-        return {
-          'color': Colors.red,
-          'icon': Icons.cancel,
-          'label': 'Offline',
-        };
+        return {'color': Colors.red, 'icon': Icons.cancel, 'label': 'Offline'};
       case MachineStatus.maintenance:
         return {
           'color': Colors.orange,
@@ -488,7 +490,7 @@ class _MachineDashboardPageState extends State<MachineDashboardPage> {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

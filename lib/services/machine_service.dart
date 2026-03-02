@@ -331,4 +331,26 @@ class MachineService {
       return Error.errorResponse(e.toString());
     }
   }
+
+  static Future<Map<String, dynamic>> restartMachine() async {
+    try {
+      // Static IP address configured in the ESP32
+      const String espIp = "192.168.1.184";
+      final url = Uri.parse('http://$espIp/restart');
+
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        return {"ok": true, "message": "Restart command sent to ESP32"};
+      } else {
+        return Error.errorResponse(
+          "Machine returned status: ${response.statusCode}",
+        );
+      }
+    } catch (e) {
+      return Error.errorResponse(
+        "Connection failed: Ensure you're on the same Wi-Fi",
+      );
+    }
+  }
 }

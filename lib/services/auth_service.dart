@@ -348,7 +348,7 @@ static Future<Map<String, dynamic>> recordLogin({
 
       final data = jsonDecode(result.body);
 
-      print("TEST: ${data}");
+      print("TEST: $data");
       if (data["ok"] != true) {
         return Error.errorResponse(data["message"] ?? data["error"]);
       }

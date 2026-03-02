@@ -142,8 +142,11 @@ class _NutriBinPageState extends State<NutriBinPage> {
 
     final isMachineOffline = sensorData['is_active'] == false;
 
-    final weight =
-        double.tryParse(sensorData['weight_kg']?.toString() ?? '0') ?? 0;
+    final weightRaw = sensorData['weight_kg'];
+    final weight = (weightRaw == null || weightRaw == 'offline')
+        ? 0.0
+        : (double.tryParse(weightRaw.toString()) ?? 0.0);
+
     final dailyOutput = weight > 0 ? (weight * 0.12).toStringAsFixed(1) : '0.0';
     final quality = weight > 0 ? '84.5' : '0.0';
     final efficiency = weight > 0 ? '85.2' : '0.0';
@@ -302,10 +305,17 @@ class _NutriBinPageState extends State<NutriBinPage> {
         : Colors.black.withOpacity(0.1);
 
     // Parse sensor values
-    final temperature = double.tryParse(sensorData['temperature'] ?? '0') ?? 0;
-    final humidity = double.tryParse(sensorData['humidity'] ?? '0') ?? 0;
-    final ph = double.tryParse(sensorData['ph'] ?? '0') ?? 0;
-    final moisture = double.tryParse(sensorData['moisture'] ?? '0') ?? 0;
+    double parseVal(dynamic val) {
+      if (val == null || val == 'offline') return 0.0;
+      return double.tryParse(val.toString()) ?? 0.0;
+    }
+    final temperature = parseVal(sensorData['temperature']);
+    final humidity = parseVal(sensorData['humidity']);
+    final ph = parseVal(sensorData['ph']);
+    final moisture = parseVal(sensorData['moisture']);
+
+    final isMachineOffline = sensorData['is_active'] == false;
+    if (isMachineOffline) return const SizedBox.shrink();
 
     // Determine status based on values
     String getTempStatus(double temp) {
@@ -477,9 +487,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
           ),
           const SizedBox(height: 8),
           Container(
-            padding: const Offset(10, 4) != null
-                ? const EdgeInsets.symmetric(horizontal: 10, vertical: 4)
-                : EdgeInsets.zero,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: displayColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
@@ -504,16 +512,20 @@ class _NutriBinPageState extends State<NutriBinPage> {
         : Colors.black.withOpacity(0.1);
 
     // Parse gas sensor values
-    final methane =
-        double.tryParse(sensorData['methane']?.toString() ?? '0') ?? 0;
-    final co =
-        double.tryParse(sensorData['carbon_monoxide']?.toString() ?? '0') ?? 0;
-    final airQuality =
-        double.tryParse(sensorData['air_quality']?.toString() ?? '0') ?? 0;
+    double parseGas(dynamic val) {
+      if (val == null || val == 'offline') return 0.0;
+      return double.tryParse(val.toString()) ?? 0.0;
+    }
 
-    // If all zero (offline/no data), hide the entire widget
+    final methane = parseGas(sensorData['methane']);
+    final co = parseGas(sensorData['carbon_monoxide']);
+    final airQuality = parseGas(sensorData['air_quality']);
+
+    // If all zero (offline/no data) or isMachineOffline, decide if we hide
+    final isMachineOffline = sensorData['is_active'] == false;
     final bool allZero = methane == 0 && co == 0 && airQuality == 0;
-    if (allZero) return const SizedBox.shrink();
+
+    if (isMachineOffline || allZero) return const SizedBox.shrink();
 
     // Progress bars (max raw ADC = 4095)
     final methaneProgress = (methane / 4095).clamp(0.0, 1.0);
