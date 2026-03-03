@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,11 +16,27 @@ class MachineSelectionPage extends StatefulWidget {
 class _MachineSelectionPageState extends State<MachineSelectionPage> {
   List<Map<String, dynamic>> existingMachines = [];
   bool isLoading = true;
+  Timer? _machineRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     fetchMachineIds();
+    _startMachineRefresh();
+  }
+
+  @override
+  void dispose() {
+    _machineRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startMachineRefresh() {
+    _machineRefreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (mounted && !isLoading) {
+        fetchMachineIds();
+      }
+    });
   }
 
   void fetchMachineIds() async {
