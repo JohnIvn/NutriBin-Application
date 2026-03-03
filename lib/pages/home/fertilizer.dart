@@ -119,6 +119,7 @@ class _FertilizerPageState extends State<FertilizerPage> {
                     children: [
                       _fertilizerStatusCard(),
                       _buildNPKMonitoring(),
+                      _buildEnvironmentalMonitoring(),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -594,6 +595,175 @@ class _FertilizerPageState extends State<FertilizerPage> {
             fontWeight: FontWeight.w600,
             color: subTextColor,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEnvironmentalMonitoring() {
+    // --- DYNAMIC COLORS ---
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardColor =
+        Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    final shadowColor = isDarkMode
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.1);
+
+    // Parse sensor values
+    double parseValue(dynamic val) {
+      if (val == null || val == 'offline') return 0.0;
+      return double.tryParse(val.toString()) ?? 0.0;
+    }
+
+    final temperature = parseValue(sensorData['temperature']);
+    final ph = parseValue(sensorData['ph']);
+    final humidity = parseValue(sensorData['humidity']);
+    final moisture = parseValue(sensorData['moisture']);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.thermostat, color: textColor, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Environmental Conditions',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Real-time sensor readings',
+                          style: TextStyle(color: subTextColor, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildEnvironmentalGauge(
+                    'Temperature',
+                    temperature,
+                    '°C',
+                    Colors.red,
+                    50,
+                  ),
+                  _buildEnvironmentalGauge(
+                    'pH Level',
+                    ph,
+                    'pH',
+                    Colors.purple,
+                    14,
+                  ),
+                  _buildEnvironmentalGauge(
+                    'Humidity',
+                    humidity,
+                    '%',
+                    Colors.blue,
+                    100,
+                  ),
+                  _buildEnvironmentalGauge(
+                    'Moisture',
+                    moisture,
+                    '%',
+                    Colors.cyan,
+                    100,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnvironmentalGauge(
+    String label,
+    double value,
+    String unit,
+    Color color,
+    double maxValue,
+  ) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDarkMode
+        ? Colors.white.withOpacity(0.1)
+        : Colors.grey.shade100;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+
+    final percentage = (value / maxValue).clamp(0.0, 1.0);
+
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 70,
+              height: 70,
+              child: CircularProgressIndicator(
+                value: percentage,
+                backgroundColor: bgColor,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+                strokeWidth: 8,
+              ),
+            ),
+            Column(
+              children: [
+                Text(
+                  value.toStringAsFixed(1),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                Text(unit, style: TextStyle(fontSize: 10, color: subTextColor)),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: subTextColor,
+          ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
