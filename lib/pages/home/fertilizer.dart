@@ -618,10 +618,17 @@ class _FertilizerPageState extends State<FertilizerPage> {
       return double.tryParse(val.toString()) ?? 0.0;
     }
 
-    final temperature = parseValue(sensorData['temperature']);
-    final ph = parseValue(sensorData['ph']);
-    final humidity = parseValue(sensorData['humidity']);
-    final moisture = parseValue(sensorData['moisture']);
+    final isMachineOffline = sensorData['is_active'] == false;
+    final temperature = isMachineOffline
+        ? 0.0
+        : parseValue(sensorData['temperature']);
+    final ph = isMachineOffline ? 0.0 : parseValue(sensorData['ph']);
+    final humidity = isMachineOffline
+        ? 0.0
+        : parseValue(sensorData['humidity']);
+    final moisture = isMachineOffline
+        ? 0.0
+        : parseValue(sensorData['moisture']);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
