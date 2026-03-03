@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:nutribin_application/services/machine_service.dart';
 
 class RegisterMachinePage extends StatefulWidget {
@@ -18,6 +19,62 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
   final _wifiPasswordController = TextEditingController();
   // ignore: unused_field
   bool _isLoading = false;
+
+  void _showScanner() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.black,
+      builder: (context) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Scan QR Code',
+                    style: GoogleFonts.interTight(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: MobileScanner(
+                onDetect: (capture) {
+                  final List<Barcode> barcodes = capture.barcodes;
+                  for (final barcode in barcodes) {
+                    if (barcode.rawValue != null) {
+                      final scannedCode = barcode.rawValue!;
+                      setState(() {
+                        _machineIdController.text = scannedCode;
+                      });
+                      Navigator.pop(context);
+
+                      // Automatically trigger registration
+                      _handleRegisterMachine();
+                      break;
+                    }
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -90,6 +147,41 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                 style: GoogleFonts.inter(fontSize: 14, color: subTextColor),
               ),
               const SizedBox(height: 24),
+
+              _buildSectionCard(
+                context: context,
+                title: 'Scan QR Code',
+                subtitle:
+                    'Scan the QR code on your NutriBin machine to register it automatically.',
+                icon: Icons.qr_code_scanner_rounded,
+                cardColor: cardColor,
+                textColor: textColor,
+                subTextColor: subTextColor,
+                primaryColor: primaryColor,
+                isDarkMode: isDarkMode,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _showScanner,
+                    icon: const Icon(Icons.center_focus_weak_rounded),
+                    label: Text(
+                      'Open QR Scanner',
+                      style: GoogleFonts.interTight(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: primaryColor.withOpacity(0.5)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
 
               _buildSectionCard(
                 context: context,
