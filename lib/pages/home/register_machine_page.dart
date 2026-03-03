@@ -61,6 +61,14 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                       });
                       Navigator.pop(context);
 
+                      // Show a brief message before triggering registration
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Processing QR Code..."),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+
                       // Automatically trigger registration
                       _handleRegisterMachine();
                       break;
@@ -162,7 +170,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                 child: SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: _showScanner,
+                    onPressed: _isLoading ? null : _showScanner,
                     icon: const Icon(Icons.center_focus_weak_rounded),
                     label: Text(
                       'Open QR Scanner',
@@ -173,7 +181,12 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                     ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: primaryColor.withOpacity(0.5)),
+                      side: BorderSide(
+                        color: _isLoading
+                            ? Colors.grey
+                            : primaryColor.withOpacity(0.5),
+                      ),
+                      foregroundColor: _isLoading ? Colors.grey : primaryColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -211,7 +224,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _handleRegisterMachine,
+                        onPressed: _isLoading ? null : _handleRegisterMachine,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
                           foregroundColor: Colors.white,
@@ -221,13 +234,22 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                           ),
                           elevation: 0,
                         ),
-                        child: Text(
-                          "Register Machine",
-                          style: GoogleFonts.interTight(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                "Register Machine",
+                                style: GoogleFonts.interTight(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ],

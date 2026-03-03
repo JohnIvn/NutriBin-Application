@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:nutribin_application/pages/home/register_machine_page.dart';
 import 'package:nutribin_application/services/machine_service.dart';
 
@@ -213,6 +214,124 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
     if (result == true) {
       await _deleteMachine(machineId, serialNumber);
     }
+  }
+
+  void _showQRCode(
+    String serialNumber,
+    Color highlightColor,
+    Color textColor,
+    Color subTextColor,
+    bool isDarkMode,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Material(
+        type: MaterialType.transparency,
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1D2428) : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Machine QR Code',
+                            style: GoogleFonts.interTight(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            serialNumber,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: subTextColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close_rounded, color: subTextColor),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: QrImageView(
+                    data: serialNumber,
+                    version: QrVersions.auto,
+                    size: 220.0,
+                    gapless: false,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Scan this code to register this machine on another device.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: subTextColor,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: highlightColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Done',
+                      style: GoogleFonts.interTight(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteMachine(String machineId, String serialNumber) async {
@@ -475,6 +594,17 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                     "machineId": machineId,
                     "isActive": isActive,
                   },
+                );
+              },
+              onLongPress: () {
+                debugPrint("LONG PRESS TRIGGERED FOR $serialNumber");
+                HapticFeedback.vibrate();
+                _showQRCode(
+                  serialNumber,
+                  highlightColor,
+                  textColor,
+                  subTextColor,
+                  isDarkMode,
                 );
               },
               borderRadius: BorderRadius.circular(12),
