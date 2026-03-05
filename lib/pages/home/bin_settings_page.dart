@@ -23,6 +23,12 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
   String _serialNumber = "";
   String _firmware = "Loading...";
   String _model = "Loading...";
+  bool _isUpdateAvailable = false;
+  bool _isOnline = false;
+  String? _latestVersion;
+  String? _targetVersion;
+  String _updateStatus = "none";
+  double _updateProgress = 0.0;
   final TextEditingController _nicknameController = TextEditingController();
   final ScreenshotController _screenshotController = ScreenshotController();
 
@@ -30,12 +36,283 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
   void initState() {
     super.initState();
     _loadBinSettings();
+    _checkUpdate();
   }
 
   @override
   void dispose() {
     _nicknameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkUpdate() async {
+    try {
+      final response = await MachineService.checkFirmwareUpdate(
+        machineId: widget.machineId,
+      );
+      if (response['ok'] == true) {
+        if (mounted) {
+          setState(() {
+            _isOnline = response['isOnline'] ?? false;
+            _updateStatus = response['updateStatus'] ?? "none";
+            _updateProgress =
+                double.tryParse(response['updateProgress']?.toString() ?? '0') ??
+                    0.0;
+            _isUpdateAvailable = response['updateAvailable'] == true;
+            _latestVersion = response['latestVersion'];
+            _targetVersion = response['targetFirmwareVersion'];
+          });
+        }
+      }
+    } catch (e) {
+      print("Update check failed: $e");
+    }
+  }
+
+  Future<void> _showUpdateDialog() async {
+    if (_latestVersion == null &&
+        (_updateStatus != "failed" && _updateStatus != "interrupted")) return;
+
+    if (!_isOnline &&
+        _updateStatus != "failed" &&
+        _updateStatus != "interrupted") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Your bin is offline. Please check its connection before updating.',
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    bool? proceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Firmware Update Available',
+          style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'A new version ($_latestVersion) is available for your model. Would you like to update now?',
+          style: GoogleFonts.inter(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Later', style: GoogleFonts.inter(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2E7D32),
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Update Now', style: GoogleFonts.inter()),
+          ),
+        ],
+      ),
+    );
+
+    if (proceed == true) {
+      _startUpdateProcess();
+    }
+  }
+
+  Future<void> _startUpdateProcess() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                const SizedBox(height: 20),
+                Text(
+                  'Initiating Firmware Update...',
+                  style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Communicating with server...',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    // Initial call to move status to pending
+    final response = await MachineService.updateFirmware(
+      machineId: widget.machineId,
+      version: _latestVersion!,
+    );
+
+    if (mounted) {
+      Navigator.pop(context); // Close initiating dialog
+
+      if (response['ok'] == true) {
+        // Start polling for progress
+        _pollUpdateProgress();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['error'] ?? 'Initiation failed'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pollUpdateProgress() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return PopScope(
+            canPop: false,
+            child: AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        value: _updateProgress / 100,
+                        strokeWidth: 8,
+                        color:
+                            _updateStatus == "interrupted" ||
+                                _updateStatus == "failed"
+                            ? (_updateStatus == "failed"
+                                  ? Colors.red
+                                  : Colors.orange)
+                            : const Color(0xFF2E7D32),
+                        backgroundColor: Colors.grey[200],
+                      ),
+                      Text(
+                        "${_updateProgress.toInt()}%",
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          color:
+                              _updateStatus == "interrupted" ||
+                                  _updateStatus == "failed"
+                              ? (_updateStatus == "failed"
+                                    ? Colors.red
+                                    : Colors.orange)
+                              : const Color(0xFF2E7D32),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    _updateStatus == "interrupted"
+                        ? 'Update Interrupted'
+                        : (_updateStatus == "failed"
+                              ? 'Update Failed'
+                              : 'Updating Firmware...'),
+                    style: GoogleFonts.interTight(
+                      fontWeight: FontWeight.bold,
+                      color: _updateStatus == "failed" ? Colors.red : null,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    _updateStatus == "interrupted"
+                        ? 'Connection lost. Retrying... (${_updateProgress.toInt()}%)'
+                        : (_updateStatus == "failed"
+                              ? 'Update failed at ${_updateProgress.toInt()}%. Please try again.'
+                              : 'Updating to $_latestVersion... ${_updateProgress.toInt()}%'),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: _updateStatus == "interrupted"
+                          ? Colors.orange
+                          : (_updateStatus == "failed"
+                                ? Colors.red
+                                : Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    bool isUpdating = true;
+    while (isUpdating && mounted) {
+      await Future.delayed(const Duration(seconds: 2));
+
+      try {
+        final response = await MachineService.checkFirmwareUpdate(
+          machineId: widget.machineId,
+        );
+
+        if (response['ok'] == true) {
+          if (mounted) {
+            setState(() {
+              _updateStatus = response['updateStatus'] ?? "none";
+              _updateProgress =
+                  double.tryParse(
+                    response['updateProgress']?.toString() ?? '0',
+                  ) ??
+                  0.0;
+            });
+          }
+
+          if (_updateStatus == 'success') {
+            isUpdating = false;
+            if (mounted) {
+              Navigator.pop(context); // Close progress dialog
+              _loadBinSettings(); // Refresh settings
+              _checkUpdate(); // NEW: Refresh update status as well
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Firmware updated successfully!'),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          } else if (_updateStatus == 'failed' ||
+              _updateStatus == 'interrupted') {
+            isUpdating = false;
+            if (mounted) {
+              Navigator.pop(context); // Close progress dialog
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    _updateStatus == 'failed'
+                        ? 'Firmware update failed at ${_updateProgress.toInt()}%.'
+                        : 'Update was interrupted at ${_updateProgress.toInt()}%.',
+                  ),
+                  backgroundColor: _updateStatus == 'failed'
+                      ? Colors.red
+                      : Colors.orange,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          }
+        }
+      } catch (e) {
+        print("Polling error: $e");
+      }
+    }
   }
 
   Future<void> _loadBinSettings() async {
@@ -48,7 +325,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
         if (mounted) {
           setState(() {
             _nicknameController.text = response['data']['nickname'] ?? "";
-            _serialNumber = response['data']['serial_number'] ?? widget.machineId;
+            _serialNumber =
+                response['data']['serial_number'] ?? widget.machineId;
             _firmware = response['data']['firmware_version'] ?? "Unknown";
             _model = response['data']['model'] ?? "NutriBin v1";
           });
@@ -146,11 +424,11 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
     try {
       // Check permissions based on platform/version
       bool hasPermission = false;
-      
+
       if (Platform.isAndroid) {
         // For Android 13+ (API 33), we need Photos permission
         // For older versions, we need Storage permission
-        if (await Permission.photos.request().isGranted || 
+        if (await Permission.photos.request().isGranted ||
             await Permission.storage.request().isGranted) {
           hasPermission = true;
         }
@@ -166,7 +444,9 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Photo Gallery permission is required to save the QR code'),
+              content: Text(
+                'Photo Gallery permission is required to save the QR code',
+              ),
               action: SnackBarAction(
                 label: 'Settings',
                 onPressed: openAppSettings,
@@ -232,7 +512,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
       );
 
       final tempDir = await getTemporaryDirectory();
-      final path = '${tempDir.path}/QR_${DateTime.now().millisecondsSinceEpoch}.png';
+      final path =
+          '${tempDir.path}/QR_${DateTime.now().millisecondsSinceEpoch}.png';
       final file = File(path);
       await file.writeAsBytes(imageBytes);
 
@@ -332,7 +613,10 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
               ),
               const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(30),
@@ -472,6 +756,136 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                           icon: Icons.qr_code_2_rounded,
                           onTap: () => _showShareQR(),
                           trailing: const Icon(Icons.chevron_right_rounded),
+                        ),
+
+                        const SizedBox(height: 24),
+                        _buildSectionHeader('Hardware & Updates'),
+                        _buildModernTile(
+                          title: 'Firmware Update',
+                          subtitle: _updateStatus == "failed"
+                              ? 'Update failed at ${_updateProgress.toInt()}%'
+                              : (_updateStatus == "interrupted"
+                                    ? 'Update interrupted at ${_updateProgress.toInt()}%'
+                                    : (_updateStatus == "pending"
+                                          ? 'Update in progress: ${_updateProgress.toInt()}%'
+                                          : (_isUpdateAvailable
+                                                ? 'New version $_latestVersion available'
+                                                : 'Your firmware is up to date'))),
+                          icon: Icons.system_update_rounded,
+                          onTap:
+                              _isUpdateAvailable ||
+                                  _updateStatus == "failed" ||
+                                  _updateStatus == "interrupted" ||
+                                  _updateStatus == "pending"
+                              ? (_updateStatus == "pending"
+                                    ? _pollUpdateProgress
+                                    : _showUpdateDialog)
+                              : null,
+                          trailing: _updateStatus == "failed"
+                              ? const Icon(
+                                  Icons.error_outline_rounded,
+                                  color: Colors.red,
+                                  size: 20,
+                                )
+                              : (_updateStatus == "interrupted"
+                                    ? const Icon(
+                                        Icons.warning_amber_rounded,
+                                        color: Colors.orange,
+                                        size: 20,
+                                      )
+                                    : (_updateStatus == "pending"
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Color(0xFF2E7D32),
+                                              ),
+                                            )
+                                          : (_isUpdateAvailable
+                                                ? Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 4,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors
+                                                          .orange
+                                                          .shade100,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      'UPDATE',
+                                                      style: GoogleFonts.inter(
+                                                        color: Colors
+                                                            .orange
+                                                            .shade900,
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const Icon(
+                                                    Icons
+                                                        .check_circle_outline_rounded,
+                                                    color: Colors.green,
+                                                    size: 20,
+                                                  )))),
+                        ),
+                        _buildModernTile(
+                          title: 'Restart Machine',
+                          subtitle: 'Reboot the NutriBin controller',
+                          icon: Icons.restart_alt_rounded,
+                          onTap: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: Text(
+                                  'Restart Machine',
+                                  style: GoogleFonts.interTight(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                content: const Text(
+                                  'Are you sure you want to restart the machine?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text(
+                                      'Restart',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              final res = await MachineService.restartMachine();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(res['message']),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          trailing: const Icon(
+                            Icons.power_settings_new_rounded,
+                          ),
                         ),
 
                         const SizedBox(height: 24),

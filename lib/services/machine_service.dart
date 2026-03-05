@@ -1,14 +1,14 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:nutribin_application/utils/response_handler.dart';
 import 'package:nutribin_application/utils/helpers.dart';
 import 'package:http/http.dart' as http;
 
-final String restUser = dotenv.env["RAILWAY_USER"].toString();
-final String restServer = dotenv.env["RAILWAY_SERVER"].toString();
-final String googleClient = dotenv.env["GOOGLE_CLIENT_ID"].toString();
-final String anonKey = dotenv.env["SUPABASE_ANON"].toString();
+final String restUser = dotenv.env['RAILWAY_USER'].toString();
+final String restServer = dotenv.env['RAILWAY_SERVER'].toString();
+final String googleClient = dotenv.env['GOOGLE_CLIENT_ID'].toString();
+final String anonKey = dotenv.env['SUPABASE_ANON'].toString();
 
 class MachineService {
   static Future<Map<String, dynamic>> fetchExistingMachines() async {
@@ -16,29 +16,24 @@ class MachineService {
       final userId = await PreferenceUtility.getUserId();
 
       if (userId == null || userId.isEmpty) {
-        return Error.errorResponse("Customer ID Required");
+        return Error.errorResponse('Customer ID Required');
       }
       final url = Uri.parse('$restUser/mobile/machine/$userId');
 
       final response = await http.get(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
       );
 
       final data = jsonDecode(response.body);
-      print("TESTING MACHINES: ${data["data"]}");
-
-      if (data["ok"] != true && data.data[0].toString().isEmpty) {
-        await PreferenceUtility.saveMachineIds([]);
-      }
 
       return {
-        "ok": true,
-        "data": data["data"],
-        "message": data["message"] ?? "Successfully fetched all machines",
+        'ok': true,
+        'data': data['data'],
+        'message': data['message'] ?? 'Successfully fetched all machines',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
@@ -52,24 +47,23 @@ class MachineService {
       final userId = await PreferenceUtility.getUserId();
 
       if (userId == null || userId.isEmpty) {
-        return Error.errorResponse("Customer ID Required");
+        return Error.errorResponse('Customer ID Required');
       }
       final url = Uri.parse('$restUser/mobile/machine/data/$userId/$machineId');
 
       final response = await http.get(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
       );
 
       final data = jsonDecode(response.body);
-      print("TEST DATA: ${data.toString()}");
       return {
-        "ok": true,
-        "data": data["data"],
-        "message": data["message"] ?? "Successfully fetched all machines",
+        'ok': true,
+        'data': data['data'],
+        'message': data['message'] ?? 'Successfully fetched all machines',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
@@ -84,28 +78,28 @@ class MachineService {
       final userId = await PreferenceUtility.getUserId();
 
       if (userId == null || userId.isEmpty) {
-        return Error.errorResponse("Customer ID Required");
+        return Error.errorResponse('Customer ID Required');
       }
       final url = Uri.parse('$restUser/mobile/repair/create');
 
       final response = await http.post(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
         body: jsonEncode({
-          "machineId": machineId,
-          "userId": userId,
-          "description": description,
+          'machineId': machineId,
+          'userId': userId,
+          'description': description,
         }),
       );
 
       final data = jsonDecode(response.body);
       return {
-        "ok": true,
-        "data": data,
-        "message": "Repair request created successfully",
+        'ok': true,
+        'data': data,
+        'message': 'Repair request created successfully',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
@@ -117,28 +111,28 @@ class MachineService {
       final userId = await PreferenceUtility.getUserId();
 
       if (userId == null || userId.isEmpty) {
-        return Error.errorResponse("Customer ID Required");
+        return Error.errorResponse('Customer ID Required');
       }
       final url = Uri.parse('$restUser/mobile/repair/$userId');
 
       final response = await http.get(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
       );
 
       final data = jsonDecode(response.body);
 
-      if (data["ok"] != true) {
-        return Error.errorResponse(data["error"] ?? data["message"]);
+      if (data['ok'] != true) {
+        return Error.errorResponse(data['error'] ?? data['message']);
       }
 
       return {
-        "ok": true,
-        "data": data["data"],
-        "message": data["message"] ?? "Successfully fetched repair requests",
+        'ok': true,
+        'data': data['data'],
+        'message': data['message'] ?? 'Successfully fetched repair requests',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
@@ -154,23 +148,22 @@ class MachineService {
       final response = await http.get(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
       );
 
       final data = jsonDecode(response.body);
-      print("RECOMMENDATIONS DATA: ${data.toString()}");
       return {
-        "ok": data["ok"] ?? false,
-        "recommendations": data["recommendations"] ?? [],
-        "message": data["message"] ?? "Successfully fetched recommendations",
+        'ok': data['ok'] ?? false,
+        'recommendations': data['recommendations'] ?? [],
+        'message': data['message'] ?? 'Successfully fetched recommendations',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
     }
   }
-  
+
   static Future<Map<String, dynamic>> fetchModulesStatus({
     required String machineId,
   }) async {
@@ -180,16 +173,15 @@ class MachineService {
       final response = await http.get(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
       );
 
       final data = jsonDecode(response.body);
 
-      if (data["ok"] == true && data["data"] != null) {
-        final modules = data["data"]["modules"];
-        // Map backend descriptive names back to short codes for the frontend
+      if (data['ok'] == true && data['data'] != null) {
+        final modules = data['data']['modules'];
         final mappedModules = {
           'c1': modules['arduino_q'],
           'c2': modules['esp32_filter'],
@@ -214,9 +206,9 @@ class MachineService {
         };
 
         return {
-          "ok": true,
-          "data": mappedModules,
-          "message": data["message"] ?? "Successfully fetched module status",
+          'ok': true,
+          'data': mappedModules,
+          'message': data['message'] ?? 'Successfully fetched module status',
         };
       }
 
@@ -233,7 +225,7 @@ class MachineService {
       final userId = await PreferenceUtility.getUserId();
 
       if (userId == null || userId.isEmpty) {
-        return Error.errorResponse("Customer ID Required");
+        return Error.errorResponse('Customer ID Required');
       }
       final url = Uri.parse(
         '$restUser/mobile/machine/notifications/$userId/$machineId',
@@ -242,17 +234,16 @@ class MachineService {
       final response = await http.get(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
       );
 
       final data = jsonDecode(response.body);
-      print("TEST DATA: ${data.toString()}");
       return {
-        "ok": true,
-        "data": data["data"],
-        "message": data["message"] ?? "Successfully fetched all machines",
+        'ok': true,
+        'data': data['data'],
+        'message': data['message'] ?? 'Successfully fetched all machines',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
@@ -266,30 +257,30 @@ class MachineService {
       final userId = await PreferenceUtility.getUserId();
 
       if (userId == null || userId.isEmpty) {
-        return Error.errorResponse("Customer ID Required");
+        return Error.errorResponse('Customer ID Required');
       }
       final url = Uri.parse('$restUser/mobile/machine/add-machine');
 
-      final body = {"machineSerial": serialId, "customerId": userId};
+      final body = {'machineSerial': serialId, 'customerId': userId};
       final response = await http.post(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
         body: jsonEncode(body),
       );
 
       final data = jsonDecode(response.body);
 
-      if (data["ok"] != true) {
-        return Error.errorResponse(data["error"] ?? data["message"]);
+      if (data['ok'] != true) {
+        return Error.errorResponse(data['error'] ?? data['message']);
       }
 
       return {
-        "ok": true,
-        "data": data["data"],
-        "message": data["message"] ?? "Successfully registered user",
+        'ok': true,
+        'data': data['data'],
+        'message': data['message'] ?? 'Successfully registered user',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
@@ -303,7 +294,7 @@ class MachineService {
       final userId = await PreferenceUtility.getUserId();
 
       if (userId == null || userId.isEmpty) {
-        return Error.errorResponse("Customer ID Required");
+        return Error.errorResponse('Customer ID Required');
       }
       final url = Uri.parse(
         '$restUser/mobile/machine/delete/$userId/$machineId',
@@ -311,21 +302,21 @@ class MachineService {
       final response = await http.post(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
       );
 
       final data = jsonDecode(response.body);
 
-      if (data["ok"] != true) {
-        return Error.errorResponse(data["error"] ?? data["message"]);
+      if (data['ok'] != true) {
+        return Error.errorResponse(data['error'] ?? data['message']);
       }
 
       return {
-        "ok": true,
-        "data": data["data"],
-        "message": data["message"] ?? "Successfully registered user",
+        'ok': true,
+        'data': data['data'],
+        'message': data['message'] ?? 'Successfully registered user',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
@@ -334,25 +325,25 @@ class MachineService {
 
   static Future<Map<String, dynamic>> restartMachine() async {
     try {
-      // Static IP address configured in the ESP32
-      const String espIp = "192.168.1.184";
+      const String espIp = '192.168.1.184';
       final url = Uri.parse('http://$espIp/restart');
 
       final response = await http.get(url).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
-        return {"ok": true, "message": "Restart command sent to ESP32"};
+        return {'ok': true, 'message': 'Restart command sent to ESP32'};
       } else {
         return Error.errorResponse(
-          "Machine returned status: ${response.statusCode}",
+          'Machine returned status: ' + response.statusCode.toString(),
         );
       }
     } catch (e) {
       return Error.errorResponse(
-        "Connection failed: Ensure you're on the same Wi-Fi",
+        'Connection failed: Ensure you\'re on the same Wi-Fi',
       );
     }
   }
+
   static Future<Map<String, dynamic>> updateBinNickname({
     required String machineId,
     required String nickname,
@@ -360,27 +351,27 @@ class MachineService {
     try {
       final userId = await PreferenceUtility.getUserId();
       if (userId == null || userId.isEmpty) {
-        return Error.errorResponse("Customer ID Required");
+        return Error.errorResponse('Customer ID Required');
       }
       final url = Uri.parse('$restUser/mobile/bin-settings/nickname');
 
       final response = await http.patch(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
         body: jsonEncode({
-          "machineId": machineId,
-          "customerId": userId,
-          "nickname": nickname,
+          'machineId': machineId,
+          'customerId': userId,
+          'nickname': nickname,
         }),
       );
 
       final data = jsonDecode(response.body);
       return {
-        "ok": data["ok"] ?? false,
-        "message": data["message"] ?? data["error"] ?? "Update failed",
+        'ok': data['ok'] ?? false,
+        'message': data['message'] ?? data['error'] ?? 'Update failed',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
@@ -395,18 +386,59 @@ class MachineService {
       final response = await http.get(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $anonKey",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
         },
       );
 
       final data = jsonDecode(response.body);
       return {
-        "ok": data["ok"] ?? false,
-        "data": data["data"],
-        "message": data["message"] ?? "Successfully fetched bin settings",
+        'ok': data['ok'] ?? false,
+        'data': data['data'],
+        'message': data['message'] ?? 'Successfully fetched bin settings',
       };
     } catch (e) {
       return Error.errorResponse(e.toString());
     }
-  }}
+  }
+
+  static Future<Map<String, dynamic>> checkFirmwareUpdate({
+    required String machineId,
+  }) async {
+    try {
+      final url = Uri.parse('$restUser/machine/firmware-update/$machineId');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
+        },
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateFirmware({
+    required String machineId,
+    required String version,
+  }) async {
+    try {
+      final url = Uri.parse('$restUser/machine/update-firmware');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
+        },
+        body: jsonEncode({'machineId': machineId, 'version': version}),
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+}
