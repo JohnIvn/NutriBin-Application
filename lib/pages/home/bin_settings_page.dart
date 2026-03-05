@@ -21,6 +21,8 @@ class BinSettingsPage extends StatefulWidget {
 class _BinSettingsPageState extends State<BinSettingsPage> {
   bool _isLoading = false;
   String _serialNumber = "";
+  String _firmware = "Loading...";
+  String _model = "Loading...";
   final TextEditingController _nicknameController = TextEditingController();
   final ScreenshotController _screenshotController = ScreenshotController();
 
@@ -47,6 +49,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
           setState(() {
             _nicknameController.text = response['data']['nickname'] ?? "";
             _serialNumber = response['data']['serial_number'] ?? widget.machineId;
+            _firmware = response['data']['firmware_version'] ?? "Unknown";
+            _model = response['data']['model'] ?? "NutriBin v1";
           });
         }
       }
@@ -491,14 +495,14 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                               const Divider(height: 24),
                               _buildInfoRow(
                                 'Firmware',
-                                'v1.0.4 - Stable',
+                                _firmware,
                                 Icons.system_update_rounded,
                               ),
                               const Divider(height: 24),
                               _buildInfoRow(
-                                'Signal Strength',
-                                'Excellent',
-                                Icons.wifi_tethering_rounded,
+                                'Model',
+                                _model,
+                                Icons.category_rounded,
                               ),
                             ],
                           ),
