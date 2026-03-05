@@ -490,7 +490,13 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                               _buildInfoRow(
                                 'Serial Number',
                                 _serialNumber,
-                                Icons.fingerprint,
+                                Icons.qr_code_2_rounded,
+                              ),
+                              const Divider(height: 24),
+                              _buildInfoRow(
+                                'Machine ID',
+                                widget.machineId,
+                                Icons.fingerprint_rounded,
                               ),
                               const Divider(height: 24),
                               _buildInfoRow(
@@ -632,31 +638,44 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
 
   Widget _buildInfoRow(String label, String value, IconData icon) {
     final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 18,
-          color: theme.colorScheme.onSurface.withOpacity(0.4),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
-            fontSize: 13,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(
+              icon,
+              size: 18,
+              color: theme.colorScheme.onSurface.withOpacity(0.4),
+            ),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+          const SizedBox(width: 12),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 13,
+              ),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 24),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.firaCode(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
