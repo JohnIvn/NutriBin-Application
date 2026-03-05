@@ -353,4 +353,60 @@ class MachineService {
       );
     }
   }
-}
+  static Future<Map<String, dynamic>> updateBinNickname({
+    required String machineId,
+    required String nickname,
+  }) async {
+    try {
+      final userId = await PreferenceUtility.getUserId();
+      if (userId == null || userId.isEmpty) {
+        return Error.errorResponse("Customer ID Required");
+      }
+      final url = Uri.parse('$restUser/mobile/bin-settings/nickname');
+
+      final response = await http.patch(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+        body: jsonEncode({
+          "machineId": machineId,
+          "customerId": userId,
+          "nickname": nickname,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      return {
+        "ok": data["ok"] ?? false,
+        "message": data["message"] ?? data["error"] ?? "Update failed",
+      };
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
+  static Future<Map<String, dynamic>> fetchBinSettings({
+    required String machineId,
+  }) async {
+    try {
+      final url = Uri.parse('$restUser/mobile/bin-settings/$machineId');
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $anonKey",
+        },
+      );
+
+      final data = jsonDecode(response.body);
+      return {
+        "ok": data["ok"] ?? false,
+        "data": data["data"],
+        "message": data["message"] ?? "Successfully fetched bin settings",
+      };
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }}

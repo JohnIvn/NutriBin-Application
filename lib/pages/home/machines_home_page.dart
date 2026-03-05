@@ -532,6 +532,10 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _buildMachineCard(
                             context: context,
+                            nickname:
+                                (machine['nickname'] as String?) ??
+                                machine['serial_number'] ??
+                                'Unknown',
                             serialNumber: machine['serial_number'] ?? 'Unknown',
                             machineId: machine['machine_id'] ?? '',
                             isActive: machine['is_active'] ?? false,
@@ -555,6 +559,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
 
   Widget _buildMachineCard({
     required BuildContext context,
+    required String nickname,
     required String serialNumber,
     required String machineId,
     required bool isActive,
@@ -590,7 +595,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                   context,
                   '/home',
                   arguments: {
-                    "serialNumber": serialNumber,
+                    "serialNumber": nickname.isNotEmpty ? nickname : serialNumber,
                     "machineId": machineId,
                     "isActive": isActive,
                   },
@@ -637,7 +642,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                serialNumber,
+                                nickname.isNotEmpty ? nickname : serialNumber,
                                 style: GoogleFonts.interTight(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -734,20 +739,67 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                     const Divider(height: 1, thickness: 0.5),
                     const SizedBox(height: 12),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.fingerprint_rounded,
-                          size: 14,
-                          color: subTextColor.withOpacity(0.7),
+                        SizedBox(
+                          width: 100,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.qr_code_2_rounded,
+                                size: 14,
+                                color: subTextColor.withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'SERIAL ID:',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: subTextColor.withOpacity(0.7),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'MACHINE ID:',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: subTextColor.withOpacity(0.7),
-                            letterSpacing: 0.5,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            serialNumber,
+                            style: GoogleFonts.firaCode(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: subTextColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 100,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.fingerprint_rounded,
+                                size: 14,
+                                color: subTextColor.withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'MACHINE ID:',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: subTextColor.withOpacity(0.7),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 8),

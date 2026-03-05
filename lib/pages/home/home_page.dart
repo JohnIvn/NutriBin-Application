@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nutribin_application/pages/home/fertilizer.dart';
 import 'package:nutribin_application/pages/home/notification_page.dart';
 import 'package:nutribin_application/pages/home/nutribin_page.dart';
+import 'package:nutribin_application/pages/home/bin_settings_page.dart';
 import 'package:nutribin_application/widgets/custom_appbar.dart';
 import 'package:nutribin_application/widgets/custom_navbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +26,7 @@ class _HomePageState extends State<HomePage> {
     FertilizerPage(machineId: _machineId ?? ''),
     NutriBinPage(machineId: _machineId ?? ''),
     NotificationPage(machineId: _machineId ?? ''),
+    BinSettingsPage(machineId: _machineId ?? ''),
   ];
 
   @override

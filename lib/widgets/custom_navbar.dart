@@ -17,7 +17,7 @@ class CustomNavBar extends StatefulWidget {
 }
 
 class _CustomNavBarState extends State<CustomNavBar> {
-  final List<GlobalKey> _navKeys = List.generate(4, (_) => GlobalKey());
+  final List<GlobalKey> _navKeys = List.generate(5, (_) => GlobalKey());
   TutorialCoachMark? _tutorialCoachMark;
 
   @override
@@ -165,6 +165,39 @@ class _CustomNavBarState extends State<CustomNavBar> {
           ),
         ],
       ),
+      TargetFocus(
+        identify: "settings_key",
+        keyTarget: _navKeys[4],
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (context, controller) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Bin Settings",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      "Manage your NutriBin configuration",
+                      style: TextStyle(fontSize: 14, color: Colors.white),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     ];
   }
 
@@ -221,6 +254,10 @@ class _CustomNavBarState extends State<CustomNavBar> {
             BottomNavigationBarItem(
               icon: Icon(Icons.notifications_outlined, key: _navKeys[3]),
               label: 'Notifications',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined, key: _navKeys[4]),
+              label: 'Bin Settings',
             ),
           ],
         ),
