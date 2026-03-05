@@ -430,7 +430,7 @@ class _ModulesPageState extends State<ModulesPage> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.5,
+        childAspectRatio: 1.3, // Increased from 1.5 to provide more height
       ),
       itemCount: modules.length,
       itemBuilder: (context, index) {
@@ -442,10 +442,13 @@ class _ModulesPageState extends State<ModulesPage> {
   Widget _buildModuleCard(ModuleInfo module) {
     final isOnline = module.status == true;
     final isOffline = module.status == 'offline';
-    final statusColor = isOffline
+    final isOfflineAndBroken = module.status == 'offline & broken';
+    
+    final statusColor = (isOffline || isOfflineAndBroken)
         ? Colors.grey
         : (isOnline ? Colors.green : Colors.red);
-    final bgColor = isOffline
+    
+    final bgColor = (isOffline || isOfflineAndBroken)
         ? (_isDarkMode ? Colors.grey.withOpacity(0.1) : Colors.grey.shade50)
         : (isOnline
               ? (_isDarkMode
@@ -454,6 +457,10 @@ class _ModulesPageState extends State<ModulesPage> {
               : (_isDarkMode
                     ? Colors.red.withOpacity(0.1)
                     : Colors.red.shade50));
+
+    final String statusText = isOfflineAndBroken 
+        ? 'Offline & Broken' 
+        : (isOffline ? 'Offline' : (isOnline ? 'Online' : 'Fault'));
 
     return InkWell(
       onTap: (isOnline || isOffline)
@@ -464,7 +471,10 @@ class _ModulesPageState extends State<ModulesPage> {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: statusColor.withOpacity(0.3), width: 1.5),
+          border: Border.all(
+            color: isOfflineAndBroken ? Colors.red.withOpacity(0.5) : statusColor.withOpacity(0.3), 
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
               color: _shadowColor,
@@ -504,7 +514,7 @@ class _ModulesPageState extends State<ModulesPage> {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: statusColor,
+                      color: isOfflineAndBroken ? Colors.red : statusColor,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -514,7 +524,7 @@ class _ModulesPageState extends State<ModulesPage> {
               Text(
                 module.name,
                 style: GoogleFonts.inter(
-                  color: isOffline ? _secondaryText : _textColor,
+                  color: (isOffline || isOfflineAndBroken) ? _secondaryText : _textColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -525,19 +535,25 @@ class _ModulesPageState extends State<ModulesPage> {
               Row(
                 children: [
                   Icon(
-                    isOffline
-                        ? Icons.cloud_off
-                        : (isOnline ? Icons.check_circle : Icons.error),
-                    color: statusColor,
+                    isOfflineAndBroken
+                        ? Icons.report_problem
+                        : (isOffline
+                            ? Icons.cloud_off
+                            : (isOnline ? Icons.check_circle : Icons.error)),
+                    color: isOfflineAndBroken ? Colors.red : statusColor,
                     size: 14,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    isOffline ? 'Offline' : (isOnline ? 'Online' : 'Fault'),
-                    style: GoogleFonts.inter(
-                      color: statusColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                  Expanded(
+                    child: Text(
+                      statusText,
+                      style: GoogleFonts.inter(
+                        color: isOfflineAndBroken ? Colors.red : statusColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

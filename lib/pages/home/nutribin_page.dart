@@ -948,12 +948,25 @@ class _NutriBinPageState extends State<NutriBinPage> {
     };
 
     modulesData.forEach((key, value) {
-      if (moduleLabels.containsKey(key) && value != true) {
-        faultedModules.add(moduleLabels[key]!);
+      if (moduleLabels.containsKey(key)) {
+        // A module ONLY requires attention if it is explicitly marked as "broken"
+        // in the data, regardless of whether the machine is currently offline or not.
+        // We check for false (from boolean mapping) or "offline & broken" (from strings).
+        if (value == false || value == 'offline & broken') {
+          faultedModules.add(moduleLabels[key]!);
+        }
       }
     });
 
+    final isMachineOffline = sensorData['is_active'] == false;
     final bool hasModuleFaults = faultedModules.isNotEmpty;
+
+    // If machine is offline, we only show the faults banner if there are 
+    // actually broken parts in the latest data, but we don't count everything 
+    // as "requiring attention" just because it's offline.
+    // The previous logic already checks `value != true` which covers 'offline' strings
+    // and false booleans.
+    
     final displayedModules = faultedModules.take(5).toList();
     final extraCount = faultedModules.length - displayedModules.length;
 
@@ -1029,10 +1042,11 @@ class _NutriBinPageState extends State<NutriBinPage> {
                           ),
                         ),
                         Text(
-                          'Real-time functionality report',
+                          isMachineOffline ? 'Machine is currently OFFLINE' : 'Real-time functionality report',
                           style: TextStyle(
-                            color: _secondaryText.withOpacity(0.7),
+                            color: isMachineOffline ? Colors.red.withOpacity(0.8) : _secondaryText.withOpacity(0.7),
                             fontSize: 14,
+                            fontWeight: isMachineOffline ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                       ],
