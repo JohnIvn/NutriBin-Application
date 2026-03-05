@@ -70,19 +70,16 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
   }
 
   Future<void> _showUpdateDialog() async {
-    if (_latestVersion == null &&
+    if ((_latestVersion == null || !_isUpdateAvailable) &&
         (_updateStatus != "failed" && _updateStatus != "interrupted")) return;
 
-    if (!_isOnline &&
-        _updateStatus != "failed" &&
-        _updateStatus != "interrupted") {
+    if (!_isOnline) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Your bin is offline. Please check its connection before updating.',
-          ),
-          backgroundColor: Colors.orange,
+          content: Text('Offline device - Cannot update. Please check connection.'),
+          backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
         ),
       );
       return;
@@ -762,24 +759,25 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                         _buildSectionHeader('Hardware & Updates'),
                         _buildModernTile(
                           title: 'Firmware Update',
-                          subtitle: _updateStatus == "failed"
-                              ? 'Update failed at ${_updateProgress.toInt()}%'
-                              : (_updateStatus == "interrupted"
-                                    ? 'Update interrupted at ${_updateProgress.toInt()}%'
-                                    : (_updateStatus == "pending"
+                          subtitle: !_isOnline && (_isUpdateAvailable || _updateStatus == "failed" || _updateStatus == "interrupted" || _updateStatus == "pending")
+                              ? 'Offline device - Cannot update'
+                              : (_updateStatus == "failed"
+                                  ? 'Update failed at ${_updateProgress.toInt()}%'
+                                  : (_updateStatus == "interrupted"
+                                      ? 'Update interrupted at ${_updateProgress.toInt()}%'
+                                      : (_updateStatus == "pending"
                                           ? 'Update in progress: ${_updateProgress.toInt()}%'
                                           : (_isUpdateAvailable
-                                                ? 'New version $_latestVersion available'
-                                                : 'Your firmware is up to date'))),
+                                              ? 'New version $_latestVersion available'
+                                              : 'Your firmware is up to date')))),
                           icon: Icons.system_update_rounded,
-                          onTap:
-                              _isUpdateAvailable ||
-                                  _updateStatus == "failed" ||
-                                  _updateStatus == "interrupted" ||
-                                  _updateStatus == "pending"
+                          onTap: _isUpdateAvailable ||
+                              _updateStatus == "failed" ||
+                              _updateStatus == "interrupted" ||
+                              _updateStatus == "pending"
                               ? (_updateStatus == "pending"
-                                    ? _pollUpdateProgress
-                                    : _showUpdateDialog)
+                                  ? _pollUpdateProgress
+                                  : _showUpdateDialog)
                               : null,
                           trailing: _updateStatus == "failed"
                               ? const Icon(
