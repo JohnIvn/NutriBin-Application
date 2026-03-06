@@ -425,37 +425,56 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
           return PopScope(
             canPop: false,
             child: AlertDialog(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Stack(
-                    alignment: Alignment.center,
+              content: StreamBuilder<double>(
+                stream: Stream.periodic(const Duration(milliseconds: 500), (_) => _updateProgress),
+                builder: (context, snapshot) {
+                  final progress = _updateProgress;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(
-                        strokeWidth: 8,
-                        color: const Color(0xFF2E7D32),
-                        backgroundColor: Colors.grey[200],
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: CircularProgressIndicator(
+                              value: progress / 100,
+                              strokeWidth: 8,
+                              color: const Color(0xFF2E7D32),
+                              backgroundColor: Colors.grey[200],
+                            ),
+                          ),
+                          Text(
+                            '${progress.toInt()}%',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: const Color(0xFF2E7D32),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Updating...',
+                        style: GoogleFonts.interTight(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Please do not turn off the machine.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Updating...',
-                    style: GoogleFonts.interTight(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Please do not turn off the machine.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
+                  );
+                }
               ),
             ),
           );
@@ -968,7 +987,9 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                           icon: Icons.system_update_rounded,
                           onTap: (_isUpdateAvailable ||
                               _updateStatus == "failed" ||
-                              _updateStatus == "interrupted") && _updateStatus != "pending"
+                              _updateStatus == "interrupted") && 
+                              _updateStatus != "pending" && 
+                              _isOnline
                               ? _showUpdateDialog
                               : null,
                           trailing: _updateStatus == "failed"
@@ -1029,10 +1050,25 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                         ),
                         _buildModernTile(
                           title: 'Downgrade Firmware',
-                          subtitle: 'Select a previous firmware version',
+                          subtitle: _updateStatus == "pending"
+                              ? 'Update in progress: ${_updateProgress.toInt()}%'
+                              : (!_isOnline
+                                  ? 'Offline device - Cannot downgrade'
+                                  : 'Select a previous firmware version'),
                           icon: Icons.download_for_offline_rounded,
-                          onTap: _isOnline ? _showDowngradeDialog : null,
-                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: _isOnline && _updateStatus != "pending"
+                              ? _showDowngradeDialog
+                              : null,
+                          trailing: _updateStatus == "pending"
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF2E7D32),
+                                  ),
+                                )
+                              : const Icon(Icons.chevron_right_rounded),
                         ),
                         _buildModernTile(
                           title: 'Restart Machine',
