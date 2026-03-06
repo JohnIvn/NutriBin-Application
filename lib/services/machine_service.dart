@@ -485,4 +485,23 @@ class MachineService {
       return Error.errorResponse(e.toString());
     }
   }
+
+  static Future<Map<String, dynamic>> getFirmwareVersions({
+    required String machineId,
+  }) async {
+    try {
+      final url = Uri.parse('$restUser/machine/firmware-versions/$machineId');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
+        },
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
 }

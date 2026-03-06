@@ -29,6 +29,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
   String? _targetVersion;
   String _updateStatus = "none";
   double _updateProgress = 0.0;
+  List<Map<String, dynamic>> _availableFirmwareVersions = [];
   final TextEditingController _nicknameController = TextEditingController();
   final ScreenshotController _screenshotController = ScreenshotController();
 
@@ -66,6 +67,245 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
       }
     } catch (e) {
       print("Update check failed: $e");
+    }
+  }
+
+  Future<void> _loadFirmwareVersions() async {
+    try {
+      final response = await MachineService.getFirmwareVersions(
+        machineId: widget.machineId,
+      );
+      if (response['ok'] == true && response['versions'] != null) {
+        if (mounted) {
+          setState(() {
+            _availableFirmwareVersions =
+                List<Map<String, dynamic>>.from(response['versions'] ?? []);
+          });
+        }
+      }
+    } catch (e) {
+      print("Failed to load firmware versions: $e");
+    }
+  }
+
+  Future<void> _showDowngradeDialog() async {
+    if (_availableFirmwareVersions.isEmpty) {
+      await _loadFirmwareVersions();
+    }
+
+    if (!_isOnline) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Offline device - Cannot downgrade. Please check connection.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    if (_availableFirmwareVersions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No firmware versions available for downgrade'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    String? selectedVersion;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(
+            'Downgrade Firmware',
+            style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _availableFirmwareVersions.length,
+              itemBuilder: (context, index) {
+                final version = _availableFirmwareVersions[index];
+                final versionString = version['version'] ?? 'Unknown';
+                final isCurrentVersion = versionString == _firmware;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isCurrentVersion ? Colors.green : Colors.grey.shade300,
+                      width: isCurrentVersion ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: isCurrentVersion
+                        ? Colors.green.shade50
+                        : Colors.grey.shade50,
+                  ),
+                  child: RadioListTile<String>(
+                    title: Text(
+                      versionString,
+                      style: GoogleFonts.firaCode(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    subtitle: isCurrentVersion
+                        ? Text(
+                            'Current Version',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          )
+                        : Row(
+                            children: [
+                              if (version['releaseDate'] != null)
+                                Text(
+                                  DateTime.parse(version['releaseDate'])
+                                      .toLocal()
+                                      .toString()
+                                      .split(' ')[0],
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                            ],
+                          ),
+                    value: versionString,
+                    groupValue: selectedVersion,
+                    enabled: !isCurrentVersion,
+                    onChanged: isCurrentVersion
+                        ? null
+                        : (value) {
+                            setDialogState(() {
+                              selectedVersion = value;
+                            });
+                          },
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: GoogleFonts.inter(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: selectedVersion != null && selectedVersion != _firmware
+                  ? () {
+                      Navigator.pop(context);
+                      _proceedWithDowngrade(selectedVersion!);
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey.shade300,
+              ),
+              child: Text('Downgrade', style: GoogleFonts.inter()),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _proceedWithDowngrade(String selectedVersion) async {
+    bool? proceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Confirm Downgrade',
+          style: GoogleFonts.interTight(
+            fontWeight: FontWeight.bold,
+            color: Colors.orange,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to downgrade to version $selectedVersion? This action cannot be undone easily.',
+          style: GoogleFonts.inter(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Confirm Downgrade', style: GoogleFonts.inter()),
+          ),
+        ],
+      ),
+    );
+
+    if (proceed == true) {
+      _startDowngradeProcess(selectedVersion);
+    }
+  }
+
+  Future<void> _startDowngradeProcess(String version) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Colors.orange),
+                const SizedBox(height: 20),
+                Text(
+                  'Initiating Firmware Downgrade...',
+                  style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Communicating with server...',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    final response = await MachineService.updateFirmware(
+      machineId: widget.machineId,
+      version: version,
+    );
+
+    if (mounted) {
+      Navigator.pop(context); // Close initiating dialog
+
+      if (response['ok'] == true) {
+        _simulateUpdate(version);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['error'] ?? 'Downgrade initiation failed'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -114,11 +354,11 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
     );
 
     if (proceed == true) {
-      _startUpdateProcess();
+      _startUpdateProcess(_latestVersion!);
     }
   }
 
-  Future<void> _startUpdateProcess() async {
+  Future<void> _startUpdateProcess(String version) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -150,7 +390,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
     // Initial call to move status to pending
     final response = await MachineService.updateFirmware(
       machineId: widget.machineId,
-      version: _latestVersion!,
+      version: version,
     );
 
     if (mounted) {
@@ -158,7 +398,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
 
       if (response['ok'] == true) {
         // Start 10-second simulation
-        _simulateUpdate();
+        _simulateUpdate(version);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -171,7 +411,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
     }
   }
 
-  Future<void> _simulateUpdate() async {
+  Future<void> _simulateUpdate(String version) async {
     // Reset progress to 0
     setState(() {
       _updateProgress = 0.0;
@@ -249,7 +489,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
 
       setState(() {
         _updateStatus = 'success';
-        _firmware = _latestVersion!;
+        _firmware = version;
         _isUpdateAvailable = false;
       });
 
@@ -786,6 +1026,13 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                                                     color: Colors.green,
                                                     size: 20,
                                                   )))),
+                        ),
+                        _buildModernTile(
+                          title: 'Downgrade Firmware',
+                          subtitle: 'Select a previous firmware version',
+                          icon: Icons.download_for_offline_rounded,
+                          onTap: _isOnline ? _showDowngradeDialog : null,
+                          trailing: const Icon(Icons.chevron_right_rounded),
                         ),
                         _buildModernTile(
                           title: 'Restart Machine',
