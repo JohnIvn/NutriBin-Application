@@ -157,8 +157,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
       Navigator.pop(context); // Close initiating dialog
 
       if (response['ok'] == true) {
-        // Start polling for progress
-        _pollUpdateProgress();
+        // Start 10-second simulation
+        _simulateUpdate();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -171,7 +171,12 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
     }
   }
 
-  Future<void> _pollUpdateProgress() async {
+  Future<void> _simulateUpdate() async {
+    // Reset progress to 0
+    setState(() {
+      _updateProgress = 0.0;
+    });
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -189,57 +194,30 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                       CircularProgressIndicator(
                         value: _updateProgress / 100,
                         strokeWidth: 8,
-                        color:
-                            _updateStatus == "interrupted" ||
-                                _updateStatus == "failed"
-                            ? (_updateStatus == "failed"
-                                  ? Colors.red
-                                  : Colors.orange)
-                            : const Color(0xFF2E7D32),
+                        color: const Color(0xFF2E7D32),
                         backgroundColor: Colors.grey[200],
                       ),
                       Text(
                         "${_updateProgress.toInt()}%",
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.bold,
-                          color:
-                              _updateStatus == "interrupted" ||
-                                  _updateStatus == "failed"
-                              ? (_updateStatus == "failed"
-                                    ? Colors.red
-                                    : Colors.orange)
-                              : const Color(0xFF2E7D32),
+                          color: const Color(0xFF2E7D32),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    _updateStatus == "interrupted"
-                        ? 'Update Interrupted'
-                        : (_updateStatus == "failed"
-                              ? 'Update Failed'
-                              : 'Updating Firmware...'),
-                    style: GoogleFonts.interTight(
-                      fontWeight: FontWeight.bold,
-                      color: _updateStatus == "failed" ? Colors.red : null,
-                    ),
+                    'Updating Firmware...',
+                    style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    _updateStatus == "interrupted"
-                        ? 'Connection lost. Retrying... (${_updateProgress.toInt()}%)'
-                        : (_updateStatus == "failed"
-                              ? 'Update failed at ${_updateProgress.toInt()}%. Please try again.'
-                              : 'Updating to $_latestVersion... ${_updateProgress.toInt()}%'),
+                    'Updating to $_latestVersion. Please do not turn off the machine.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: _updateStatus == "interrupted"
-                          ? Colors.orange
-                          : (_updateStatus == "failed"
-                                ? Colors.red
-                                : Colors.grey),
+                      color: Colors.grey,
                     ),
                   ),
                 ],
@@ -250,65 +228,47 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
       ),
     );
 
-    bool isUpdating = true;
-    while (isUpdating && mounted) {
-      await Future.delayed(const Duration(seconds: 2));
+    // Simulate 10 seconds with 10% per second
+    for (int i = 1; i <= 10; i++) {
+      await Future.delayed(const Duration(seconds: 1));
 
-      try {
-        final response = await MachineService.checkFirmwareUpdate(
+      if (mounted) {
+        // Call backend to update progress
+        await MachineService.updateProgress(
           machineId: widget.machineId,
+          updateProgress: (i * 10).toString(),
         );
 
-        if (response['ok'] == true) {
-          if (mounted) {
-            setState(() {
-              _updateStatus = response['updateStatus'] ?? "none";
-              _updateProgress =
-                  double.tryParse(
-                    response['updateProgress']?.toString() ?? '0',
-                  ) ??
-                  0.0;
-            });
-          }
-
-          if (_updateStatus == 'success') {
-            isUpdating = false;
-            if (mounted) {
-              Navigator.pop(context); // Close progress dialog
-              _loadBinSettings(); // Refresh settings
-              _checkUpdate(); // NEW: Refresh update status as well
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Firmware updated successfully!'),
-                  backgroundColor: Colors.green,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
-          } else if (_updateStatus == 'failed' ||
-              _updateStatus == 'interrupted') {
-            isUpdating = false;
-            if (mounted) {
-              Navigator.pop(context); // Close progress dialog
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    _updateStatus == 'failed'
-                        ? 'Firmware update failed at ${_updateProgress.toInt()}%.'
-                        : 'Update was interrupted at ${_updateProgress.toInt()}%.',
-                  ),
-                  backgroundColor: _updateStatus == 'failed'
-                      ? Colors.red
-                      : Colors.orange,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
-          }
-        }
-      } catch (e) {
-        print("Polling error: $e");
+        setState(() {
+          _updateProgress = (i * 10).toDouble();
+          _updateStatus = 'pending';
+        });
       }
+    }
+
+    // After 10 seconds, complete the update on backend
+    if (mounted) {
+      await MachineService.completeUpdate(
+        machineId: widget.machineId,
+      );
+
+      setState(() {
+        _updateStatus = 'success';
+        _firmware = _latestVersion!;
+        _isUpdateAvailable = false;
+      });
+
+      Navigator.pop(context); // Close progress dialog
+      _loadBinSettings(); // Refresh firmware version
+      _checkUpdate(); // Refresh update status
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Firmware updated successfully!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -771,13 +731,10 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                                               ? 'New version $_latestVersion available'
                                               : 'Your firmware is up to date')))),
                           icon: Icons.system_update_rounded,
-                          onTap: _isUpdateAvailable ||
+                          onTap: (_isUpdateAvailable ||
                               _updateStatus == "failed" ||
-                              _updateStatus == "interrupted" ||
-                              _updateStatus == "pending"
-                              ? (_updateStatus == "pending"
-                                  ? _pollUpdateProgress
-                                  : _showUpdateDialog)
+                              _updateStatus == "interrupted") && _updateStatus != "pending"
+                              ? _showUpdateDialog
                               : null,
                           trailing: _updateStatus == "failed"
                               ? const Icon(

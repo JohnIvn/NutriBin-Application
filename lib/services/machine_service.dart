@@ -441,4 +441,48 @@ class MachineService {
       return Error.errorResponse(e.toString());
     }
   }
+
+  static Future<Map<String, dynamic>> updateProgress({
+    required String machineId,
+    required String updateProgress,
+  }) async {
+    try {
+      final url = Uri.parse('$restUser/machine/update-progress');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
+        },
+        body: jsonEncode({
+          'machineId': machineId,
+          'updateProgress': updateProgress,
+        }),
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
+
+  static Future<Map<String, dynamic>> completeUpdate({
+    required String machineId,
+  }) async {
+    try {
+      final url = Uri.parse('$restUser/machine/complete-update');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $anonKey',
+        },
+        body: jsonEncode({'machineId': machineId}),
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return Error.errorResponse(e.toString());
+    }
+  }
 }
