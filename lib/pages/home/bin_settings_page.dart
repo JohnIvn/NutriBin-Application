@@ -192,28 +192,23 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                     alignment: Alignment.center,
                     children: [
                       CircularProgressIndicator(
-                        value: _updateProgress / 100,
                         strokeWidth: 8,
                         color: const Color(0xFF2E7D32),
                         backgroundColor: Colors.grey[200],
-                      ),
-                      Text(
-                        "${_updateProgress.toInt()}%",
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF2E7D32),
-                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Updating Firmware...',
-                    style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
+                    'Updating...',
+                    style: GoogleFonts.interTight(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Updating to $_latestVersion. Please do not turn off the machine.',
+                    'Please do not turn off the machine.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 12,
