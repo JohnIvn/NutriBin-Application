@@ -325,17 +325,34 @@ class MachineService {
 
   static Future<Map<String, dynamic>> restartMachine() async {
     try {
-      const String espIp = '192.168.1.184';
-      final url = Uri.parse('http://$espIp/restart');
+      const String espSensorsIp = '192.168.1.184';
+      const String espServoIp = '192.168.1.185'; // Assumed next sequential IP
 
-      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      final urls = [
+        Uri.parse('http://$espSensorsIp/restart'),
+        Uri.parse('http://$espServoIp/restart'),
+      ];
 
-      if (response.statusCode == 200) {
-        return {'ok': true, 'message': 'Restart command sent to ESP32'};
+      final results = await Future.wait(
+        urls.map(
+          (url) => http
+              .get(url)
+              .timeout(const Duration(seconds: 3))
+              .catchError(
+                (e) => http.Response('{"ok": false, "message": "$e"}', 408),
+              ),
+        ),
+      );
+
+      bool atLeastOneOk = results.any((res) => res.statusCode == 200);
+
+      if (atLeastOneOk) {
+        return {
+          'ok': true,
+          'message': 'Restart command sent (skipped offline nodes)',
+        };
       } else {
-        return Error.errorResponse(
-          'Machine returned status: ' + response.statusCode.toString(),
-        );
+        return {'ok': false, 'message': 'All nodes offline. Check your Wi-Fi.'};
       }
     } catch (e) {
       return Error.errorResponse(
