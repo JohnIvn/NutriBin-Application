@@ -122,101 +122,230 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            'Downgrade Firmware',
-            style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: _availableFirmwareVersions.length,
-              itemBuilder: (context, index) {
-                final version = _availableFirmwareVersions[index];
-                final versionString = version['version'] ?? 'Unknown';
-                final isCurrentVersion = versionString == _firmware;
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final theme = Theme.of(context);
+          final primaryColor = theme.primaryColor;
+          
+          return AlertDialog(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side: BorderSide(
+                color: theme.dividerColor.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    border: Border.all(
-                      color: isCurrentVersion ? Colors.green : Colors.grey.shade300,
-                      width: isCurrentVersion ? 2 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    color: isCurrentVersion
-                        ? Colors.green.shade50
-                        : Colors.grey.shade50,
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: RadioListTile<String>(
-                    title: Text(
-                      versionString,
-                      style: GoogleFonts.firaCode(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
+                  child: Icon(
+                    Icons.history_rounded,
+                    color: Colors.orange,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    'Restore Firmware',
+                    style: GoogleFonts.interTight(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                      color: theme.colorScheme.onSurface,
                     ),
-                    subtitle: isCurrentVersion
-                        ? Text(
-                            'Current Version',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: Colors.green,
-                              fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select a previous stable version to restore your machine state.',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.4,
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _availableFirmwareVersions.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final version = _availableFirmwareVersions[index];
+                        final versionString = version['version'] ?? 'Unknown';
+                        final isCurrentVersion = versionString == _firmware;
+                        final isSelected = selectedVersion == versionString;
+
+                        return InkWell(
+                          onTap: isCurrentVersion
+                              ? null
+                              : () => setDialogState(() => selectedVersion = versionString),
+                          borderRadius: BorderRadius.circular(16),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.orange.withOpacity(0.1)
+                                  : (isCurrentVersion 
+                                      ? theme.cardColor.withOpacity(0.5) 
+                                      : theme.cardColor),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.orange
+                                    : (isCurrentVersion
+                                        ? Colors.transparent
+                                        : theme.dividerColor.withOpacity(0.1)),
+                                width: isSelected ? 2 : 1,
+                              ),
                             ),
-                          )
-                        : Row(
-                            children: [
-                              if (version['releaseDate'] != null)
-                                Text(
-                                  DateTime.parse(version['releaseDate'])
-                                      .toLocal()
-                                      .toString()
-                                      .split(' ')[0],
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    color: Colors.grey,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            versionString,
+                                            style: GoogleFonts.firaCode(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 15,
+                                              color: isCurrentVersion
+                                                  ? theme.colorScheme.onSurface.withOpacity(0.3)
+                                                  : theme.colorScheme.onSurface,
+                                            ),
+                                          ),
+                                          if (isCurrentVersion) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                'CURRENT',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: Colors.green,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        version['releaseDate'] != null
+                                            ? 'Released ${DateTime.parse(version['releaseDate']).toLocal().toString().split(' ')[0]}'
+                                            : 'Unknown release date',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                            ],
+                                if (!isCurrentVersion)
+                                  Icon(
+                                    isSelected
+                                        ? Icons.check_circle_rounded
+                                        : Icons.radio_button_off_rounded,
+                                    color: isSelected
+                                        ? Colors.orange
+                                        : theme.colorScheme.onSurface.withOpacity(0.2),
+                                    size: 22,
+                                  ),
+                              ],
+                            ),
                           ),
-                    value: versionString,
-                    groupValue: selectedVersion,
-                    enabled: !isCurrentVersion,
-                    onChanged: isCurrentVersion
-                        ? null
-                        : (value) {
-                            setDialogState(() {
-                              selectedVersion = value;
-                            });
-                          },
+                        );
+                      },
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: GoogleFonts.inter(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: selectedVersion != null && selectedVersion != _firmware
-                  ? () {
-                      Navigator.pop(context);
-                      _proceedWithDowngrade(selectedVersion!);
-                    }
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.grey.shade300,
+                ],
               ),
-              child: Text('Downgrade', style: GoogleFonts.inter()),
             ),
-          ],
-        ),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            actions: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Dismiss',
+                        style: GoogleFonts.inter(
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: selectedVersion != null && selectedVersion != _firmware
+                          ? () {
+                              Navigator.pop(context);
+                              _proceedWithDowngrade(selectedVersion!);
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        disabledBackgroundColor: theme.dividerColor.withOpacity(0.1),
+                        disabledForegroundColor: theme.colorScheme.onSurface.withOpacity(0.3),
+                      ),
+                      child: Text(
+                        'Restore',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
