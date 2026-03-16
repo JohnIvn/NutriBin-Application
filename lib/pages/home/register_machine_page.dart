@@ -19,6 +19,167 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
   final _wifiPasswordController = TextEditingController();
   // ignore: unused_field
   bool _isLoading = false;
+  bool _isBluetoothScanning = false;
+
+  void _showBluetoothPairing() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final primaryColor = Theme.of(context).colorScheme.primary;
+            final textColor = Theme.of(context).colorScheme.onSurface;
+            final subTextColor =
+                Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+            final bgColor = Theme.of(context).scaffoldBackgroundColor;
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.65,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 8, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Bluetooth Pairing',
+                          style: GoogleFonts.interTight(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close, color: textColor),
+                          onPressed: () {
+                            setModalState(() => _isBluetoothScanning = false);
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(height: 1, color: Colors.grey.withOpacity(0.15)),
+                  Expanded(
+                    child: _isBluetoothScanning
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 56,
+                                height: 56,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                'Scanning for nearby devices...',
+                                style: GoogleFonts.interTight(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Make sure your NutriBin is powered on.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: subTextColor,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.bluetooth_disabled_rounded,
+                                size: 64,
+                                color: Colors.grey.withOpacity(0.35),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No devices found',
+                                style: GoogleFonts.interTight(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tap "Scan for Devices" to begin.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: subTextColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => setModalState(
+                          () => _isBluetoothScanning = !_isBluetoothScanning,
+                        ),
+                        icon: Icon(
+                          _isBluetoothScanning
+                              ? Icons.stop_rounded
+                              : Icons.bluetooth_searching_rounded,
+                        ),
+                        label: Text(
+                          _isBluetoothScanning
+                              ? 'Stop Scanning'
+                              : 'Scan for Devices',
+                          style: GoogleFonts.interTight(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _showScanner() {
     showModalBottomSheet(
@@ -158,6 +319,43 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
 
               _buildSectionCard(
                 context: context,
+                title: 'Pair via Bluetooth',
+                subtitle:
+                    'Automatically detect nearby NutriBin devices. No Wi-Fi required.',
+                icon: Icons.bluetooth_rounded,
+                cardColor: cardColor,
+                textColor: textColor,
+                subTextColor: subTextColor,
+                primaryColor: primaryColor,
+                isDarkMode: isDarkMode,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoading ? null : _showBluetoothPairing,
+                    icon: const Icon(Icons.bluetooth_searching_rounded),
+                    label: Text(
+                      'Scan for Devices',
+                      style: GoogleFonts.interTight(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              _buildSectionCard(
+                context: context,
                 title: 'Scan QR Code',
                 subtitle:
                     'Scan the QR code on your NutriBin machine to register it automatically.',
@@ -169,7 +367,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                 isDarkMode: isDarkMode,
                 child: SizedBox(
                   width: double.infinity,
-                  child: OutlinedButton.icon(
+                  child: ElevatedButton.icon(
                     onPressed: _isLoading ? null : _showScanner,
                     icon: const Icon(Icons.center_focus_weak_rounded),
                     label: Text(
@@ -179,17 +377,14 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    style: OutlinedButton.styleFrom(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(
-                        color: _isLoading
-                            ? Colors.grey
-                            : primaryColor.withOpacity(0.5),
-                      ),
-                      foregroundColor: _isLoading ? Colors.grey : primaryColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
+                      elevation: 0,
                     ),
                   ),
                 ),

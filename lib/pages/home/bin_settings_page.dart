@@ -440,7 +440,9 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
 
   Future<void> _showUpdateDialog() async {
     if ((_latestVersion == null || !_isUpdateAvailable) &&
-        (_updateStatus != "failed" && _updateStatus != "interrupted")) return;
+        (_updateStatus != "failed" && _updateStatus != "interrupted")) {
+      return;
+    }
 
     if (!_isOnline) {
       ScaffoldMessenger.of(context).showSnackBar(
