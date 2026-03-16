@@ -1,3 +1,5 @@
+import com.android.build.gradle.LibraryExtension
+
 allprojects {
     repositories {
         google()
@@ -15,6 +17,22 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
+subprojects {
+    plugins.withId("com.android.library") {
+        extensions.findByType(LibraryExtension::class.java)?.apply {
+            if (namespace.isNullOrBlank()) {
+                val groupValue = project.group.toString()
+                namespace = if (groupValue.isNotBlank() && groupValue != "unspecified") {
+                    groupValue
+                } else {
+                    "com.nutribin.${project.name.replace("-", "")}" 
+                }
+            }
+        }
+    }
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

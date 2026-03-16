@@ -1,8 +1,14 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:nutribin_application/services/machine_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class RegisterMachinePage extends StatefulWidget {
   const RegisterMachinePage({super.key});
@@ -20,20 +26,63 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
   // ignore: unused_field
   bool _isLoading = false;
   bool _isBluetoothScanning = false;
+  bool _isBluetoothConnecting = false;
+  bool _isProvisioningWifi = false;
+  List<BluetoothDiscoveryResult> _scanResults = [];
+  List<BluetoothDevice> _bondedDevices = [];
+  BluetoothConnection? _bluetoothConnection;
+  BluetoothDevice? _selectedBluetoothDevice;
+  StreamSubscription<BluetoothDiscoveryResult>? _discoverySubscription;
+  String? _bluetoothStatus;
+  StateSetter? _pairingSheetSetState;
+  BuildContext? _pairingSheetContext;
+  bool _isPairedDevicesDrawerOpen = false;
 
-  void _showBluetoothPairing() {
-    showModalBottomSheet(
+  Future<void> _showBluetoothPairing() async {
+    final ready = await _prepareBluetoothForProvisioning();
+    if (!ready) {
+      return;
+    }
+
+    if (_scanResults.isEmpty && !_isBluetoothScanning) {
+      await _startBluetoothDiscovery();
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (modalContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            _pairingSheetSetState = setModalState;
+            _pairingSheetContext = modalContext;
             final primaryColor = Theme.of(context).colorScheme.primary;
             final textColor = Theme.of(context).colorScheme.onSurface;
             final subTextColor =
                 Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
             final bgColor = Theme.of(context).scaffoldBackgroundColor;
+            final hasConnectedDevice =
+                _bluetoothConnection?.isConnected == true &&
+                _selectedBluetoothDevice != null;
+
+            final connectedDeviceName = hasConnectedDevice
+                ? _displayBluetoothName(_selectedBluetoothDevice!)
+                : null;
+            final discoveredDevices = _scanResults
+                .map((result) => result.device)
+                .toList();
+            final pairedOnlyDevices = _bondedDevices.where((bonded) {
+              return discoveredDevices.every(
+                (discovered) => discovered.address != bonded.address,
+              );
+            }).toList();
+            final hasAnyDevices =
+                discoveredDevices.isNotEmpty || pairedOnlyDevices.isNotEmpty;
 
             return Container(
               height: MediaQuery.of(context).size.height * 0.65,
@@ -70,30 +119,64 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                         IconButton(
                           icon: Icon(Icons.close, color: textColor),
                           onPressed: () {
-                            setModalState(() => _isBluetoothScanning = false);
-                            Navigator.pop(context);
+                            _stopBluetoothDiscovery();
+                            Navigator.pop(modalContext);
                           },
                         ),
                       ],
                     ),
                   ),
                   Divider(height: 1, color: Colors.grey.withOpacity(0.15)),
+                  if (_bluetoothStatus != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 16,
+                            color: subTextColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _bluetoothStatus!,
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: subTextColor,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   Expanded(
-                    child: _isBluetoothScanning
+                    child: !hasAnyDevices
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SizedBox(
-                                width: 56,
-                                height: 56,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: primaryColor,
+                              if (_isBluetoothScanning)
+                                SizedBox(
+                                  width: 56,
+                                  height: 56,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: primaryColor,
+                                  ),
+                                )
+                              else
+                                Icon(
+                                  Icons.bluetooth_disabled_rounded,
+                                  size: 64,
+                                  color: Colors.grey.withOpacity(0.35),
                                 ),
-                              ),
                               const SizedBox(height: 20),
                               Text(
-                                'Scanning for nearby devices...',
+                                _isBluetoothScanning
+                                    ? 'Scanning for nearby devices...'
+                                    : 'No devices found',
                                 style: GoogleFonts.interTight(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -102,50 +185,224 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Make sure your NutriBin is powered on.',
+                                'Make sure your NutriBin is powered on. If it is already paired in system Bluetooth (even as audio), tap Scan and connect from the paired list.',
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   color: subTextColor,
                                 ),
+                                textAlign: TextAlign.center,
                               ),
                             ],
                           )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        : ListView(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                             children: [
-                              Icon(
-                                Icons.bluetooth_disabled_rounded,
-                                size: 64,
-                                color: Colors.grey.withOpacity(0.35),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No devices found',
-                                style: GoogleFonts.interTight(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: textColor,
+                              if (discoveredDevices.isNotEmpty) ...[
+                                Text(
+                                  'Discovered Nearby',
+                                  style: GoogleFonts.interTight(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: textColor,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Tap "Scan for Devices" to begin.',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: subTextColor,
+                                const SizedBox(height: 6),
+                                for (final device in discoveredDevices) ...[
+                                  _buildBluetoothDeviceTile(
+                                    device: device,
+                                    primaryColor: primaryColor,
+                                    textColor: textColor,
+                                    subTextColor: subTextColor,
+                                    isBonded: _bondedDevices.any(
+                                      (bonded) =>
+                                          bonded.address == device.address,
+                                    ),
+                                  ),
+                                  Divider(
+                                    height: 1,
+                                    color: Colors.grey.withOpacity(0.1),
+                                  ),
+                                ],
+                                const SizedBox(height: 14),
+                              ],
+                              if (pairedOnlyDevices.isNotEmpty) ...[
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white.withOpacity(0.04)
+                                        : Colors.grey.withOpacity(0.06),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: Colors.grey.withOpacity(0.12),
+                                    ),
+                                  ),
+                                  child: Theme(
+                                    data: Theme.of(context).copyWith(
+                                      dividerColor: Colors.transparent,
+                                    ),
+                                    child: ExpansionTile(
+                                      key: const PageStorageKey(
+                                        'pairedDevicesDrawer',
+                                      ),
+                                      initiallyExpanded:
+                                          _isPairedDevicesDrawerOpen,
+                                      onExpansionChanged: (isExpanded) {
+                                        _isPairedDevicesDrawerOpen = isExpanded;
+                                        _refreshBluetoothUi();
+                                      },
+                                      tilePadding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 2,
+                                      ),
+                                      childrenPadding:
+                                          const EdgeInsets.fromLTRB(
+                                            14,
+                                            0,
+                                            14,
+                                            10,
+                                          ),
+                                      iconColor: primaryColor,
+                                      collapsedIconColor: primaryColor,
+                                      title: Text(
+                                        'Paired Devices',
+                                        style: GoogleFonts.interTight(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: textColor,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        '${pairedOnlyDevices.length} saved device${pairedOnlyDevices.length == 1 ? '' : 's'}',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: subTextColor,
+                                        ),
+                                      ),
+                                      children: [
+                                        for (final device
+                                            in pairedOnlyDevices) ...[
+                                          _buildBluetoothDeviceTile(
+                                            device: device,
+                                            primaryColor: primaryColor,
+                                            textColor: textColor,
+                                            subTextColor: subTextColor,
+                                            isBonded: true,
+                                          ),
+                                          if (device != pairedOnlyDevices.last)
+                                            Divider(
+                                              height: 1,
+                                              color: Colors.grey.withOpacity(
+                                                0.1,
+                                              ),
+                                            ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
                   ),
+                  if (hasConnectedDevice)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Connected: $connectedDeviceName',
+                            style: GoogleFonts.interTight(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          _buildTextField(
+                            controller: _wifiNameController,
+                            label: 'Wi-Fi Name (SSID)',
+                            hint: 'e.g. Home_Wifi_2.4G',
+                            icon: Icons.wifi_rounded,
+                            isDarkMode:
+                                Theme.of(context).brightness == Brightness.dark,
+                            primaryColor: primaryColor,
+                            cardColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.black12
+                                : Colors.grey[100]!,
+                            textColor: textColor,
+                          ),
+                          const SizedBox(height: 10),
+                          _buildTextField(
+                            controller: _wifiPasswordController,
+                            label: 'Wi-Fi Password',
+                            hint: 'Enter Wi-Fi password',
+                            icon: Icons.lock_rounded,
+                            isObscure: true,
+                            isDarkMode:
+                                Theme.of(context).brightness == Brightness.dark,
+                            primaryColor: primaryColor,
+                            cardColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.black12
+                                : Colors.grey[100]!,
+                            textColor: textColor,
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _isProvisioningWifi
+                                  ? null
+                                  : _sendWifiCredentials,
+                              icon: _isProvisioningWifi
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.send_rounded),
+                              label: Text(
+                                _isProvisioningWifi
+                                    ? 'Sending Wi-Fi Credentials...'
+                                    : 'Send Wi-Fi Credentials',
+                                style: GoogleFonts.interTight(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                elevation: 0,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 12),
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () => setModalState(
-                          () => _isBluetoothScanning = !_isBluetoothScanning,
-                        ),
+                        onPressed: _isBluetoothConnecting
+                            ? null
+                            : (_isBluetoothScanning
+                                  ? _stopBluetoothDiscovery
+                                  : _startBluetoothDiscovery),
                         icon: Icon(
                           _isBluetoothScanning
                               ? Icons.stop_rounded
@@ -179,6 +436,422 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
         );
       },
     );
+
+    _pairingSheetContext = null;
+    _pairingSheetSetState = null;
+    _stopBluetoothDiscovery();
+  }
+
+  void _refreshBluetoothUi() {
+    if (!mounted) {
+      return;
+    }
+    setState(() {});
+    _pairingSheetSetState?.call(() {});
+  }
+
+  void _closeBluetoothPairingSheet() {
+    final sheetContext = _pairingSheetContext;
+    _pairingSheetContext = null;
+    _pairingSheetSetState = null;
+
+    if (sheetContext != null && Navigator.of(sheetContext).canPop()) {
+      Navigator.of(sheetContext).pop();
+    }
+  }
+
+  Future<void> _loadBondedDevices() async {
+    try {
+      _bondedDevices = await FlutterBluetoothSerial.instance.getBondedDevices();
+    } catch (_) {
+      _bondedDevices = [];
+    }
+  }
+
+  Future<bool> _ensureBluetoothPermissions() async {
+    final statuses = await [
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.locationWhenInUse,
+    ].request();
+
+    final allGranted = statuses.values.every((status) => status.isGranted);
+    if (!allGranted) {
+      _showSnackBar('Bluetooth and location permissions are required.');
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> _prepareBluetoothForProvisioning() async {
+    if (!Platform.isAndroid) {
+      _showSnackBar(
+        'Bluetooth provisioning is currently supported on Android only.',
+      );
+      return false;
+    }
+
+    final permissionsGranted = await _ensureBluetoothPermissions();
+    if (!permissionsGranted) {
+      return false;
+    }
+
+    final available =
+        await FlutterBluetoothSerial.instance.isAvailable ?? false;
+    if (!available) {
+      _showSnackBar('Bluetooth is not available on this device.');
+      return false;
+    }
+
+    var enabled = await FlutterBluetoothSerial.instance.isEnabled ?? false;
+    if (!enabled) {
+      await FlutterBluetoothSerial.instance.requestEnable();
+      enabled = await FlutterBluetoothSerial.instance.isEnabled ?? false;
+    }
+
+    if (!enabled) {
+      _showSnackBar('Enable Bluetooth first, then try again.');
+      return false;
+    }
+
+    final locationServiceStatus = await Permission.location.serviceStatus;
+    if (!locationServiceStatus.isEnabled) {
+      _showSnackBar(
+        'Turn on Location services to improve Bluetooth discovery.',
+      );
+    }
+
+    return true;
+  }
+
+  Future<void> _startBluetoothDiscovery() async {
+    if (_isBluetoothScanning) {
+      return;
+    }
+
+    final ready = await _prepareBluetoothForProvisioning();
+    if (!ready) {
+      return;
+    }
+
+    await _stopBluetoothDiscovery();
+    await _loadBondedDevices();
+
+    _scanResults = [];
+    _isBluetoothScanning = true;
+    _bluetoothStatus = 'Scanning for nearby devices...';
+    _refreshBluetoothUi();
+
+    _discoverySubscription = FlutterBluetoothSerial.instance
+        .startDiscovery()
+        .listen(
+          (result) {
+            final index = _scanResults.indexWhere(
+              (existing) => existing.device.address == result.device.address,
+            );
+
+            if (index == -1) {
+              _scanResults.add(result);
+            } else {
+              _scanResults[index] = result;
+            }
+
+            _refreshBluetoothUi();
+          },
+          onError: (Object error) {
+            _bluetoothStatus = 'Discovery error: $error';
+            _isBluetoothScanning = false;
+            _refreshBluetoothUi();
+          },
+          onDone: () {
+            _isBluetoothScanning = false;
+            _bluetoothStatus = _scanResults.isEmpty && _bondedDevices.isEmpty
+                ? 'Scan finished. No devices found. Pair in system Bluetooth first, then rescan.'
+                : 'Scan finished. Select a device to connect.';
+            _refreshBluetoothUi();
+          },
+          cancelOnError: true,
+        );
+  }
+
+  Future<void> _stopBluetoothDiscovery() async {
+    await _discoverySubscription?.cancel();
+    _discoverySubscription = null;
+    _isBluetoothScanning = false;
+    _refreshBluetoothUi();
+  }
+
+  String _displayBluetoothName(BluetoothDevice device) {
+    final name = device.name?.trim() ?? '';
+    return name.isEmpty ? 'Unknown Device' : name;
+  }
+
+  bool _isNutriBinNamedDevice(BluetoothDevice device) {
+    final name = device.name?.trim().toLowerCase() ?? '';
+    return name == 'nutribin' || name.startsWith('nutribin-');
+  }
+
+  String _friendlyBluetoothConnectError(Object error) {
+    final message = error.toString().toLowerCase();
+
+    if (message.contains('incorrect pin') ||
+        message.contains('passkey') ||
+        message.contains('authentication')) {
+      return 'Pairing was rejected by the device. Remove old pairing on both sides, then retry.';
+    }
+
+    if (message.contains('connect_error') ||
+        message.contains('read failed') ||
+        message.contains('read ret: -1')) {
+      return 'Could not open Bluetooth serial channel. Pair in system Bluetooth, then retry.';
+    }
+
+    if (message.contains('timeout')) {
+      return 'Bluetooth connection timed out. Keep device close and try again.';
+    }
+
+    if (message.contains('permission')) {
+      return 'Bluetooth permission error. Re-open app and grant Bluetooth permissions.';
+    }
+
+    return 'Bluetooth connection failed. Please retry.';
+  }
+
+  Widget _buildBluetoothDeviceTile({
+    required BluetoothDevice device,
+    required Color primaryColor,
+    required Color textColor,
+    required Color subTextColor,
+    required bool isBonded,
+  }) {
+    final isConnected =
+        _bluetoothConnection?.isConnected == true &&
+        _selectedBluetoothDevice?.address == device.address;
+    final isNutriBinDevice = _isNutriBinNamedDevice(device);
+    final leadingIcon = isNutriBinDevice
+        ? Icons.recycling_rounded
+        : (isConnected
+              ? Icons.bluetooth_connected_rounded
+              : Icons.bluetooth_rounded);
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+      leading: Icon(
+        leadingIcon,
+        color: isConnected ? Colors.green : primaryColor,
+      ),
+      title: Text(
+        _displayBluetoothName(device),
+        style: GoogleFonts.interTight(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
+      ),
+      subtitle: Text(
+        isBonded ? '${device.address} - Paired' : device.address,
+        style: GoogleFonts.inter(fontSize: 12, color: subTextColor),
+      ),
+      trailing: isConnected
+          ? const Icon(Icons.check_circle_rounded, color: Colors.green)
+          : TextButton(
+              onPressed: _isBluetoothConnecting
+                  ? null
+                  : () => _connectToBluetoothDevice(device),
+              child: Text(
+                'Connect',
+                style: GoogleFonts.interTight(fontWeight: FontWeight.w700),
+              ),
+            ),
+    );
+  }
+
+  Future<void> _connectToBluetoothDevice(BluetoothDevice device) async {
+    if (_isBluetoothConnecting) {
+      return;
+    }
+
+    _isBluetoothConnecting = true;
+    _bluetoothStatus = 'Connecting to ${_displayBluetoothName(device)}...';
+    _refreshBluetoothUi();
+
+    await _stopBluetoothDiscovery();
+
+    Object? lastError;
+
+    try {
+      await _loadBondedDevices();
+      final alreadyBonded = _bondedDevices.any(
+        (bonded) => bonded.address == device.address,
+      );
+
+      if (_bluetoothConnection?.isConnected == true) {
+        await _bluetoothConnection!.close();
+      }
+
+      try {
+        final connection = await BluetoothConnection.toAddress(device.address);
+        _bluetoothConnection = connection;
+        _selectedBluetoothDevice = device;
+        _bluetoothStatus = 'Connected to ${_displayBluetoothName(device)}';
+        _showSnackBar('Connected to ${_displayBluetoothName(device)}');
+        _closeBluetoothPairingSheet();
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+
+      if (!alreadyBonded) {
+        _bluetoothStatus =
+            'Direct connect failed. Pairing with ${_displayBluetoothName(device)}...';
+        _refreshBluetoothUi();
+
+        final bonded = await FlutterBluetoothSerial.instance
+            .bondDeviceAtAddress(device.address);
+
+        if (bonded == true) {
+          await _loadBondedDevices();
+          final connection = await BluetoothConnection.toAddress(
+            device.address,
+          );
+          _bluetoothConnection = connection;
+          _selectedBluetoothDevice = device;
+          _bluetoothStatus = 'Connected to ${_displayBluetoothName(device)}';
+          _showSnackBar('Connected to ${_displayBluetoothName(device)}');
+          _closeBluetoothPairingSheet();
+          return;
+        }
+      }
+
+      final friendly = _friendlyBluetoothConnectError(
+        lastError ?? 'Bluetooth connection failed',
+      );
+      _bluetoothStatus = friendly;
+      _showSnackBar(friendly);
+    } catch (error) {
+      final friendly = _friendlyBluetoothConnectError(error);
+      _bluetoothStatus = friendly;
+      _showSnackBar(friendly);
+    } finally {
+      _isBluetoothConnecting = false;
+      _refreshBluetoothUi();
+    }
+  }
+
+  Future<String?> _waitForProvisioningResponse(
+    BluetoothConnection connection,
+  ) async {
+    final input = connection.input;
+    if (input == null) {
+      return null;
+    }
+
+    final completer = Completer<String?>();
+    final buffer = StringBuffer();
+    late final StreamSubscription<Uint8List> subscription;
+
+    subscription = input.listen(
+      (chunk) {
+        buffer.write(utf8.decode(chunk, allowMalformed: true));
+        if (buffer.toString().contains('\n')) {
+          final lines = buffer
+              .toString()
+              .split('\n')
+              .map((line) => line.trim())
+              .where((line) => line.isNotEmpty)
+              .toList();
+
+          if (!completer.isCompleted) {
+            completer.complete(lines.isEmpty ? null : lines.last);
+          }
+          subscription.cancel();
+        }
+      },
+      onError: (_) {
+        if (!completer.isCompleted) {
+          completer.complete(null);
+        }
+      },
+      onDone: () {
+        if (!completer.isCompleted) {
+          completer.complete(null);
+        }
+      },
+      cancelOnError: true,
+    );
+
+    try {
+      return await completer.future.timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      await subscription.cancel();
+      return null;
+    }
+  }
+
+  Future<void> _sendWifiCredentials() async {
+    final ssid = _wifiNameController.text.trim();
+    final password = _wifiPasswordController.text;
+
+    if (ssid.isEmpty || password.isEmpty) {
+      _showSnackBar('Wi-Fi name and password are required.');
+      return;
+    }
+
+    final connection = _bluetoothConnection;
+    if (connection == null || !connection.isConnected) {
+      _showSnackBar('Connect to a Bluetooth device first.');
+      return;
+    }
+
+    _isProvisioningWifi = true;
+    _bluetoothStatus = 'Sending Wi-Fi credentials...';
+    _refreshBluetoothUi();
+
+    try {
+      final payload = jsonEncode({
+        'type': 'wifi_config',
+        'ssid': ssid,
+        'password': password,
+      });
+
+      connection.output.add(Uint8List.fromList(utf8.encode('$payload\n')));
+      await connection.output.allSent;
+
+      final response = await _waitForProvisioningResponse(connection);
+      if (response != null) {
+        _bluetoothStatus = 'Device response: $response';
+
+        final serialMatch = RegExp(
+          r'SERIAL:([A-Za-z0-9_-]+)',
+        ).firstMatch(response);
+        if (serialMatch != null && _machineIdController.text.trim().isEmpty) {
+          _machineIdController.text = serialMatch.group(1) ?? '';
+        }
+
+        _showSnackBar('Wi-Fi credentials sent successfully.');
+      } else {
+        _bluetoothStatus =
+            'Wi-Fi credentials sent. Waiting for device Wi-Fi confirmation.';
+        _showSnackBar(
+          'Credentials sent. Wait for the machine to connect to Wi-Fi.',
+        );
+      }
+    } catch (error) {
+      _bluetoothStatus = 'Failed to send Wi-Fi credentials: $error';
+      _showSnackBar('Failed to send Wi-Fi credentials.');
+    } finally {
+      _isProvisioningWifi = false;
+      _refreshBluetoothUi();
+    }
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showScanner() {
@@ -247,6 +920,9 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
 
   @override
   void dispose() {
+    _discoverySubscription?.cancel();
+    _bluetoothConnection?.dispose();
+    _pairingSheetSetState = null;
     _machineNameController.dispose();
     _machineIdController.dispose();
     _wifiNameController.dispose();
@@ -321,7 +997,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                 context: context,
                 title: 'Pair via Bluetooth',
                 subtitle:
-                    'Automatically detect nearby NutriBin devices. No Wi-Fi required.',
+                    'Find your NutriBin, connect, then send your phone Wi-Fi credentials.',
                 icon: Icons.bluetooth_rounded,
                 cardColor: cardColor,
                 textColor: textColor,
@@ -413,6 +1089,66 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                       primaryColor: primaryColor,
                       cardColor: isDarkMode ? Colors.black12 : Colors.grey[50]!,
                       textColor: textColor,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildTextField(
+                      controller: _wifiNameController,
+                      label: 'Wi-Fi Name (SSID)',
+                      hint: 'e.g. Home_Wifi_2.4G',
+                      icon: Icons.wifi_rounded,
+                      isDarkMode: isDarkMode,
+                      primaryColor: primaryColor,
+                      cardColor: isDarkMode ? Colors.black12 : Colors.grey[50]!,
+                      textColor: textColor,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildTextField(
+                      controller: _wifiPasswordController,
+                      label: 'Wi-Fi Password',
+                      hint: 'Enter Wi-Fi password',
+                      icon: Icons.lock_rounded,
+                      isDarkMode: isDarkMode,
+                      primaryColor: primaryColor,
+                      cardColor: isDarkMode ? Colors.black12 : Colors.grey[50]!,
+                      textColor: textColor,
+                      isObscure: true,
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isProvisioningWifi
+                            ? null
+                            : _sendWifiCredentials,
+                        icon: _isProvisioningWifi
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.wifi_tethering_rounded),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor.withOpacity(0.9),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                        label: Text(
+                          _isProvisioningWifi
+                              ? 'Sending Wi-Fi Credentials...'
+                              : 'Send Wi-Fi to Connected Device',
+                          style: GoogleFonts.interTight(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12),
 
@@ -612,6 +1348,10 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
 
     final response = await MachineService.registerMachine(serialId: serialId);
 
+    if (!mounted) {
+      return;
+    }
+
     setState(() => _isLoading = false);
 
     if (response["ok"] == true) {
@@ -619,6 +1359,11 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
         SnackBar(content: Text(response["message"] ?? "Machine registered")),
       );
       await MachineService.fetchExistingMachines();
+
+      if (!mounted) {
+        return;
+      }
+
       _machineIdController.clear();
       _wifiNameController.clear();
       _wifiPasswordController.clear();
