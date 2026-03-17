@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.nutribin_application"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -35,6 +35,12 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            force("com.google.android.material:material:1.12.0")
         }
     }
 }
