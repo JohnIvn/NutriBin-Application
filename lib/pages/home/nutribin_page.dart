@@ -309,6 +309,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
       if (val == null || val == 'offline') return 0.0;
       return double.tryParse(val.toString()) ?? 0.0;
     }
+
     final temperature = parseVal(sensorData['temperature']);
     final humidity = parseVal(sensorData['humidity']);
     final ph = parseVal(sensorData['ph']);
@@ -453,7 +454,7 @@ class _NutriBinPageState extends State<NutriBinPage> {
     String status,
   ) {
     final isMachineOffline = sensorData['is_active'] == false;
-    final displayValue = isMachineOffline ? '--' : value;
+    final displayValue = isMachineOffline ? '0.0' : value;
     final displayStatus = isMachineOffline ? 'Offline' : status;
     final displayColor = isMachineOffline ? Colors.grey : color;
 
@@ -713,7 +714,9 @@ class _NutriBinPageState extends State<NutriBinPage> {
               ],
             ),
             Text(
-              isMachineOffline ? '--' : '${value.toStringAsFixed(1)} $unit',
+              isMachineOffline
+                  ? '0.0 $unit'
+                  : '${value.toStringAsFixed(1)} $unit',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -750,15 +753,19 @@ class _NutriBinPageState extends State<NutriBinPage> {
         : Colors.black.withOpacity(0.1);
 
     // Parse weight data
-    final weight =
-        double.tryParse(sensorData['weight_kg']?.toString() ?? '0') ?? 0;
+    final isMachineOffline = sensorData['is_active'] == false;
+    final weightRaw = isMachineOffline ? '0' : sensorData['weight_kg'];
+    final weight = double.tryParse(weightRaw?.toString() ?? '0') ?? 0;
     final totalCapacity = 10.0; // kg
     final currentLoad = weight;
-    final availableSpace = totalCapacity - currentLoad;
+    final availableSpace = (totalCapacity - currentLoad).clamp(
+      0.0,
+      totalCapacity,
+    );
     final fillPercentage = (currentLoad / totalCapacity).clamp(0.0, 1.0);
 
     // Calculate estimated days until full (assuming 2.5kg per day)
-    final daysUntilFull = availableSpace > 0
+    final daysUntilFull = (availableSpace > 0 && !isMachineOffline)
         ? (availableSpace / 2.5).toStringAsFixed(1)
         : '0.0';
 
@@ -961,12 +968,12 @@ class _NutriBinPageState extends State<NutriBinPage> {
     final isMachineOffline = sensorData['is_active'] == false;
     final bool hasModuleFaults = faultedModules.isNotEmpty;
 
-    // If machine is offline, we only show the faults banner if there are 
-    // actually broken parts in the latest data, but we don't count everything 
+    // If machine is offline, we only show the faults banner if there are
+    // actually broken parts in the latest data, but we don't count everything
     // as "requiring attention" just because it's offline.
     // The previous logic already checks `value != true` which covers 'offline' strings
     // and false booleans.
-    
+
     final displayedModules = faultedModules.take(5).toList();
     final extraCount = faultedModules.length - displayedModules.length;
 
@@ -1042,11 +1049,17 @@ class _NutriBinPageState extends State<NutriBinPage> {
                           ),
                         ),
                         Text(
-                          isMachineOffline ? 'Machine is currently OFFLINE' : 'Real-time functionality report',
+                          isMachineOffline
+                              ? 'Machine is currently OFFLINE'
+                              : 'Real-time functionality report',
                           style: TextStyle(
-                            color: isMachineOffline ? Colors.red.withOpacity(0.8) : _secondaryText.withOpacity(0.7),
+                            color: isMachineOffline
+                                ? Colors.red.withOpacity(0.8)
+                                : _secondaryText.withOpacity(0.7),
                             fontSize: 14,
-                            fontWeight: isMachineOffline ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isMachineOffline
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                         ),
                       ],

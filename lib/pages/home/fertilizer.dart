@@ -451,12 +451,12 @@ class _FertilizerPageState extends State<FertilizerPage> {
         : Colors.blue.shade900;
 
     // Parse sensor values
+    final isMachineOffline = sensorData['is_active'] == false;
     double parseNPK(dynamic val) {
-      if (val == null || val == 'offline') return 0.0;
+      if (isMachineOffline || val == null || val == 'offline') return 0.0;
       return double.tryParse(val.toString()) ?? 0.0;
     }
 
-    final isMachineOffline = sensorData['is_active'] == false;
     final nitrogen = parseNPK(sensorData['nitrogen']);
     final phosphorus = parseNPK(sensorData['phosphorus']);
     final potassium = parseNPK(sensorData['potassium']);
