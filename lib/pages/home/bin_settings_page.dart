@@ -23,6 +23,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
   String _serialNumber = "";
   String _firmware = "Loading...";
   String _model = "Loading...";
+  String _wifiSsid = "Not Connected";
+  String _ipAddress = "0.0.0.0";
   bool _isUpdateAvailable = false;
   bool _isOnline = false;
   String? _latestVersion;
@@ -57,8 +59,10 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
             _isOnline = response['isOnline'] ?? false;
             _updateStatus = response['updateStatus'] ?? "none";
             _updateProgress =
-                double.tryParse(response['updateProgress']?.toString() ?? '0') ??
-                    0.0;
+                double.tryParse(
+                  response['updateProgress']?.toString() ?? '0',
+                ) ??
+                0.0;
             _isUpdateAvailable = response['updateAvailable'] == true;
             _latestVersion = response['latestVersion'];
             _targetVersion = response['targetFirmwareVersion'];
@@ -78,8 +82,9 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
       if (response['ok'] == true && response['versions'] != null) {
         if (mounted) {
           setState(() {
-            _availableFirmwareVersions =
-                List<Map<String, dynamic>>.from(response['versions'] ?? []);
+            _availableFirmwareVersions = List<Map<String, dynamic>>.from(
+              response['versions'] ?? [],
+            );
           });
         }
       }
@@ -96,7 +101,9 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
     if (!_isOnline) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Offline device - Cannot downgrade. Please check connection.'),
+          content: Text(
+            'Offline device - Cannot downgrade. Please check connection.',
+          ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 2),
@@ -126,7 +133,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final theme = Theme.of(context);
           final primaryColor = theme.primaryColor;
-          
+
           return AlertDialog(
             backgroundColor: theme.scaffoldBackgroundColor,
             surfaceTintColor: Colors.transparent,
@@ -186,7 +193,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: _availableFirmwareVersions.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 10),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final version = _availableFirmwareVersions[index];
                         final versionString = version['version'] ?? 'Unknown';
@@ -196,7 +204,9 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                         return InkWell(
                           onTap: isCurrentVersion
                               ? null
-                              : () => setDialogState(() => selectedVersion = versionString),
+                              : () => setDialogState(
+                                  () => selectedVersion = versionString,
+                                ),
                           borderRadius: BorderRadius.circular(16),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
@@ -204,16 +214,18 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? Colors.orange.withOpacity(0.1)
-                                  : (isCurrentVersion 
-                                      ? theme.cardColor.withOpacity(0.5) 
-                                      : theme.cardColor),
+                                  : (isCurrentVersion
+                                        ? theme.cardColor.withOpacity(0.5)
+                                        : theme.cardColor),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isSelected
                                     ? Colors.orange
                                     : (isCurrentVersion
-                                        ? Colors.transparent
-                                        : theme.dividerColor.withOpacity(0.1)),
+                                          ? Colors.transparent
+                                          : theme.dividerColor.withOpacity(
+                                              0.1,
+                                            )),
                                 width: isSelected ? 2 : 1,
                               ),
                             ),
@@ -221,7 +233,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
@@ -231,20 +244,25 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                                               fontWeight: FontWeight.w700,
                                               fontSize: 15,
                                               color: isCurrentVersion
-                                                  ? theme.colorScheme.onSurface.withOpacity(0.3)
+                                                  ? theme.colorScheme.onSurface
+                                                        .withOpacity(0.3)
                                                   : theme.colorScheme.onSurface,
                                             ),
                                           ),
                                           if (isCurrentVersion) ...[
                                             const SizedBox(width: 8),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 2,
-                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: Colors.green.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(6),
+                                                color: Colors.green.withOpacity(
+                                                  0.1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
                                               ),
                                               child: Text(
                                                 'CURRENT',
@@ -265,7 +283,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                                             : 'Unknown release date',
                                         style: GoogleFonts.inter(
                                           fontSize: 11,
-                                          color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                          color: theme.colorScheme.onSurface
+                                              .withOpacity(0.4),
                                         ),
                                       ),
                                     ],
@@ -278,7 +297,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                                         : Icons.radio_button_off_rounded,
                                     color: isSelected
                                         ? Colors.orange
-                                        : theme.colorScheme.onSurface.withOpacity(0.2),
+                                        : theme.colorScheme.onSurface
+                                              .withOpacity(0.2),
                                     size: 22,
                                   ),
                               ],
@@ -316,7 +336,9 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: selectedVersion != null && selectedVersion != _firmware
+                      onPressed:
+                          selectedVersion != null &&
+                              selectedVersion != _firmware
                           ? () {
                               Navigator.pop(context);
                               _proceedWithDowngrade(selectedVersion!);
@@ -330,14 +352,15 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        disabledBackgroundColor: theme.dividerColor.withOpacity(0.1),
-                        disabledForegroundColor: theme.colorScheme.onSurface.withOpacity(0.3),
+                        disabledBackgroundColor: theme.dividerColor.withOpacity(
+                          0.1,
+                        ),
+                        disabledForegroundColor: theme.colorScheme.onSurface
+                            .withOpacity(0.3),
                       ),
                       child: Text(
                         'Restore',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -447,7 +470,9 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
     if (!_isOnline) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Offline device - Cannot update. Please check connection.'),
+          content: Text(
+            'Offline device - Cannot update. Please check connection.',
+          ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 2),
@@ -557,7 +582,10 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
             canPop: false,
             child: AlertDialog(
               content: StreamBuilder<double>(
-                stream: Stream.periodic(const Duration(milliseconds: 500), (_) => _updateProgress),
+                stream: Stream.periodic(
+                  const Duration(milliseconds: 500),
+                  (_) => _updateProgress,
+                ),
                 builder: (context, snapshot) {
                   final progress = _updateProgress;
                   return Column(
@@ -605,7 +633,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                       ),
                     ],
                   );
-                }
+                },
               ),
             ),
           );
@@ -633,9 +661,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
 
     // After 10 seconds, complete the update on backend
     if (mounted) {
-      await MachineService.completeUpdate(
-        machineId: widget.machineId,
-      );
+      await MachineService.completeUpdate(machineId: widget.machineId);
 
       setState(() {
         _updateStatus = 'success';
@@ -671,6 +697,13 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                 response['data']['serial_number'] ?? widget.machineId;
             _firmware = response['data']['firmware_version'] ?? "Unknown";
             _model = response['data']['model'] ?? "NutriBin v1";
+            _isOnline = response['data']['is_active'] ?? false;
+            _wifiSsid = _isOnline
+                ? (response['data']['wifi_ssid'] ?? "Not Connected")
+                : "Offline";
+            _ipAddress = _isOnline
+                ? (response['data']['ip_address'] ?? "0.0.0.0")
+                : "Offline";
           });
         }
       }
@@ -1104,23 +1137,29 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                         _buildSectionHeader('Hardware & Updates'),
                         _buildModernTile(
                           title: 'Firmware Update',
-                          subtitle: !_isOnline && (_isUpdateAvailable || _updateStatus == "failed" || _updateStatus == "interrupted" || _updateStatus == "pending")
+                          subtitle:
+                              !_isOnline &&
+                                  (_isUpdateAvailable ||
+                                      _updateStatus == "failed" ||
+                                      _updateStatus == "interrupted" ||
+                                      _updateStatus == "pending")
                               ? 'Offline device - Cannot update'
                               : (_updateStatus == "failed"
-                                  ? 'Update failed at ${_updateProgress.toInt()}%'
-                                  : (_updateStatus == "interrupted"
-                                      ? 'Update interrupted at ${_updateProgress.toInt()}%'
-                                      : (_updateStatus == "pending"
-                                          ? 'Update in progress: ${_updateProgress.toInt()}%'
-                                          : (_isUpdateAvailable
-                                              ? 'New version $_latestVersion available'
-                                              : 'Your firmware is up to date')))),
+                                    ? 'Update failed at ${_updateProgress.toInt()}%'
+                                    : (_updateStatus == "interrupted"
+                                          ? 'Update interrupted at ${_updateProgress.toInt()}%'
+                                          : (_updateStatus == "pending"
+                                                ? 'Update in progress: ${_updateProgress.toInt()}%'
+                                                : (_isUpdateAvailable
+                                                      ? 'New version $_latestVersion available'
+                                                      : 'Your firmware is up to date')))),
                           icon: Icons.system_update_rounded,
-                          onTap: (_isUpdateAvailable ||
-                              _updateStatus == "failed" ||
-                              _updateStatus == "interrupted") && 
-                              _updateStatus != "pending" && 
-                              _isOnline
+                          onTap:
+                              (_isUpdateAvailable ||
+                                      _updateStatus == "failed" ||
+                                      _updateStatus == "interrupted") &&
+                                  _updateStatus != "pending" &&
+                                  _isOnline
                               ? _showUpdateDialog
                               : null,
                           trailing: _updateStatus == "failed"
@@ -1184,8 +1223,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                           subtitle: _updateStatus == "pending"
                               ? 'Update in progress: ${_updateProgress.toInt()}%'
                               : (!_isOnline
-                                  ? 'Offline device - Cannot downgrade'
-                                  : 'Select a previous firmware version'),
+                                    ? 'Offline device - Cannot downgrade'
+                                    : 'Select a previous firmware version'),
                           icon: Icons.download_for_offline_rounded,
                           onTap: _isOnline && _updateStatus != "pending"
                               ? _showDowngradeDialog
@@ -1287,6 +1326,18 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                                 'Model',
                                 _model,
                                 Icons.category_rounded,
+                              ),
+                              const Divider(height: 24),
+                              _buildInfoRow(
+                                'Wi-Fi Name',
+                                _wifiSsid,
+                                Icons.wifi_rounded,
+                              ),
+                              const Divider(height: 24),
+                              _buildInfoRow(
+                                'IP Address',
+                                _ipAddress,
+                                Icons.lan_rounded,
                               ),
                             ],
                           ),

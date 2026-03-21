@@ -6,6 +6,7 @@ import FlutterMacOS
 import Foundation
 
 import file_selector_macos
+import flutter_blue_plus_darwin
 import gal
 import geolocator_apple
 import google_sign_in_ios
@@ -18,6 +19,7 @@ import url_launcher_macos
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FileSelectorPlugin.register(with: registry.registrar(forPlugin: "FileSelectorPlugin"))
+  FlutterBluePlusPlugin.register(with: registry.registrar(forPlugin: "FlutterBluePlusPlugin"))
   GalPlugin.register(with: registry.registrar(forPlugin: "GalPlugin"))
   GeolocatorPlugin.register(with: registry.registrar(forPlugin: "GeolocatorPlugin"))
   FLTGoogleSignInPlugin.register(with: registry.registrar(forPlugin: "FLTGoogleSignInPlugin"))
