@@ -28,6 +28,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
   bool _isBluetoothScanning = false;
   bool _isBluetoothConnecting = false;
   bool _isProvisioningWifi = false;
+  bool _isWifiPasswordObscured = true;
   List<ScanResult> _scanResults = [];
   BluetoothDevice? _selectedBluetoothDevice;
   BluetoothCharacteristic? _writeCharacteristic;
@@ -284,7 +285,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                                       label: 'Wi-Fi Password',
                                       hint: 'Enter Wi-Fi password',
                                       icon: Icons.lock_rounded,
-                                      isObscure: true,
+                                      isObscure: _isWifiPasswordObscured,
                                       isDarkMode:
                                           Theme.of(context).brightness ==
                                           Brightness.dark,
@@ -295,6 +296,24 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                                           ? Colors.black12
                                           : Colors.grey[100]!,
                                       textColor: textColor,
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _isWifiPasswordObscured
+                                              ? Icons.visibility_off_rounded
+                                              : Icons.visibility_rounded,
+                                          color:
+                                              Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Colors.white70
+                                              : primaryColor.withOpacity(0.7),
+                                        ),
+                                        onPressed: () {
+                                          _pairingSheetSetState?.call(() {
+                                            _isWifiPasswordObscured =
+                                                !_isWifiPasswordObscured;
+                                          });
+                                        },
+                                      ),
                                     ),
                                     const SizedBox(height: 12),
                                     SizedBox(
@@ -686,7 +705,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
           print('[DEBUG] ✓ Enabled notifications');
         }
 
-        _closeBluetoothPairingSheet();
+        // We do NOT close the sheet here, we let the user enter Wi-Fi credentials
       } else {
         await device.disconnect();
         throw Exception('Required BLE characteristics not found.');
@@ -731,9 +750,15 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
 
       final value = utf8.encode('$payload\n');
 
-      // Try withResponse first as it is more standard for GATT writes.
-      // If it fails with GATT_UNLIKELY, we will know for sure if the server is rejecting it.
-      await char.write(value, withoutResponse: false);
+      try {
+        // Try withResponse first as it is more standard for GATT writes.
+        // The server might not respond properly but still receive the payload.
+        await char.write(value, withoutResponse: false);
+      } catch (e) {
+        print(
+          '[DEBUG] BLE write threw an error, but payload might have been received. $e',
+        );
+      }
 
       _bluetoothStatus = 'Wi-Fi credentials sent. Closing...';
       _refreshBluetoothUi();
@@ -1022,7 +1047,22 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                       primaryColor: primaryColor,
                       cardColor: isDarkMode ? Colors.black12 : Colors.grey[50]!,
                       textColor: textColor,
-                      isObscure: true,
+                      isObscure: _isWifiPasswordObscured,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isWifiPasswordObscured
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : primaryColor.withOpacity(0.7),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isWifiPasswordObscured = !_isWifiPasswordObscured;
+                          });
+                        },
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -1195,6 +1235,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
     required Color cardColor, // Background color for input
     required Color textColor,
     bool isObscure = false,
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1222,6 +1263,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
                   ? Colors.white70
                   : primaryColor.withOpacity(0.7),
             ),
+            suffixIcon: suffixIcon,
             filled: true,
             fillColor: cardColor,
             contentPadding: const EdgeInsets.symmetric(
