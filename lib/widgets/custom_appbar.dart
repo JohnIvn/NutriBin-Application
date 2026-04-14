@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/services/emergency_service.dart';
 
@@ -20,6 +21,29 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.machineId = '',
     this.onEmergencyPressed,
   });
+
+  Future<void> _triggerEmergency(BuildContext context) async {
+    if (machineId.isEmpty) return;
+
+    final result = await EmergencyService.triggerEmergency(
+      machineId: machineId,
+    );
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Emergency triggered'),
+          backgroundColor: result['ok'] == true ? Colors.green : Colors.red,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+
+    if (onEmergencyPressed != null) {
+      onEmergencyPressed!();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,69 +203,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: () {
                   showDialog(
                     context: context,
+                    barrierDismissible: false,
                     builder: (BuildContext context) {
-                      final isDark =
-                          Theme.of(context).brightness == Brightness.dark;
-                      return AlertDialog(
-                        title: const Row(
-                          children: [
-                            Icon(Icons.warning, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Emergency Alert'),
-                          ],
-                        ),
-                        content: const Text(
-                          'Are you sure you want to trigger an emergency alert?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: isDark
-                                  ? Colors.white
-                                  : Colors.blueGrey,
-                            ),
-                            child: const Text('Dismiss'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              Navigator.of(context).pop();
-
-                              // Trigger emergency API call
-                              if (machineId.isNotEmpty) {
-                                final result =
-                                    await EmergencyService.triggerEmergency(
-                                      machineId: machineId,
-                                    );
-
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        result['message'] ??
-                                            'Emergency triggered',
-                                      ),
-                                      backgroundColor: result['ok'] == true
-                                          ? Colors.green
-                                          : Colors.red,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              }
-
-                              if (onEmergencyPressed != null) {
-                                onEmergencyPressed!();
-                              }
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
-                            ),
-                            child: const Text('Confirm'),
-                          ),
-                        ],
+                      return _EmergencyCountdownDialog(
+                        machineId: machineId,
+                        onEmergencyTriggered: () => _triggerEmergency(context),
                       );
                     },
                   );
@@ -259,4 +225,146 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
+}
+
+class _EmergencyCountdownDialog extends StatefulWidget {
+  final String machineId;
+  final VoidCallback onEmergencyTriggered;
+
+  const _EmergencyCountdownDialog({
+    required this.machineId,
+    required this.onEmergencyTriggered,
+  });
+
+  @override
+  State<_EmergencyCountdownDialog> createState() =>
+      _EmergencyCountdownDialogState();
+}
+
+class _EmergencyCountdownDialogState extends State<_EmergencyCountdownDialog> {
+  late int countdown;
+  Timer? countdownTimer;
+  bool isCancelled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    countdown = 5;
+    startCountdown();
+  }
+
+  void startCountdown() {
+    countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (isCancelled) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        countdown--;
+      });
+
+      if (countdown < 0) {
+        timer.cancel();
+        if (mounted) {
+          Navigator.of(context).pop();
+          widget.onEmergencyTriggered();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return WillPopScope(
+      onWillPop: () async {
+        isCancelled = true;
+        countdownTimer?.cancel();
+        return true;
+      },
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+        title: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.warning_rounded, color: Colors.red, size: 32),
+            SizedBox(width: 12),
+            Text('Emergency Alert'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 20),
+            Text(
+              'Emergency will be triggered in',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: isDark ? Colors.grey[300] : Colors.grey[700],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.red, width: 3),
+              ),
+              child: Center(
+                child: Text(
+                  '$countdown',
+                  style: GoogleFonts.interTight(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.red,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Click Cancel to stop',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () {
+                isCancelled = true;
+                countdownTimer?.cancel();
+                Navigator.of(context).pop();
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                foregroundColor: isDark ? Colors.white : Colors.blueGrey,
+              ),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
