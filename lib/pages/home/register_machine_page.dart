@@ -498,6 +498,7 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
 
     try {
       await FlutterBluePlus.startScan(
+        withServices: [Guid('4fafc201-1fb5-459e-8fcc-c5c9c331914b')],
         timeout: const Duration(seconds: 15),
         androidUsesFineLocation: true,
       );
@@ -545,6 +546,18 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
 
     if (message.contains('permission')) {
       return 'Bluetooth permission error. Re-grant permissions in settings.';
+    }
+
+    if (message.contains('bond') ||
+        message.contains('pairing') ||
+        message.contains('authentication')) {
+      return 'Pairing failed. Check the pairing dialog on your device and try again.';
+    }
+
+    if (message.contains('gatt') ||
+        message.contains('service') ||
+        message.contains('characteristic')) {
+      return 'Device does not have required BLE services. Ensure device is in pairing mode.';
     }
 
     return 'BLE connection failed. Please retry.';
@@ -603,11 +616,21 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
     await _stopBluetoothDiscovery();
 
     try {
-      await device.connect(timeout: const Duration(seconds: 10));
+      print('[DEBUG] === Starting BLE Connection ===');
+      print('[DEBUG] Device: ${device.remoteId} (${device.platformName})');
+
+      // Step 1: Connect to device
+      _bluetoothStatus = 'Connecting to ${_displayBluetoothName(device)}...';
+      _refreshBluetoothUi();
+      print('[DEBUG] Calling device.connect() with 15s timeout...');
+      await device.connect(timeout: const Duration(seconds: 15));
+      print('[DEBUG] ✓ Connected to device: ${device.remoteId}');
 
       _connectionSubscription?.cancel();
       _connectionSubscription = device.connectionState.listen((state) {
+        print('[DEBUG] Connection state changed: $state');
         if (state == BluetoothConnectionState.disconnected) {
+          print('[DEBUG] Device disconnected!');
           _selectedBluetoothDevice = null;
           _writeCharacteristic = null;
           _notifyCharacteristic = null;
@@ -616,16 +639,38 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
         }
       });
 
+      // Step 3: Discover services
+      _bluetoothStatus =
+          'Discovering services on ${_displayBluetoothName(device)}...';
+      _refreshBluetoothUi();
+      print('[DEBUG] Starting service discovery...');
+
       List<BluetoothService> services = await device.discoverServices();
+      print('[DEBUG] ✓ Discovered ${services.length} services');
+      if (services.isEmpty) {
+        throw Exception('No GATT services found on device.');
+      }
+
+      // Step 4: Find required characteristics
       for (var service in services) {
-        for (var characteristic in service.characteristics) {
-          if (characteristic.properties.write ||
-              characteristic.properties.writeWithoutResponse) {
-            _writeCharacteristic = characteristic;
-          }
-          if (characteristic.properties.notify ||
-              characteristic.properties.indicate) {
-            _notifyCharacteristic = characteristic;
+        print('[DEBUG] Service: ${service.uuid}');
+        if (service.uuid.toString() == '4fafc201-1fb5-459e-8fcc-c5c9c331914b') {
+          for (var characteristic in service.characteristics) {
+            print(
+              '[DEBUG]   └─ Char: ${characteristic.uuid}, Write: ${characteristic.properties.write}, WriteNoResp: ${characteristic.properties.writeWithoutResponse}',
+            );
+            if (characteristic.uuid.toString() ==
+                'beb5483e-36e1-4688-b7f5-ea07361b26a8') {
+              _writeCharacteristic = characteristic;
+              print(
+                '[DEBUG]   ✓ Found NutriBin WRITE characteristic: ${characteristic.uuid}',
+              );
+            }
+            if (characteristic.properties.notify ||
+                characteristic.properties.indicate) {
+              _notifyCharacteristic =
+                  characteristic; // Optional feature for future use
+            }
           }
         }
       }
@@ -634,9 +679,11 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
         _selectedBluetoothDevice = device;
         _bluetoothStatus = 'Connected to ${_displayBluetoothName(device)}';
         _showSnackBar('Connected to ${_displayBluetoothName(device)}');
+        print('[DEBUG] ✓ Successfully connected and ready for provisioning');
 
         if (_notifyCharacteristic != null) {
           await _notifyCharacteristic!.setNotifyValue(true);
+          print('[DEBUG] ✓ Enabled notifications');
         }
 
         _closeBluetoothPairingSheet();
@@ -644,7 +691,9 @@ class _RegisterMachinePageState extends State<RegisterMachinePage> {
         await device.disconnect();
         throw Exception('Required BLE characteristics not found.');
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
+      print('[ERROR] ✗ Connection error: $error');
+      print('[ERROR] Stack trace:\n$stackTrace');
       final friendly = _friendlyBluetoothConnectError(error);
       _bluetoothStatus = friendly;
       _showSnackBar(friendly);
