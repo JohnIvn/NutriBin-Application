@@ -8,6 +8,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:nutribin_application/pages/home/register_machine_page.dart';
 import 'package:nutribin_application/services/machine_service.dart';
 import 'package:nutribin_application/services/announcement_service.dart';
+import 'package:nutribin_application/services/emergency_service.dart';
+import 'package:nutribin_application/services/emergency_service.dart';
 
 // Helper function to format date strings
 String _formatAnnouncementDate(String dateString) {
@@ -65,7 +67,9 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
   }
 
   void _startMachineRefresh() {
-    _machineRefreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _machineRefreshTimer = Timer.periodic(const Duration(milliseconds: 500), (
+      timer,
+    ) {
       if (mounted && !isLoading) {
         fetchMachineIds();
       }
@@ -742,10 +746,21 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
     required int index,
     required bool isDarkMode,
   }) {
+    // Check if machine has emergency status
+    bool isEmergency = false;
+    final machineData = existingMachines.firstWhere(
+      (m) => m['machine_id'] == machineId,
+      orElse: () => {},
+    );
+    if (machineData.isNotEmpty) {
+      isEmergency = machineData['is_emergency'] ?? false;
+    }
     return Container(
           decoration: BoxDecoration(
-            color: cardColor,
-            border: isDarkMode
+            color: isEmergency ? Colors.red.withOpacity(0.1) : cardColor,
+            border: isEmergency
+                ? Border.all(color: Colors.red.withOpacity(0.5))
+                : isDarkMode
                 ? Border.all(color: Colors.white.withOpacity(0.05))
                 : null,
             boxShadow: isDarkMode
@@ -772,6 +787,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                         : serialNumber,
                     "machineId": machineId,
                     "isActive": isActive,
+                    "isEmergency": isEmergency,
                   },
                 );
               },
@@ -799,15 +815,19 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: highlightColor.withOpacity(
-                              isDarkMode ? 0.2 : 0.1,
-                            ),
+                            color: isEmergency
+                                ? Colors.red.withOpacity(
+                                    isDarkMode ? 0.3 : 0.15,
+                                  )
+                                : highlightColor.withOpacity(
+                                    isDarkMode ? 0.2 : 0.1,
+                                  ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             Icons.restore_from_trash,
                             size: 24,
-                            color: highlightColor,
+                            color: isEmergency ? Colors.red : highlightColor,
                           ),
                         ),
                         const SizedBox(width: 16),

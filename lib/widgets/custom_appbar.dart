@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/services/emergency_service.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final String? machineNameOverride;
   final bool? isOnline;
+  final bool isEmergency;
+  final String machineId;
   final VoidCallback? onEmergencyPressed;
 
   const CustomAppBar({
@@ -13,6 +16,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBackButton = true,
     this.machineNameOverride,
     this.isOnline,
+    this.isEmergency = false,
+    this.machineId = '',
     this.onEmergencyPressed,
   });
 
@@ -24,9 +29,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // --- COLOR LOGIC ---
-    // Light Mode: Green Background
-    // Dark Mode: Dark Background
-    final appBarBg = isDarkMode ? backgroundColor : primaryColor;
+    // Light Mode: Green Background normally, Red if Emergency
+    // Dark Mode: Dark Background normally, Red if Emergency
+    final appBarBg = isEmergency
+        ? Colors.red
+        : (isDarkMode ? backgroundColor : primaryColor);
     const contentColor = Colors.white;
 
     return AppBar(
@@ -199,8 +206,32 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                             child: const Text('Dismiss'),
                           ),
                           TextButton(
-                            onPressed: () {
+                            onPressed: () async {
                               Navigator.of(context).pop();
+
+                              // Trigger emergency API call
+                              if (machineId.isNotEmpty) {
+                                final result =
+                                    await EmergencyService.triggerEmergency(
+                                      machineId: machineId,
+                                    );
+
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        result['message'] ??
+                                            'Emergency triggered',
+                                      ),
+                                      backgroundColor: result['ok'] == true
+                                          ? Colors.green
+                                          : Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              }
+
                               if (onEmergencyPressed != null) {
                                 onEmergencyPressed!();
                               }

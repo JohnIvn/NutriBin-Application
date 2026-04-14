@@ -9,6 +9,7 @@ class Machine {
   final String description;
   final MachineStatus status;
   final DateTime registeredAt;
+  final bool isEmergency;
 
   Machine({
     required this.id,
@@ -18,6 +19,7 @@ class Machine {
     required this.description,
     required this.status,
     required this.registeredAt,
+    this.isEmergency = false,
   });
 }
 

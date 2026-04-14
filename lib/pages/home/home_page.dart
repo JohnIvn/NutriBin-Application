@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:nutribin_application/pages/home/fertilizer.dart';
 import 'package:nutribin_application/pages/home/notification_page.dart';
 import 'package:nutribin_application/pages/home/nutribin_page.dart';
 import 'package:nutribin_application/pages/home/bin_settings_page.dart';
 import 'package:nutribin_application/widgets/custom_appbar.dart';
 import 'package:nutribin_application/widgets/custom_navbar.dart';
+import 'package:nutribin_application/services/machine_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,6 +23,8 @@ class _HomePageState extends State<HomePage> {
   String? _machineName;
   String? _machineId;
   bool? _isOnline;
+  bool _isEmergency = false;
+  Timer? _emergencyPollingTimer;
 
   List<Widget> get _pages => [
     FertilizerPage(machineId: _machineId ?? ''),
@@ -43,9 +47,48 @@ class _HomePageState extends State<HomePage> {
           _machineId = arguments["machineId"].toString();
           _isOnline =
               arguments["isActive"] == true || arguments["is_active"] == true;
+          _isEmergency = arguments["isEmergency"] == true;
         });
+        _startEmergencyPolling();
       }
     });
+  }
+
+  void _startEmergencyPolling() {
+    _emergencyPollingTimer = Timer.periodic(const Duration(milliseconds: 500), (
+      _,
+    ) {
+      _fetchEmergencyStatus();
+    });
+  }
+
+  Future<void> _fetchEmergencyStatus() async {
+    if (_machineId == null || _machineId!.isEmpty) return;
+
+    final response = await MachineService.fetchExistingMachines();
+
+    if (response['ok'] == true && response['data'] is List) {
+      final machines = response['data'] as List;
+      final currentMachine = machines.firstWhere(
+        (m) => m['machine_id'] == _machineId,
+        orElse: () => null,
+      );
+
+      if (currentMachine != null && mounted) {
+        final newEmergencyStatus = currentMachine['is_emergency'] ?? false;
+        if (newEmergencyStatus != _isEmergency) {
+          setState(() {
+            _isEmergency = newEmergencyStatus;
+          });
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _emergencyPollingTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _checkSession() async {
@@ -137,6 +180,8 @@ class _HomePageState extends State<HomePage> {
       appBar: CustomAppBar(
         machineNameOverride: _machineName,
         isOnline: _isOnline,
+        isEmergency: _isEmergency,
+        machineId: _machineId ?? '',
       ),
       body: _pages[_currentIndex],
       bottomNavigationBar: CustomNavBar(
