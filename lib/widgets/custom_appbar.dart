@@ -6,12 +6,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final String? machineNameOverride;
   final bool? isOnline;
+  final VoidCallback? onEmergencyPressed;
 
   const CustomAppBar({
     super.key,
     this.showBackButton = true,
     this.machineNameOverride,
     this.isOnline,
+    this.onEmergencyPressed,
   });
 
   @override
@@ -30,17 +32,29 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: appBarBg,
       automaticallyImplyLeading: false,
-      elevation: 0,
+      elevation: 2,
       scrolledUnderElevation: 0,
       toolbarHeight: kToolbarHeight,
 
       // Status Bar
       systemOverlayStyle: SystemUiOverlayStyle.light,
 
-      // Bottom Border
+      // Bottom Border with subtle shadow
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.0),
-        child: Container(color: Colors.transparent, height: 1.0),
+        child: Container(
+          height: 1.0,
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.08),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
       ),
 
       title: Row(
@@ -58,6 +72,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               },
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
+              tooltip: 'Back',
+              splashRadius: 24,
             )
           else
             const SizedBox(width: 8),
@@ -84,17 +100,23 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   if (isOnline != null) ...[
                     const SizedBox(width: 8),
                     Container(
-                      width: 8,
-                      height: 8,
+                      width: 10,
+                      height: 10,
                       decoration: BoxDecoration(
-                        color: isOnline! ? Colors.greenAccent : Colors.grey,
+                        color: isOnline!
+                            ? Colors.greenAccent
+                            : Colors.grey[400],
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isOnline! ? Colors.green : Colors.grey[500]!,
+                          width: 1,
+                        ),
                         boxShadow: isOnline!
                             ? [
                                 BoxShadow(
-                                  color: Colors.greenAccent.withOpacity(0.5),
-                                  blurRadius: 4,
-                                  spreadRadius: 1,
+                                  color: Colors.greenAccent.withOpacity(0.6),
+                                  blurRadius: 6,
+                                  spreadRadius: 1.5,
                                 ),
                               ]
                             : [],
@@ -112,15 +134,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   // Logo
                   Image.asset('assets/images/Logo (Img).png', height: 40),
 
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
 
                   // App name
                   Text(
                     'NutriBin',
                     style: GoogleFonts.interTight(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
                       color: contentColor,
+                      letterSpacing: -0.5,
                     ),
                   ),
                 ],
@@ -130,6 +153,76 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       centerTitle: false,
       titleSpacing: 16,
+
+      // Emergency Button
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 12.0),
+          child: Center(
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.emergency, color: Colors.red),
+                iconSize: 18,
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      final isDark =
+                          Theme.of(context).brightness == Brightness.dark;
+                      return AlertDialog(
+                        title: const Row(
+                          children: [
+                            Icon(Icons.warning, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Emergency Alert'),
+                          ],
+                        ),
+                        content: const Text(
+                          'Are you sure you want to trigger an emergency alert?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: isDark
+                                  ? Colors.white
+                                  : Colors.blueGrey,
+                            ),
+                            child: const Text('Dismiss'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              if (onEmergencyPressed != null) {
+                                onEmergencyPressed!();
+                              }
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                            ),
+                            child: const Text('Confirm'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Emergency Alert',
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
