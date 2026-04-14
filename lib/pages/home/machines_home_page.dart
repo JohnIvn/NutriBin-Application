@@ -1158,18 +1158,18 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isDarkMode
-                  ? const Color(0xFF3F6B4B) // Medium green for dark mode
+                  ? const Color(0xFF36513D) // Dark green for dark mode
                   : const Color(0xFF2C3E2D), // Dark green container
               border: Border(
                 left: BorderSide.none,
                 top: isDarkMode
-                    ? BorderSide(color: Colors.black.withOpacity(0.1))
+                    ? BorderSide(color: Colors.white.withOpacity(0.05))
                     : BorderSide.none,
                 right: isDarkMode
-                    ? BorderSide(color: Colors.black.withOpacity(0.1))
+                    ? BorderSide(color: Colors.white.withOpacity(0.05))
                     : BorderSide.none,
                 bottom: isDarkMode
-                    ? BorderSide(color: Colors.black.withOpacity(0.1))
+                    ? BorderSide(color: Colors.white.withOpacity(0.05))
                     : BorderSide.none,
               ),
               boxShadow: [],
@@ -1288,7 +1288,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Color(0xFF3A4D39),
+                          color: const Color(0xFF4A7856),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -1296,7 +1296,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: lightPrimaryBackground,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -1322,7 +1322,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: isDarkMode
-              ? const Color(0xFF3F6B4B) // Medium green for dark mode
+              ? const Color(0xFF36513D) // Dark green for dark mode
               : const Color(0xFF2C3E2D), // Dark green container
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
