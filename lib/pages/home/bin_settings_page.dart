@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nutribin_application/services/machine_service.dart';
+import 'package:nutribin_application/pages/home/change_wifi_page.dart';
 import 'package:gal/gal.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:dio/dio.dart';
@@ -1234,6 +1235,21 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                                   ),
                                 )
                               : const Icon(Icons.chevron_right_rounded),
+                        ),
+                        _buildModernTile(
+                          title: 'Change Wi-Fi Network',
+                          subtitle:
+                              'Connect your NutriBin to a new network via Bluetooth',
+                          icon: Icons.wifi_find_rounded,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ChangeWifiPage(),
+                              ),
+                            );
+                          },
+                          trailing: const Icon(Icons.chevron_right_rounded),
                         ),
                         _buildModernTile(
                           title: 'Restart Machine',
