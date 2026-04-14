@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nutribin_application/models/support_ticket.dart';
+import 'package:nutribin_application/pages/common/ticket_chat.dart';
+import 'package:nutribin_application/services/support_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContactWidget extends StatefulWidget {
@@ -20,16 +24,30 @@ class _ContactWidgetState extends State<ContactWidget>
   late List<Animation<double>> _fadeAnimations;
   late List<Animation<Offset>> _slideAnimations;
 
+  // Support ticket management
+  List<SupportTicket> _tickets = [];
+  bool _isLoadingTickets = false;
+  String? _customerId;
+  bool _showTicketForm = false;
+
+  // Form controllers
+  final TextEditingController _subjectController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  String _selectedPriority = 'medium';
+
   @override
   void initState() {
     super.initState();
-    // Initialize animation controller
+    _initializeAnimations();
+    _loadCustomerData();
+  }
+
+  void _initializeAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
-    // Create animations
     _fadeAnimations = List.generate(
       7,
       (index) => Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -62,9 +80,83 @@ class _ContactWidgetState extends State<ContactWidget>
     _animationController.forward();
   }
 
+  Future<void> _loadCustomerData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final customerId = prefs.getString('userId');
+
+    if (customerId != null) {
+      setState(() {
+        _customerId = customerId;
+      });
+      await _fetchTickets();
+    }
+  }
+
+  Future<void> _fetchTickets() async {
+    if (_customerId == null) return;
+
+    setState(() {
+      _isLoadingTickets = true;
+    });
+
+    final result = await SupportService.getTickets(customerId: _customerId!);
+
+    setState(() {
+      _isLoadingTickets = false;
+      if (result['ok'] == true) {
+        _tickets = result['data'] ?? [];
+      }
+    });
+  }
+
+  Future<void> _submitTicket() async {
+    if (_subjectController.text.isEmpty ||
+        _descriptionController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
+      return;
+    }
+
+    if (_customerId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User not logged in')));
+      return;
+    }
+
+    final result = await SupportService.createTicket(
+      customerId: _customerId!,
+      subject: _subjectController.text,
+      description: _descriptionController.text,
+      priority: _selectedPriority,
+    );
+
+    if (mounted) {
+      if (result['ok'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Support ticket created successfully')),
+        );
+        _subjectController.clear();
+        _descriptionController.clear();
+        setState(() {
+          _showTicketForm = false;
+          _selectedPriority = 'medium';
+        });
+        await _fetchTickets();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? 'Error creating ticket')),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
+    _subjectController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -79,6 +171,288 @@ class _ContactWidgetState extends State<ContactWidget>
       },
       child: child,
     );
+  }
+
+  Widget _buildTicketForm({
+    required Color cardColor,
+    required Color textColor,
+    required Color subTextColor,
+    required bool isDarkMode,
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: isDarkMode
+            ? Border.all(color: Colors.white.withOpacity(0.05))
+            : Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Create a New Ticket',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _subjectController,
+              decoration: InputDecoration(
+                labelText: 'Subject',
+                labelStyle: GoogleFonts.inter(color: subTextColor),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              style: GoogleFonts.inter(color: textColor),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _descriptionController,
+              decoration: InputDecoration(
+                labelText: 'Description',
+                labelStyle: GoogleFonts.inter(color: subTextColor),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              maxLines: 4,
+              style: GoogleFonts.inter(color: textColor),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _selectedPriority,
+              decoration: InputDecoration(
+                labelText: 'Priority',
+                labelStyle: GoogleFonts.inter(color: subTextColor),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              items: ['low', 'medium', 'high']
+                  .map(
+                    (priority) => DropdownMenuItem(
+                      value: priority,
+                      child: Text(
+                        priority.toUpperCase(),
+                        style: GoogleFonts.inter(color: textColor),
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedPriority = value;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _submitTicket,
+                    child: Text(
+                      'Submit Ticket',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        _showTicketForm = false;
+                      });
+                    },
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildTicketsList({
+    required Color cardColor,
+    required Color textColor,
+    required Color subTextColor,
+    required bool isDarkMode,
+  }) {
+    return _tickets.map((ticket) {
+      return Column(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TicketChatPage(ticket: ticket),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: isDarkMode
+                      ? Border.all(color: Colors.white.withOpacity(0.05))
+                      : Border.all(color: Colors.grey.withOpacity(0.2)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              ticket.subject,
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: textColor,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getPriorityColor(
+                                ticket.priority,
+                              ).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              ticket.priority.toUpperCase(),
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: _getPriorityColor(ticket.priority),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        ticket.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: subTextColor,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(
+                                ticket.status,
+                              ).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              ticket.status.toUpperCase(),
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: _getStatusColor(ticket.status),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'ID: ${ticket.id.substring(0, 8)}',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: subTextColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      );
+    }).toList();
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return Colors.red;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return Colors.blue;
+      case 'in_progress':
+        return Colors.orange;
+      case 'closed':
+        return Colors.green;
+      case 'resolved':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 
   @override
@@ -174,13 +548,17 @@ class _ContactWidgetState extends State<ContactWidget>
                         children: [
                           _buildOptionCard(
                             index: 0,
-                            icon: Icons.local_phone_rounded,
-                            label: 'Call Us',
+                            icon: Icons.add_circle_outline,
+                            label: 'Create Ticket',
                             cardColor: cardColor,
                             iconColor: highlightColor,
                             textColor: textColor,
                             isDarkMode: isDarkMode,
-                            onTap: () => _openFaqs(),
+                            onTap: () {
+                              setState(() {
+                                _showTicketForm = !_showTicketForm;
+                              });
+                            },
                           ),
                           const SizedBox(width: 12),
                           _buildOptionCard(
@@ -196,92 +574,123 @@ class _ContactWidgetState extends State<ContactWidget>
                           const SizedBox(width: 12),
                           _buildOptionCard(
                             index: 2,
-                            icon: Icons.search_rounded,
-                            label: 'Search FAQs',
+                            icon: Icons.refresh,
+                            label: 'My Tickets',
                             cardColor: cardColor,
                             iconColor: highlightColor,
                             textColor: textColor,
                             isDarkMode: isDarkMode,
-                            onTap: () => _openFaqs(),
+                            onTap: _fetchTickets,
                           ),
                         ],
                       ),
 
                       const SizedBox(height: 32),
 
-                      // FAQ Section Header
-                      Text(
-                        'Frequently Asked Questions',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // FAQ List
-                      _buildAnimatedContainer(
-                        index: 3,
-                        child: _buildFAQCard(
-                          question: 'What does the compost bin system do?',
-                          answer:
-                              'The compost bin system helps convert organic waste like food scraps and garden waste into nutrient-rich compost, reducing landfill waste and creating a natural fertilizer for plants.',
+                      // Ticket Form Section
+                      if (_showTicketForm)
+                        _buildTicketForm(
                           cardColor: cardColor,
                           textColor: textColor,
                           subTextColor: subTextColor,
                           isDarkMode: isDarkMode,
                         ),
-                      ),
 
-                      const SizedBox(height: 12),
-
-                      _buildAnimatedContainer(
-                        index: 4,
-                        child: _buildFAQCard(
-                          question:
-                              'What types of waste can be placed in the compost bin?',
-                          answer:
-                              'You can place fruit and vegetable scraps, coffee grounds, eggshells, garden clippings, and other biodegradable organic materials. Avoid meat, dairy, and oily foods as they can attract pests.',
-                          cardColor: cardColor,
-                          textColor: textColor,
-                          subTextColor: subTextColor,
-                          isDarkMode: isDarkMode,
+                      // My Support Tickets Section
+                      if (_tickets.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'My Support Tickets',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: textColor,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ..._buildTicketsList(
+                              cardColor: cardColor,
+                              textColor: textColor,
+                              subTextColor: subTextColor,
+                              isDarkMode: isDarkMode,
+                            ),
+                          ],
                         ),
-                      ),
 
-                      const SizedBox(height: 12),
-
-                      _buildAnimatedContainer(
-                        index: 5,
-                        child: _buildFAQCard(
-                          question:
-                              'How does the system monitor the composting process?',
-                          answer:
-                              'The system uses sensors to monitor temperature, moisture, and aeration levels to ensure optimal composting conditions, providing notifications if adjustments are needed.',
-                          cardColor: cardColor,
-                          textColor: textColor,
-                          subTextColor: subTextColor,
-                          isDarkMode: isDarkMode,
+                      // Frequently Asked Questions Section
+                      if (!_showTicketForm || _tickets.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 32),
+                            Text(
+                              'Frequently Asked Questions',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: textColor,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildAnimatedContainer(
+                              index: 3,
+                              child: _buildFAQCard(
+                                question:
+                                    'What does the compost bin system do?',
+                                answer:
+                                    'The compost bin system helps convert organic waste like food scraps and garden waste into nutrient-rich compost, reducing landfill waste and creating a natural fertilizer for plants.',
+                                cardColor: cardColor,
+                                textColor: textColor,
+                                subTextColor: subTextColor,
+                                isDarkMode: isDarkMode,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildAnimatedContainer(
+                              index: 4,
+                              child: _buildFAQCard(
+                                question:
+                                    'What types of waste can be placed in the compost bin?',
+                                answer:
+                                    'You can place fruit and vegetable scraps, coffee grounds, eggshells, garden clippings, and other biodegradable organic materials. Avoid meat, dairy, and oily foods as they can attract pests.',
+                                cardColor: cardColor,
+                                textColor: textColor,
+                                subTextColor: subTextColor,
+                                isDarkMode: isDarkMode,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildAnimatedContainer(
+                              index: 5,
+                              child: _buildFAQCard(
+                                question:
+                                    'How does the system monitor the composting process?',
+                                answer:
+                                    'The system uses sensors to monitor temperature, moisture, and aeration levels to ensure optimal composting conditions, providing notifications if adjustments are needed.',
+                                cardColor: cardColor,
+                                textColor: textColor,
+                                subTextColor: subTextColor,
+                                isDarkMode: isDarkMode,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildAnimatedContainer(
+                              index: 6,
+                              child: _buildFAQCard(
+                                question:
+                                    'Does the compost bin require regular maintenance?',
+                                answer:
+                                    'Yes, regular maintenance involves adding the right mix of green and brown materials, stirring or turning the compost, and checking sensor readings to maintain proper conditions for decomposition.',
+                                cardColor: cardColor,
+                                textColor: textColor,
+                                subTextColor: subTextColor,
+                                isDarkMode: isDarkMode,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      _buildAnimatedContainer(
-                        index: 6,
-                        child: _buildFAQCard(
-                          question:
-                              'Does the compost bin require regular maintenance?',
-                          answer:
-                              'Yes, regular maintenance involves adding the right mix of green and brown materials, stirring or turning the compost, and checking sensor readings to maintain proper conditions for decomposition.',
-                          cardColor: cardColor,
-                          textColor: textColor,
-                          subTextColor: subTextColor,
-                          isDarkMode: isDarkMode,
-                        ),
-                      ),
 
                       const SizedBox(height: 40),
                     ],
