@@ -482,20 +482,6 @@ class _AccountPageState extends State<AccountPage>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () => Navigator.pushNamed(context, '/profile'),
-                    child: Text(
-                      'Edit Profile',
-                      style: GoogleFonts.inter(
-                        color: isDarkMode
-                            ? Colors.white
-                            : Theme.of(context).primaryColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

@@ -3,9 +3,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:nutribin_application/main.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:nutribin_application/pages/home/register_machine_page.dart';
 import 'package:nutribin_application/services/machine_service.dart';
+import 'package:nutribin_application/services/announcement_service.dart';
+
+// Helper function to format date strings
+String _formatAnnouncementDate(String dateString) {
+  try {
+    final date = DateTime.parse(dateString);
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        if (difference.inMinutes < 1) {
+          return 'Just now';
+        }
+        return '${difference.inMinutes}m ago';
+      }
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${date.toLocal().toString().split(' ')[0]}'; // Return date format
+    }
+  } catch (e) {
+    return dateString; // Return original if parsing fails
+  }
+}
 
 class MachineSelectionPage extends StatefulWidget {
   const MachineSelectionPage({super.key});
@@ -16,6 +45,8 @@ class MachineSelectionPage extends StatefulWidget {
 
 class _MachineSelectionPageState extends State<MachineSelectionPage> {
   List<Map<String, dynamic>> existingMachines = [];
+  List<Map<String, dynamic>> announcements = [];
+  DateTime? lastAnnouncementUpdate;
   bool isLoading = true;
   Timer? _machineRefreshTimer;
 
@@ -23,6 +54,7 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
   void initState() {
     super.initState();
     fetchMachineIds();
+    fetchAnnouncements();
     _startMachineRefresh();
   }
 
@@ -63,6 +95,46 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
       });
       _showError(e.toString());
       print("FETCH ERROR: $e");
+    }
+  }
+
+  void fetchAnnouncements() async {
+    try {
+      final response = await AnnouncementService.fetchAnnouncements();
+      print("ANNOUNCEMENTS RESPONSE: $response");
+
+      if (response['ok'] == true && response['data'] != null) {
+        setState(() {
+          // Handle both array and object responses
+          final data = response['data'];
+          print("ANNOUNCEMENTS DATA: $data");
+
+          if (data is List) {
+            print("Handling as List");
+            announcements = List<Map<String, dynamic>>.from(data);
+          } else if (data is Map) {
+            // If the API returns announcements in a nested structure
+            print("Handling as Map");
+            final announcementList = data['announcements'] ?? [];
+            print("ANNOUNCEMENT LIST: $announcementList");
+            announcements = List<Map<String, dynamic>>.from(announcementList);
+          }
+          lastAnnouncementUpdate = DateTime.now();
+          print("FINAL ANNOUNCEMENTS COUNT: ${announcements.length}");
+        });
+      } else {
+        print("ERROR RESPONSE: ok=${response['ok']}, data=${response['data']}");
+        // Still call setState to ensure UI updates even if fetch fails
+        setState(() {
+          announcements = [];
+        });
+      }
+    } catch (e) {
+      print("FETCH ANNOUNCEMENTS ERROR: $e");
+      // Still call setState to ensure UI updates even on error
+      setState(() {
+        announcements = [];
+      });
     }
   }
 
@@ -334,6 +406,96 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
     );
   }
 
+  void _showMachineOptions({
+    required String serialNumber,
+    required String machineId,
+    required Color highlightColor,
+    required Color textColor,
+    required Color subTextColor,
+    required bool isDarkMode,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                margin: const EdgeInsets.only(bottom: 16),
+              ),
+              // View QR Option
+              ListTile(
+                leading: Icon(Icons.qr_code_rounded, color: highlightColor),
+                title: Text(
+                  'View QR Code',
+                  style: GoogleFonts.interTight(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+                subtitle: Text(
+                  'Scan to register on another device',
+                  style: GoogleFonts.inter(fontSize: 12, color: subTextColor),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showQRCode(
+                    serialNumber,
+                    highlightColor,
+                    textColor,
+                    subTextColor,
+                    isDarkMode,
+                  );
+                },
+              ),
+              const Divider(indent: 16, endIndent: 16),
+              // Delete Option
+              ListTile(
+                leading: Icon(Icons.delete_outline_rounded, color: Colors.red),
+                title: Text(
+                  'Remove Machine',
+                  style: GoogleFonts.interTight(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red,
+                  ),
+                ),
+                subtitle: Text(
+                  'Delete from your account',
+                  style: GoogleFonts.inter(fontSize: 12, color: subTextColor),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmation(
+                    serialNumber: serialNumber,
+                    machineId: machineId,
+                    highlightColor: highlightColor,
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    isDarkMode: isDarkMode,
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _deleteMachine(String machineId, String serialNumber) async {
     setState(() => isLoading = true);
 
@@ -456,6 +618,16 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Announcement Section
+                    if (announcements.isNotEmpty)
+                      _buildAnnouncementSection(
+                        highlightColor: highlightColor,
+                        cardColor: cardColor,
+                        textColor: textColor,
+                        subTextColor: subTextColor,
+                        isDarkMode: isDarkMode,
+                      ),
+
                     Padding(
                       padding: const EdgeInsets.only(bottom: 20, top: 8),
                       child: Row(
@@ -595,7 +767,9 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                   context,
                   '/home',
                   arguments: {
-                    "serialNumber": nickname.isNotEmpty ? nickname : serialNumber,
+                    "serialNumber": nickname.isNotEmpty
+                        ? nickname
+                        : serialNumber,
                     "machineId": machineId,
                     "isActive": isActive,
                   },
@@ -604,12 +778,13 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
               onLongPress: () {
                 debugPrint("LONG PRESS TRIGGERED FOR $serialNumber");
                 HapticFeedback.vibrate();
-                _showQRCode(
-                  serialNumber,
-                  highlightColor,
-                  textColor,
-                  subTextColor,
-                  isDarkMode,
+                _showMachineOptions(
+                  serialNumber: serialNumber,
+                  machineId: machineId,
+                  highlightColor: highlightColor,
+                  textColor: textColor,
+                  subTextColor: subTextColor,
+                  isDarkMode: isDarkMode,
                 );
               },
               borderRadius: BorderRadius.circular(12),
@@ -707,27 +882,6 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Delete button
-                        IconButton(
-                          onPressed: () {
-                            _showDeleteConfirmation(
-                              serialNumber: serialNumber,
-                              machineId: machineId,
-                              highlightColor: highlightColor,
-                              textColor: textColor,
-                              subTextColor: subTextColor,
-                              isDarkMode: isDarkMode,
-                            );
-                          },
-                          icon: Icon(
-                            Icons.delete_outline_rounded,
-                            color: Colors.red.withOpacity(0.7),
-                            size: 20,
-                          ),
-                          tooltip: 'Remove machine',
-                          padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(),
-                        ),
                         Icon(
                           Icons.chevron_right_rounded,
                           color: subTextColor.withOpacity(0.5),
@@ -800,5 +954,646 @@ class _MachineSelectionPageState extends State<MachineSelectionPage> {
         ),
       ),
     ).animate().fadeIn(duration: 300.ms, delay: 200.ms);
+  }
+
+  Widget _buildAnnouncementSection({
+    required Color highlightColor,
+    required Color cardColor,
+    required Color textColor,
+    required Color subTextColor,
+    required bool isDarkMode,
+  }) {
+    // Empty state - show friendly message
+    if (announcements.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Announcements Header
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12, top: 8),
+            child: Row(
+              children: [
+                Text(
+                  'Announcements',
+                  style: GoogleFonts.interTight(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+                const Spacer(),
+              ],
+            ),
+          ),
+          // Empty State Card
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: isDarkMode
+                  ? const Color(0xFF3F6B4B).withOpacity(0.5)
+                  : const Color(0xFF2C3E2D).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDarkMode
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.05),
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.notifications_off_rounded,
+                  size: 48,
+                  color: isDarkMode ? Colors.white30 : Colors.black26,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No Announcements',
+                  style: GoogleFonts.interTight(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Check back later for updates',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: isDarkMode ? Colors.white54 : Colors.black45,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 300.ms),
+        ],
+      );
+    }
+
+    // Get the most important announcement to display as preview
+    final announcement = announcements.first;
+    final importance = (announcement['importance'] as String?) ?? 'Low';
+    final title = (announcement['title'] as String?) ?? 'Announcement';
+    final description = (announcement['description'] as String?) ?? '';
+    final date = (announcement['date'] as String?) ?? '';
+
+    Color importanceColor;
+    Color importanceBgColor;
+    IconData importanceIcon;
+
+    switch (importance) {
+      case 'High':
+        importanceColor = const Color(0xFFD32F2F); // Error red
+        importanceBgColor = const Color(
+          0xFFD32F2F,
+        ).withOpacity(0.28); // Error red background
+        importanceIcon = Icons.warning_rounded;
+        break;
+      case 'Medium':
+        importanceColor = Colors.orange;
+        importanceBgColor = Colors.orange.withOpacity(0.1);
+        importanceIcon = Icons.info_rounded;
+        break;
+      case 'Low':
+      default:
+        importanceColor = isDarkMode
+            ? highlightColor
+            : const Color.fromARGB(
+                255,
+                127,
+                216,
+                160,
+              ); // Dark primary in dark mode, light green in light mode
+        importanceBgColor =
+            (isDarkMode
+                    ? highlightColor
+                    : const Color.fromARGB(255, 127, 216, 160))
+                .withOpacity(0.15);
+        importanceIcon = Icons.notifications_rounded;
+        break;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Announcements Header
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12, top: 8),
+          child: Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Announcements',
+                    style: GoogleFonts.interTight(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  if (lastAnnouncementUpdate != null)
+                    Text(
+                      'Updated ${_formatAnnouncementDate(lastAnnouncementUpdate.toString())}',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: subTextColor.withOpacity(0.7),
+                      ),
+                    ),
+                ],
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: highlightColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.notifications_active_rounded,
+                          size: 14,
+                          color: highlightColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${announcements.length}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: highlightColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+            ],
+          ),
+        ),
+        // Announcement Preview Card
+        GestureDetector(
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            _showAllAnnouncements(
+              highlightColor,
+              cardColor,
+              textColor,
+              subTextColor,
+              isDarkMode,
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDarkMode
+                  ? const Color(0xFF3F6B4B) // Medium green for dark mode
+                  : const Color(0xFF2C3E2D), // Dark green container
+              border: Border(
+                left: BorderSide.none,
+                top: isDarkMode
+                    ? BorderSide(color: Colors.black.withOpacity(0.1))
+                    : BorderSide.none,
+                right: isDarkMode
+                    ? BorderSide(color: Colors.black.withOpacity(0.1))
+                    : BorderSide.none,
+                bottom: isDarkMode
+                    ? BorderSide(color: Colors.black.withOpacity(0.1))
+                    : BorderSide.none,
+              ),
+              boxShadow: [],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: importanceBgColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        importanceIcon,
+                        color: importanceColor,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: GoogleFonts.interTight(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode
+                                  ? Colors
+                                        .white // White text in dark mode
+                                  : const Color(
+                                      0xFFFFFFFF,
+                                    ), // White text on green
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: importanceBgColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              importance,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: importanceColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: isDarkMode
+                          ? Colors.white70
+                          : Colors.white70, // Light icon on green
+                      size: 20,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  description,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: isDarkMode
+                        ? Colors
+                              .white70 // White text in dark mode
+                        : Colors.white70, // Light text on green
+                    height: 1.5,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 14,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : Colors.white70, // Light icon on green
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatAnnouncementDate(date),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: isDarkMode
+                                ? Colors.white70
+                                : Colors.white70, // Light text on green
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (announcements.length > 1)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF3A4D39),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '+${announcements.length - 1} more',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: lightPrimaryBackground,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ).animate().fadeIn(duration: 300.ms),
+      ],
+    );
+  }
+
+  void _showAllAnnouncements(
+    Color highlightColor,
+    Color cardColor,
+    Color textColor,
+    Color subTextColor,
+    bool isDarkMode,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode
+              ? const Color(0xFF3F6B4B) // Medium green for dark mode
+              : const Color(0xFF2C3E2D), // Dark green container
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Announcements',
+                        style: GoogleFonts.interTight(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: isDarkMode
+                              ? Colors
+                                    .white // White text in dark mode
+                              : Colors.white70, // White text on dark green
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? highlightColor.withOpacity(0.1)
+                                : Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${announcements.length}',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode
+                                  ? highlightColor
+                                  : Colors.white, // White text on dark green
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Divider(
+                color: isDarkMode
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.white.withOpacity(0.1),
+                height: 0,
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: List.generate(
+                      announcements.length,
+                      (index) =>
+                          _buildAnnouncementItem(
+                                announcement: announcements[index],
+                                highlightColor: highlightColor,
+                                textColor: textColor,
+                                subTextColor: subTextColor,
+                                isDarkMode: isDarkMode,
+                                isLast: index == announcements.length - 1,
+                              )
+                              .animate()
+                              .fadeIn(duration: 300.ms, delay: (index * 50).ms)
+                              .slideY(
+                                begin: 0.2,
+                                end: 0,
+                                duration: 300.ms,
+                                delay: (index * 50).ms,
+                              ),
+                    ),
+                  ),
+                ),
+              ),
+              Divider(
+                color: isDarkMode
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.white.withOpacity(0.1),
+                height: 0,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: highlightColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Close',
+                      style: GoogleFonts.interTight(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnnouncementItem({
+    required Map<String, dynamic> announcement,
+    required Color highlightColor,
+    required Color textColor,
+    required Color subTextColor,
+    required bool isDarkMode,
+    required bool isLast,
+  }) {
+    final importance = (announcement['importance'] as String?) ?? 'Low';
+    final title = (announcement['title'] as String?) ?? 'Announcement';
+    final description = (announcement['description'] as String?) ?? '';
+    final date = (announcement['date'] as String?) ?? '';
+
+    Color importanceColor;
+    Color importanceBgColor;
+    IconData importanceIcon;
+
+    switch (importance) {
+      case 'High':
+        importanceColor = const Color(
+          0xFFE53935,
+        ); // Material Red 600 - readable red
+        importanceBgColor = const Color(0xFFE53935).withOpacity(0.1);
+        importanceIcon = Icons.warning_rounded;
+        break;
+      case 'Medium':
+        importanceColor = Colors.orange;
+        importanceBgColor = Colors.orange.withOpacity(0.1);
+        importanceIcon = Icons.info_rounded;
+        break;
+      case 'Low':
+      default:
+        importanceColor = const Color(0xFF7FD8A0); // Light green
+        importanceBgColor = const Color(0xFF7FD8A0).withOpacity(0.15);
+        importanceIcon = Icons.notifications_rounded;
+        break;
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: importanceBgColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      importanceIcon,
+                      color: importanceColor,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.interTight(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode
+                                ? Colors
+                                      .white // White text in dark mode
+                                : Colors.white, // White text on dark green
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: importanceBgColor,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Text(
+                            importance,
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: importanceColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                description,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: isDarkMode
+                      ? Colors
+                            .white70 // White text in dark mode
+                      : Colors.white70, // Light text on dark green
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 13,
+                    color: isDarkMode
+                        ? Colors
+                              .white70 // White text in dark mode
+                        : Colors.white70, // Light text on dark green
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _formatAnnouncementDate(date),
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: isDarkMode
+                          ? Colors.white70
+                          : Colors.white70, // Light text on dark green
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        if (!isLast)
+          Divider(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.1)
+                : Colors.white.withOpacity(0.1),
+            height: 0,
+            indent: 16,
+            endIndent: 16,
+          ),
+      ],
+    );
   }
 }

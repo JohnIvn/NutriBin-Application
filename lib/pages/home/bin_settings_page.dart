@@ -735,11 +735,11 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Unlink Device',
+          'Remove Machine',
           style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'Are you sure you want to unlink this device? You will need to scan the QR code to add it again.',
+          'Are you sure you want to remove this machine from this device? You will need to scan the QR code to add it again.',
           style: GoogleFonts.inter(),
         ),
         actions: [
@@ -783,7 +783,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response['message'] ?? 'Failed to unlink device'),
+              content: Text(response['message'] ?? 'Failed to remove machine'),
               behavior: SnackBarBehavior.floating,
               backgroundColor: Colors.red,
             ),
@@ -1078,7 +1078,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
           : CustomScrollView(
               slivers: [
                 SliverAppBar(
-                  expandedHeight: 120.0,
+                  expandedHeight: 70.0,
                   floating: false,
                   pinned: true,
                   automaticallyImplyLeading: false,
@@ -1353,7 +1353,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                               color: Colors.redAccent,
                             ),
                             label: Text(
-                              'Unlink Device',
+                              'Remove Machine',
                               style: GoogleFonts.inter(
                                 color: Colors.redAccent,
                                 fontWeight: FontWeight.w600,
@@ -1382,6 +1382,7 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
   }
 
   Widget _buildSectionHeader(String title) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
@@ -1389,7 +1390,9 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
         style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: Theme.of(context).primaryColor.withOpacity(0.8),
+          color: isDarkMode
+              ? Colors.white
+              : Theme.of(context).primaryColor.withOpacity(0.8),
           letterSpacing: 1.5,
         ),
       ),
@@ -1404,6 +1407,8 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
     VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final iconColor = isDarkMode ? Colors.white : theme.primaryColor;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -1429,10 +1434,10 @@ class _BinSettingsPageState extends State<BinSettingsPage> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.primaryColor.withOpacity(0.1),
+                    color: iconColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: theme.primaryColor, size: 22),
+                  child: Icon(icon, color: iconColor, size: 22),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
